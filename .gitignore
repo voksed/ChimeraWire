@@ -16,3 +16,8 @@ gradlew.bat
 .vscode
 .env
 signing.keystore
+
+# Собранные релизные артефакты (кроме .gitkeep)
+releases/android/*.apk
+releases/windows/*.exe
+build-desktop-*/

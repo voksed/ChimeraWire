@@ -12,11 +12,15 @@ import okhttp3.Request
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 class SubscriptionManager(private val context: Context) {
 
     private val repository = ServerRepository(context)
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
     
     private val PREFS = "vpn_subs"
     private val KEY_SUBS = "saved_subscriptions"
@@ -102,16 +106,19 @@ class SubscriptionManager(private val context: Context) {
     }
     
     private fun tryDecode(content: String): String {
+        val trimmed = content.trim()
+        // If already contains VPN scheme URLs, it's plain text — use as-is.
+        if (trimmed.contains("://")) return trimmed
+        // Standard V2Ray subscription servers return base64 with newlines every 76 chars.
+        // Strip all whitespace before decoding.
         return try {
-            val trimmed = content.trim()
-            // Heuristic: if no spaces and no :// and length > 24, might be base64
-            if (!trimmed.contains(" ") && !trimmed.contains("\n") && !trimmed.contains("://") && trimmed.length > 20) {
-                 String(Base64.decode(trimmed, Base64.DEFAULT), StandardCharsets.UTF_8)
-            } else {
-                content
-            }
+            val stripped = trimmed.replace(Regex("\\s+"), "")
+            if (stripped.length < 20) return trimmed
+            val decoded = String(Base64.decode(stripped, Base64.DEFAULT), StandardCharsets.UTF_8)
+            // Accept decoded result only if it looks like VPN config lines
+            if (decoded.contains("://")) decoded else trimmed
         } catch (e: Exception) {
-            content
+            trimmed
         }
     }
 

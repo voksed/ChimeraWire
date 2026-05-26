@@ -73,6 +73,8 @@ import com.google.zxing.BarcodeFormat
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Language
+import com.carnelia.vpn.ui.SubscriptionDialog
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.foundation.Image
@@ -726,6 +728,7 @@ fun ServerSelectionDialog(
 ) {
     var servers by remember { mutableStateOf(repository.getServers()) }
     var showManualAdd by remember { mutableStateOf(false) }
+    var showSubscriptions by remember { mutableStateOf(false) }
     var serverToRename by remember { mutableStateOf<VpnServerConfig?>(null) }
     var renameText by remember { mutableStateOf("") }
     var renameGroupText by remember { mutableStateOf("") }
@@ -816,7 +819,12 @@ fun ServerSelectionDialog(
         )
     }
 
-    if (showManualAdd) {
+    if (showSubscriptions) {
+        SubscriptionDialog(
+            onDismiss = { showSubscriptions = false },
+            onServersChanged = { servers = repository.getServers() }
+        )
+    } else if (showManualAdd) {
         ManualEntryDialog(
             onDismiss = { showManualAdd = false },
             onSave = { config ->
@@ -935,6 +943,14 @@ fun ServerSelectionDialog(
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
                              Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
+                        }
+                        Button(
+                            onClick = { showSubscriptions = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Language, contentDescription = "Подписки", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
                         }
                     }
 

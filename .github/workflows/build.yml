@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  android:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -30,13 +30,47 @@ jobs:
     - name: Create local.properties
       run: echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
 
-    - name: Build with Gradle Wrapper (8.6)
+    - name: Build debug APK
       working-directory: ./android
       run: ./gradlew assembleDebug --stacktrace
 
-    - name: Upload APK
+    - name: Upload debug APK
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: carnelia-vpn-debug
         path: android/app/build/outputs/apk/debug/*.apk
+
+  desktop:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.arch == 'arm64' && 'CLANGARM64' || 'MINGW64' }}
+        install: >-
+          ${{ matrix.arch == 'arm64' &&
+            'mingw-w64-clang-aarch64-gcc mingw-w64-clang-aarch64-cmake mingw-w64-clang-aarch64-gtk3 mingw-w64-clang-aarch64-json-glib mingw-w64-clang-aarch64-qt6-base' ||
+            'mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-gtk3 mingw-w64-x86_64-json-glib mingw-w64-x86_64-qt6-base' }}
+        update: false
+
+    - name: Configure CMake
+      run: cmake -B build-${{ matrix.arch }} -DBUILD_ARCH=${{ matrix.arch }} -DCMAKE_BUILD_TYPE=Release -S desktop
+      shell: msys2 {0}
+
+    - name: Build
+      run: cmake --build build-${{ matrix.arch }} --config Release
+      shell: msys2 {0}
+
+    - name: Upload desktop binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: CarneliaVPN-windows-${{ matrix.arch }}
+        path: build-${{ matrix.arch }}/CarneliaVPN.exe
