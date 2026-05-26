@@ -10,19 +10,56 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
 
     <!-- System Permissions -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Mock GPS Location -->
+    <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" tools:ignore="MockLocation" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- v2.4.0: VPN Schedule (daily alarm) -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:ignore="DiscouragedApi" />
 
     <application
+        android:name=".CarheliaApplication"
         android:allowBackup="false"
+        tools:replace="android:allowBackup"
         android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CarheliaVPN"
         android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
+
+        <service
+            android:name=".widget.ServerListWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+            
+        <activity
+            android:name=".EasterEggActivity"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+            
+        <activity
+            android:name=".games.MinerActivity"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:screenOrientation="portrait"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"
@@ -32,22 +69,184 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            
+            <!-- OpenVPN File Support -->
+            <!-- 1. Specific MIME types (High priority, no extension needed) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-openvpn-profile" />
+                <data android:mimeType="application/ovpn" />
+            </intent-filter>
+            
+            <!-- 2. Path Pattern for Content URIs (Telegram, Downloads) with generic MIME -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.ovpn" />
+                <data android:pathPattern=".*\\.conf" />
+                <data android:pathPattern=".*\\.OVPN" />
+                <data android:pathPattern=".*\\.CONF" />
+            </intent-filter>
+
+            <!-- 3. Path Pattern for File URIs (Managers) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.ovpn" />
+                <data android:pathPattern=".*\\.conf" />
+                <data android:pathPattern=".*\\.OVPN" />
+                <data android:pathPattern=".*\\.CONF" />
+            </intent-filter>
+
+            <!-- TON Connect 2.0 deep links -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tc" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ton-connect" />
+            </intent-filter>
         </activity>
 
         <service
             android:name=".service.CarheliaVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="true"
-            android:foregroundServiceType="connectedDevice">
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="vpn" />
+            
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+            
+            <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON" android:value="true" />
         </service>
+
+        <!-- OpenVPN Service (Required for Android 14+ specific foreground type) -->
+        <!--
+        <service
+            android:name="de.blinkt.openvpn.core.OpenVPNService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="true"
+            android:foregroundServiceType="specialUse">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="vpn_connection" />
+        </service>
+        -->
+        
+        <service
+            android:name=".service.VpnTileService"
+            android:icon="@drawable/ic_launcher_foreground"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        
+        <receiver
+            android:name=".service.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- v2.4.0: VPN Schedule receiver -->
+        <receiver
+            android:name=".service.ScheduleReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.carnelia.vpn.SCHEDULE_CONNECT" />
+                <action android:name="com.carnelia.vpn.SCHEDULE_DISCONNECT" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
             android:theme="@style/Theme.CarheliaVPN" />
+            
+        <activity
+            android:name=".StatisticsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN" />
+
+        <activity
+            android:name=".LogsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN" />
+
+        <activity
+            android:name=".AppSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN" />
+
+        <activity
+            android:name=".GeoSpoofActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN" />
+
+        <service
+            android:name=".service.GeoSpoofService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- v2.4.0: DNS-only VPN service (encrypts DNS without full VPN) -->
+        <service
+            android:name=".service.DnsOnlyService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
+        <!-- v2.4.0: Network Boost service (WiFi + Mobile standalone) -->
+        <service
+            android:name=".service.NetworkBoostService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
+        <!-- v2.4.0: Standalone Tools screen -->
+        <activity
+            android:name=".StandaloneToolsActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name=".widget.VpnWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.carnelia.vpn.UPDATE_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/vpn_widget_info_metadata" />
+        </receiver>
 
     </application>
 

@@ -1,182 +1,2230 @@
 package com.carnelia.vpn
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.os.LocaleListCompat
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import com.carnelia.vpn.core.VpnGlobalState
 import com.carnelia.vpn.ui.theme.CarheliaTheme
-import com.carnelia.vpn.core.VpnServerConfig
-import com.carnelia.vpn.core.VpnProtocol
+import com.carnelia.vpn.utils.AppLogger
+import com.carnelia.vpn.utils.LogLevel
+import com.carnelia.vpn.utils.PrefsManager
+import kotlinx.coroutines.launch
 
-class SettingsActivity : ComponentActivity() {
+class SettingsActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CarheliaTheme {
-                SettingsScreen()
+             SettingsScreen()
+        }
+    }
+    
+    companion object {
+        fun reportBug(context: Context) {
+            try {
+                val logs = AppLogger.getLogsAsString()
+                val deviceInfo = "Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}, Android: ${android.os.Build.VERSION.RELEASE}"
+                val report = "Bug Report:\n$deviceInfo\n\nLogs:\n$logs"
+                
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf("carneliavpn@gmail.com")) 
+                    putExtra(Intent.EXTRA_SUBJECT, "Bug Report Carnelia VPN")
+                    putExtra(Intent.EXTRA_TEXT, report)
+                }
+                context.startActivity(Intent.createChooser(intent, "Send Report"))
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error sending report: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
+
+fun changeLanguage(context: Context, languageCode: String) {
+    val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(languageCode)
+    AppCompatDelegate.setApplicationLocales(appLocale)
+}
+
+enum class SettingsPage {
+    MAIN,
+    APPEARANCE,
+    SECURITY,
+    CONNECTION,
+    CENSORSHIP_BYPASS,
+    AUTO_CONNECT,
+    TUNNEL,
+    LANGUAGE,
+    DONATION,
+    SUBSCRIPTIONS,
+    DOUBLE_TUNNEL,
+    NOISE_MODE,
+    TRAFFIC_MAP,
+    BACKUP,
+    SCHEDULE,
+    NETWORK_BOOST,
+    AUTO_TUNE
+}
+
+@Composable
+fun SettingsScreen() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var themeIndex by remember { mutableStateOf(PrefsManager.getThemeIndex(context)) }
+    
+    // Navigation State
+    var currentScreen by remember { mutableStateOf(SettingsPage.MAIN) }
+
+    // Handle System Back Button
+    BackHandler(enabled = currentScreen != SettingsPage.MAIN) {
+        currentScreen = SettingsPage.MAIN
+    }
+
+    CarheliaTheme(themeIndex = themeIndex) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        Text(
+                            text = when(currentScreen) {
+                                SettingsPage.MAIN -> stringResource(R.string.settings_title)
+                                SettingsPage.APPEARANCE -> stringResource(R.string.appearance_section)
+                                SettingsPage.SECURITY -> stringResource(R.string.security_section)
+                                SettingsPage.CONNECTION -> stringResource(R.string.connection_section)
+                                SettingsPage.CENSORSHIP_BYPASS -> stringResource(R.string.bypass_advanced_section)
+                                SettingsPage.AUTO_CONNECT -> stringResource(R.string.smart_auto_connect_title)
+                                SettingsPage.TUNNEL -> stringResource(R.string.tunnel_settings_section)
+                                SettingsPage.LANGUAGE -> stringResource(R.string.language_title)
+                                SettingsPage.DONATION -> stringResource(R.string.donation_section_title)
+                                SettingsPage.SUBSCRIPTIONS -> stringResource(R.string.subscriptions_title)
+                                SettingsPage.DOUBLE_TUNNEL -> stringResource(R.string.double_tunnel_title)
+                                SettingsPage.NOISE_MODE -> stringResource(R.string.noise_mode_title)
+                                SettingsPage.TRAFFIC_MAP -> stringResource(R.string.traffic_map_title)
+                                SettingsPage.BACKUP -> stringResource(R.string.backup_section_title)
+                                SettingsPage.SCHEDULE -> stringResource(R.string.schedule_title)
+                                SettingsPage.NETWORK_BOOST -> stringResource(R.string.network_boost_title)
+                                SettingsPage.AUTO_TUNE -> "Авто-Калибровка"
+                            },  
+                            color = MaterialTheme.colorScheme.onSurface
+                        ) 
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    navigationIcon = {
+                        IconButton(onClick = { 
+                            if (currentScreen == SettingsPage.MAIN) {
+                                (context as? android.app.Activity)?.finish()
+                            } else {
+                                currentScreen = SettingsPage.MAIN
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+                when(currentScreen) {
+                    SettingsPage.MAIN -> MainSettingsMenu(
+                        context = context,
+                        onNavigate = { page -> currentScreen = page }
+                    )
+                    SettingsPage.APPEARANCE -> AppearanceSettings(
+                        themeIndex = themeIndex, 
+                        onThemeChange = { newIndex ->
+                            themeIndex = newIndex
+                            PrefsManager.setThemeIndex(context, newIndex)
+                        }
+                    )
+                    SettingsPage.SECURITY -> SecuritySettings(context)
+                    SettingsPage.CONNECTION -> ConnectionSettings(context)
+                    SettingsPage.CENSORSHIP_BYPASS -> CensorshipBypassSettings(context)
+                    SettingsPage.AUTO_CONNECT -> AutoConnectSettings(context)
+                    SettingsPage.TUNNEL -> TunnelSettings(context, onNavigate = { page -> currentScreen = page })
+                    SettingsPage.AUTO_TUNE -> com.carnelia.vpn.ui.AutoTuneScreen(context)
+                    SettingsPage.LANGUAGE -> LanguageSettings(context) { currentScreen = SettingsPage.MAIN }
+                    SettingsPage.DONATION -> DonationSettings(context)
+                    SettingsPage.SUBSCRIPTIONS -> SubscriptionsSettings(context)
+                    SettingsPage.DOUBLE_TUNNEL -> DoubleTunnelSettings(context)
+                    SettingsPage.NOISE_MODE -> NoiseModeSettings(context)
+                    SettingsPage.TRAFFIC_MAP -> com.carnelia.vpn.ui.TrafficMapScreen(context)
+                    SettingsPage.BACKUP -> BackupSettings(context)
+                    SettingsPage.SCHEDULE -> ScheduleSettings(context)
+                    SettingsPage.NETWORK_BOOST -> NetworkBoostSettings(context)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun MainSettingsMenu(
+    context: Context,
+    onNavigate: (SettingsPage) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        
+        // --- Categories ---
+        SettingsCategoryItem(
+            icon = Icons.Default.Palette,
+            title = stringResource(R.string.appearance_section),
+            onClick = { onNavigate(SettingsPage.APPEARANCE) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.Tune,
+            title = stringResource(R.string.tunnel_settings_section),
+            description = "Mux, IP Strategy, LAN, Auto Start",
+            onClick = { onNavigate(SettingsPage.TUNNEL) }
+        )
+        
+        SettingsCategoryItem(
+            icon = Icons.Default.Security,
+            title = stringResource(R.string.security_section),
+            description = stringResource(R.string.netshield_title) + ", " + stringResource(R.string.kill_switch_internal),
+            onClick = { onNavigate(SettingsPage.SECURITY) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.AccountTree,
+            title = stringResource(R.string.double_tunnel_title),
+            description = stringResource(R.string.double_tunnel_desc),
+            onClick = { onNavigate(SettingsPage.DOUBLE_TUNNEL) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.BlurOn,
+            title = stringResource(R.string.noise_mode_title),
+            description = stringResource(R.string.noise_mode_desc),
+            onClick = { onNavigate(SettingsPage.NOISE_MODE) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.Hub,
+            title = stringResource(R.string.traffic_map_title),
+            description = stringResource(R.string.traffic_map_subtitle),
+            onClick = { onNavigate(SettingsPage.TRAFFIC_MAP) }
+        )
+        
+        SettingsCategoryItem(
+            icon = Icons.Default.Wifi,
+            title = stringResource(R.string.connection_section),
+            description = stringResource(R.string.split_tunneling_title) + ", DNS",
+            onClick = { onNavigate(SettingsPage.CONNECTION) }
+        )
+
+         SettingsCategoryItem(
+            icon = Icons.Default.Bolt,
+            title = stringResource(R.string.smart_auto_connect_title),
+            onClick = { onNavigate(SettingsPage.AUTO_CONNECT) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.Subscriptions,
+            title = stringResource(R.string.subscriptions_title),
+            description = stringResource(R.string.subscriptions_desc),
+            onClick = { onNavigate(SettingsPage.SUBSCRIPTIONS) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.VpnLock,
+            title = stringResource(R.string.bypass_advanced_section),
+            description = stringResource(R.string.stealth_mode_title) + ", " + stringResource(R.string.fragmentation_title),
+            onClick = { onNavigate(SettingsPage.CENSORSHIP_BYPASS) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.NetworkCheck,
+            title = stringResource(R.string.network_boost_title),
+            description = stringResource(R.string.network_boost_desc),
+            onClick = { onNavigate(SettingsPage.NETWORK_BOOST) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.SaveAlt,
+            title = stringResource(R.string.backup_section_title),
+            description = stringResource(R.string.backup_desc),
+            onClick = { onNavigate(SettingsPage.BACKUP) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.Schedule,
+            title = stringResource(R.string.schedule_title),
+            description = stringResource(R.string.schedule_desc),
+            onClick = { onNavigate(SettingsPage.SCHEDULE) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.Favorite,
+            title = stringResource(R.string.donate_dev_title),
+            description = stringResource(R.string.donate_dev_desc),
+            onClick = { onNavigate(SettingsPage.DONATION) }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- Other Items (Language, Report, Logs) ---
+        
+        SettingsCategoryItem(
+            icon = Icons.Default.Language,
+            title = stringResource(R.string.language_title),
+            value = androidx.core.os.LocaleListCompat.getAdjustedDefault().get(0)?.language?.uppercase() ?: "EN",
+            onClick = { onNavigate(SettingsPage.LANGUAGE) }
+        )
+
+        SettingsCategoryItem(
+            icon = Icons.Default.BugReport,
+            title = stringResource(R.string.show_app_logs),
+            onClick = { context.startActivity(Intent(context, LogsActivity::class.java)) }
+        )
+        
+        // Report Bug
+        Button(
+            onClick = { SettingsActivity.reportBug(context) },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCD3C1A)),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        ) {
+            Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.report_bug), color = MaterialTheme.colorScheme.onPrimary)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Socials
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = {
+                     try {
+                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/mistervoksed"))
+                        context.startActivity(intent)
+                    } catch (e: Exception) {}
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088CC)),
+                modifier = Modifier.weight(1f)
+            ) {
+                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
+                 Spacer(modifier = Modifier.width(4.dp))
+                 Text(stringResource(R.string.telegram_channel), fontSize = 12.sp)
+            }
+             Button(
+                onClick = {
+                     try {
+                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/CarneliaVPN"))
+                        context.startActivity(intent)
+                    } catch (e: Exception) {}
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088CC)),
+                modifier = Modifier.weight(1f)
+            ) {
+                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
+                 Spacer(modifier = Modifier.width(4.dp))
+                 Text(stringResource(R.string.telegram_news_channel), fontSize = 12.sp)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Reset
+        Button(
+            onClick = { 
+                PrefsManager.resetSettings(context)
+                // Theme will be reset to default automatically
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            modifier = Modifier.fillMaxWidth(),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+        ) {
+            Text(stringResource(R.string.reset_settings_caps), color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Version
+        val versionInfo = try {
+             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+             "${packageInfo.versionName} (Build ${if (android.os.Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else packageInfo.versionCode})"
+        } catch (e: Exception) { "1.0.0" }
+        
+        var clickCount by remember { mutableStateOf(0) }
+        
+        Text(
+            text = "Version: $versionInfo",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .combinedClickable(
+                    onClick = {
+                        clickCount++
+                        if (clickCount >= 7) {
+                            clickCount = 0
+                            // Launch Space Dodger
+                            context.startActivity(Intent(context, EasterEggActivity::class.java))
+                        }
+                    },
+                    onLongClick = {
+                        // Launch Miner Game
+                        context.startActivity(Intent(context, com.carnelia.vpn.games.MinerActivity::class.java))
+                    }
+                ),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun SettingsCategoryItem(
+    icon: ImageVector,
+    title: String,
+    description: String? = null,
+    value: String? = null,
+    onClick: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                if (description != null) {
+                    Text(text = description, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            if (value != null) {
+                 Text(text = value, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                 Spacer(modifier = Modifier.width(8.dp))
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun TunnelSettings(context: Context, onNavigate: (SettingsPage) -> Unit = {}) {
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        
+        Text(
+            text = stringResource(R.string.mux_protocols_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        // Use Mux
+        var muxEnabled by remember { mutableStateOf(PrefsManager.isMuxEnabled(context)) }
+        var muxTcp by remember { mutableStateOf(PrefsManager.getMuxTcpConcurrency(context)) }
+        var muxUdp by remember { mutableStateOf(PrefsManager.getMuxUdpConcurrency(context)) }
+        var muxQuic by remember { mutableStateOf(PrefsManager.getMuxQuicMode(context)) }
+        
+        SettingsCategoryItem(
+            icon = Icons.Default.Merge,
+            title = stringResource(R.string.use_mux_title),
+            value = if (muxEnabled) stringResource(R.string.enabled_status) else stringResource(R.string.disabled_status),
+            onClick = { 
+                muxEnabled = !muxEnabled
+                PrefsManager.setMuxEnabled(context, muxEnabled)
+            }
+        )
+        
+        AnimatedVisibility(
+            visible = muxEnabled,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Column(modifier = Modifier.padding(start = 16.dp)) {
+                
+                NumberPickerItem(
+                    title = stringResource(R.string.mux_tcp_concurrency),
+                    value = muxTcp,
+                    range = -1..1024,
+                    onValueChange = { 
+                        muxTcp = it
+                        PrefsManager.setMuxTcpConcurrency(context, it)
+                    }
+                )
+
+                NumberPickerItem(
+                    title = stringResource(R.string.mux_udp_concurrency),
+                    value = muxUdp,
+                    range = -1..1024,
+                    onValueChange = { 
+                        muxUdp = it
+                        PrefsManager.setMuxUdpConcurrency(context, it)
+                    }
+                )
+
+                val quicOptions = listOf(
+                    stringResource(R.string.quic_mode_reject) to "reject",
+                    stringResource(R.string.quic_mode_allow) to "allow"
+                )
+                val selectedQuicIdx = quicOptions.indexOfFirst { it.second == muxQuic }.coerceAtLeast(0)
+                
+                DropdownSettingItem(
+                     title = stringResource(R.string.mux_quic_mode),
+                     options = quicOptions,
+                     selectedOptionIdx = selectedQuicIdx,
+                     onOptionSelected = { idx ->
+                         val newValue = quicOptions[idx].second
+                         muxQuic = newValue
+                         PrefsManager.setMuxQuicMode(context, newValue)
+                     }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = stringResource(R.string.connectivity_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // Preferred IP
+        var ipType by remember { mutableStateOf(PrefsManager.getPreferredIpType(context)) }
+        SettingsCategoryItem(
+            icon = Icons.Default.Dns,
+            title = stringResource(R.string.preferred_ip_title),
+            value = when(ipType) {
+                "ipv4" -> stringResource(R.string.ip_type_ipv4)
+                "ipv6" -> stringResource(R.string.ip_type_ipv6)
+                else -> stringResource(R.string.ip_type_auto)
+            },
+            onClick = {
+                // Cycle: auto -> ipv4 -> ipv6
+                val newType = when(ipType) {
+                    "auto" -> "ipv4"
+                    "ipv4" -> "ipv6"
+                    else -> "auto"
+                }
+                ipType = newType
+                PrefsManager.setPreferredIpType(context, newType)
+            }
+        )
+        
+        // Allow LAN
+        var lanEnabled by remember { mutableStateOf(PrefsManager.isAllowLanEnabled(context)) }
+        SettingsCategoryItem(
+            icon = Icons.Default.Lan,
+            title = stringResource(R.string.allow_lan_title),
+            description = stringResource(R.string.allow_lan_summary),
+            value = if (lanEnabled) stringResource(R.string.enabled_status) else stringResource(R.string.disabled_status),
+            onClick = { 
+                lanEnabled = !lanEnabled
+                PrefsManager.setAllowLanEnabled(context, lanEnabled)
+            }
+        )
+        
+        // Auto Start
+        var autoStart by remember { mutableStateOf(PrefsManager.isAppAutoStartEnabled(context)) }
+        SettingsCategoryItem(
+            icon = Icons.Default.RocketLaunch,
+            title = stringResource(R.string.auto_start_title),
+            value = if (autoStart) stringResource(R.string.enabled_status) else stringResource(R.string.disabled_status),
+            onClick = {
+                autoStart = !autoStart
+                PrefsManager.setAppAutoStartEnabled(context, autoStart)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Auto-Calibration banner
+        androidx.compose.material3.Card(
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+            ),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onNavigate(SettingsPage.AUTO_TUNE) }
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoFixHigh,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Авто-Калибровка",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Подобрать идеальный MUX и фрагментацию под ваш сервер",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+fun AppearanceSettings(themeIndex: Int, onThemeChange: (Int) -> Unit) {
+    val context = LocalContext.current
+    val isSecretUnlocked = PrefsManager.isSecretThemeUnlocked(context)
+    
+    val themes = listOf(
+        com.carnelia.vpn.ui.theme.AppTheme.CARNELIA,
+        com.carnelia.vpn.ui.theme.AppTheme.CYBERPUNK,
+        com.carnelia.vpn.ui.theme.AppTheme.MATRIX,
+        com.carnelia.vpn.ui.theme.AppTheme.PURPLE,
+        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_BLUE,
+        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_GREEN,
+        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_PINK,
+        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_PURPLE,
+        com.carnelia.vpn.ui.theme.AppTheme.LIGHT,
+        com.carnelia.vpn.ui.theme.AppTheme.DARK,
+        com.carnelia.vpn.ui.theme.AppTheme.TON,
+        com.carnelia.vpn.ui.theme.AppTheme.SYSTEM
+    ) + if (isSecretUnlocked) listOf(com.carnelia.vpn.ui.theme.AppTheme.SECRET) else emptyList()
+    
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.app_theme_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                themes.forEach { theme ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onThemeChange(theme.ordinal) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = themeIndex == theme.ordinal,
+                            onClick = { onThemeChange(theme.ordinal) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = theme.colorScheme.primary,
+                                unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(id = theme.displayNameResId),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        // Preview colors
+                        Row {
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .background(theme.colorScheme.primary, CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .background(theme.colorScheme.surface, CircleShape)
+                                    .border(1.dp, theme.colorScheme.onSurface, CircleShape)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun SettingsScreen() {
-    var servers by remember { mutableStateOf<List<VpnServerConfig>>(emptyList()) }
-    var showAddDialog by remember { mutableStateOf(false) }
-    var newServerName by remember { mutableStateOf("") }
-    var newServerUrl by remember { mutableStateOf("") }
+fun SecuritySettings(context: Context) {
+    var netShieldEnabled by remember { mutableStateOf(PrefsManager.isNetShieldEnabled(context)) }
+    var killSwitch by remember { mutableStateOf(PrefsManager.isKillSwitchEnabled(context)) }
+    var fallbackEnabled by remember { mutableStateOf(PrefsManager.isFallbackEnabled(context)) }
+    var biometricLock by remember { mutableStateOf(PrefsManager.isBiometricLockEnabled(context)) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Параметры VPN") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Server")
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        
+        // Fallback Auto-switch
+        ToggleCard(
+            title = stringResource(R.string.fallback_title),
+            description = stringResource(R.string.fallback_desc),
+            checked = fallbackEnabled,
+            onCheckedChange = {
+                fallbackEnabled = it
+                PrefsManager.setFallbackEnabled(context, it)
             }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // AdGuard DNS (NetShield)
+        ToggleCard(
+            title = stringResource(R.string.netshield_title),
+            description = stringResource(R.string.netshield_desc),
+            checked = netShieldEnabled,
+            onCheckedChange = { 
+                netShieldEnabled = it
+                PrefsManager.setNetShieldEnabled(context, it)
+                VpnGlobalState.isNetShieldEnabled = it
+            }
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Internal Kill Switch
+        ToggleCard(
+            title = stringResource(R.string.kill_switch_internal),
+            description = stringResource(R.string.kill_switch_internal_desc),
+            checked = killSwitch,
+            onCheckedChange = { 
+                killSwitch = it 
+                PrefsManager.setKillSwitchEnabled(context, it)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Biometric Lock
+        ToggleCard(
+            title = stringResource(R.string.biometric_lock_title),
+            description = stringResource(R.string.biometric_lock_desc),
+            checked = biometricLock,
+            onCheckedChange = {
+                biometricLock = it
+                PrefsManager.setBiometricLockEnabled(context, it)
+            }
+        )
+
+         Spacer(modifier = Modifier.height(16.dp))
+
+        // System Kill Switch
+        Button(
+            onClick = {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_VPN_SETTINGS)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    val intent = Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(intent)
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(R.string.kill_switch_system), color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
-    ) { paddingValues ->
-        Column(
+    }
+}
+
+@Composable
+fun NumberPickerItem(
+    title: String,
+    value: Int,
+    range: IntRange = -1..1024,
+    onValueChange: (Int) -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), // Change color to surfaceVariant
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
                 .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Сохраненные серверы",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
             )
-
-            if (servers.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center)
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = { 
+                        val newValue = value - 1
+                        if (newValue >= range.first) onValueChange(newValue) 
+                    },
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Text("Нет добавленных серверов")
+                    Icon(
+                        imageVector = Icons.Default.Remove, // Use internal check if imported
+                        contentDescription = "Decrease",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
-            } else {
-                LazyColumn {
-                    items(servers) { server ->
-                        ServerItem(
-                            server = server,
-                            onDelete = { servers = servers.filter { it.id != server.id } }
+                
+                Text(
+                    text = "$value",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                IconButton(
+                    onClick = { 
+                        val newValue = value + 1
+                        if (newValue <= range.last) onValueChange(newValue) 
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add, // Ensure imports
+                        contentDescription = "Increase",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DropdownSettingItem(
+    title: String,
+    options: List<Pair<String, String>>, // Label, Value
+    selectedOptionIdx: Int,
+    onOptionSelected: (Int) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { expanded = true },
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Box {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Text(
+                    text = options.getOrNull(selectedOptionIdx)?.first ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            ) {
+                options.forEachIndexed { index, option ->
+                    DropdownMenuItem(
+                        text = { Text(option.first) },
+                        onClick = {
+                            onOptionSelected(index)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ConnectionSettings(context: Context) {
+    // State
+    var splitTunneling by remember { mutableStateOf(PrefsManager.isSplitTunnelingEnabled(context)) }
+    var splitTunnelMode by remember { mutableStateOf(PrefsManager.getSplitTunnelMode(context)) }
+    var dnsServer by remember { mutableStateOf(PrefsManager.getDnsServer(context)) }
+
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        
+        // Split Tunneling
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.split_tunneling_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.split_tunneling_summary), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = splitTunneling,
+                        onCheckedChange = { 
+                            splitTunneling = it 
+                            PrefsManager.setSplitTunnelingEnabled(context, it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+                
+                if (splitTunneling) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                         Button(
+                            onClick = {
+                                splitTunnelMode = "allow"
+                                PrefsManager.setSplitTunnelMode(context, "allow")
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (splitTunnelMode == "allow") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                        ) { Text(stringResource(R.string.mode_allow), fontSize = 10.sp, color = if (splitTunnelMode == "allow") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface) }
+
+                        Button(
+                            onClick = {
+                                splitTunnelMode = "disallow"
+                                PrefsManager.setSplitTunnelMode(context, "disallow")
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (splitTunnelMode == "disallow") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                        ) { Text(stringResource(R.string.mode_disallow), fontSize = 10.sp, color = if (splitTunnelMode == "disallow") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface) }
+                    }
+                    Button(
+                        onClick = { 
+                            context.startActivity(Intent(context, AppSelectionActivity::class.java))
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.select_apps), color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // DNS
+        Card(
+             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+             modifier = Modifier.fillMaxWidth()
+        ) {
+             Column(modifier = Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.dns_server_label), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // DNS Presets Row 1
+                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                     Button(
+                        onClick = {
+                            dnsServer = "8.8.8.8"
+                            PrefsManager.setDnsServer(context, "8.8.8.8")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "8.8.8.8") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                    ) { Text("Google", fontSize = 10.sp) }
+                    
+                    Button(
+                        onClick = {
+                            dnsServer = "1.1.1.1"
+                            PrefsManager.setDnsServer(context, "1.1.1.1")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "1.1.1.1") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                    ) { Text("Cloudflare", fontSize = 10.sp) }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // DNS Presets Row 2
+                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                     Button(
+                        onClick = {
+                            dnsServer = "94.140.14.14" // AdGuard Default
+                            PrefsManager.setDnsServer(context, "94.140.14.14")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "94.140.14.14") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                    ) { Text("AdGuard", fontSize = 10.sp) }
+                    
+                    Button(
+                        onClick = {
+                            dnsServer = "9.9.9.9" // Quad9
+                            PrefsManager.setDnsServer(context, "9.9.9.9")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "9.9.9.9") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                    ) { Text("Quad9", fontSize = 10.sp) }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                OutlinedTextField(
+                    value = dnsServer,
+                    onValueChange = { 
+                        dnsServer = it 
+                        PrefsManager.setDnsServer(context, it)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = androidx.compose.ui.text.TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                    label = { Text(stringResource(R.string.dns_ip_label), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                )
+             }
+        }
+    }
+}
+
+@Composable
+fun CensorshipBypassSettings(context: Context) {
+    var stealthModeEnabled by remember { mutableStateOf(PrefsManager.isStealthModeEnabled(context)) }
+    var fragEnabled by remember { mutableStateOf(PrefsManager.isFragmentationEnabled(context)) }
+    var fragMode by remember { mutableStateOf(PrefsManager.getFragmentationMode(context)) }
+    
+    // Custom Frag Values
+    var customPackets by remember { mutableStateOf(PrefsManager.getFragmentPackets(context)) }
+    var customLength by remember { mutableStateOf(PrefsManager.getFragmentLength(context)) }
+    var customInterval by remember { mutableStateOf(PrefsManager.getFragmentInterval(context)) }
+
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        
+        Text(
+            text = stringResource(R.string.advanced_anti_dpi_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        // Stealth Mode
+        ToggleCard(
+            title = stringResource(R.string.stealth_mode_title),
+            description = stringResource(R.string.stealth_mode_desc),
+            checked = stealthModeEnabled,
+            onCheckedChange = { 
+                stealthModeEnabled = it
+                PrefsManager.setStealthModeEnabled(context, it)
+                VpnGlobalState.isStealthModeEnabled = it
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Fragmentation (Expanded)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.fragmentation_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.frag_desc_text), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = fragEnabled,
+                        onCheckedChange = { 
+                            fragEnabled = it 
+                            PrefsManager.setFragmentationEnabled(context, it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+                
+                if (fragEnabled) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Mode Selection
+                    Text(stringResource(R.string.frag_mode_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    val modes = listOf("light" to stringResource(R.string.frag_mode_light), "balanced" to stringResource(R.string.frag_mode_balanced), "aggressive" to stringResource(R.string.frag_mode_aggressive), "custom" to stringResource(R.string.custom_params_title))
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        modes.forEach { (key, label) ->
+                             Button(
+                                onClick = {
+                                    fragMode = key
+                                    PrefsManager.setFragmentationMode(context, key)
+                                    // Refresh custom values from prefs if switching back from preset
+                                    if (key != "custom") {
+                                        customPackets = PrefsManager.getFragmentPackets(context)
+                                        customLength = PrefsManager.getFragmentLength(context)
+                                        customInterval = PrefsManager.getFragmentInterval(context)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(0.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = if (fragMode == key) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                            ) { 
+                                Text(label, fontSize = 10.sp, maxLines = 1) 
+                            }
+                        }
+                    }
+
+                    if (fragMode == "custom") {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(stringResource(R.string.custom_params_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextField(
+                            value = customPackets,
+                            onValueChange = { 
+                                customPackets = it
+                                PrefsManager.setFragmentPackets(context, it)
+                            },
+                            label = { Text(stringResource(R.string.frag_packets_label)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = customLength,
+                            onValueChange = { 
+                                customLength = it
+                                PrefsManager.setFragmentLength(context, it)
+                            },
+                            label = { Text(stringResource(R.string.frag_length_label)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = customInterval,
+                            onValueChange = { 
+                                customInterval = it
+                                PrefsManager.setFragmentInterval(context, it)
+                            },
+                            label = { Text(stringResource(R.string.frag_interval_label)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
                         )
                     }
                 }
             }
         }
     }
+}
 
-    // Add Server Dialog
+@Composable
+fun AutoConnectSettings(context: Context) {
+    var autoConnect by remember { mutableStateOf(PrefsManager.isAutoConnectEnabled(context)) }
+    var autoConnectWifi by remember { mutableStateOf(PrefsManager.isAutoConnectWifiEnabled(context)) }
+    var autoConnectMobile by remember { mutableStateOf(PrefsManager.isAutoConnectMobileEnabled(context)) }
+
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+         Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // On Boot
+                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.auto_connect_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.auto_connect_summary), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = autoConnect,
+                        onCheckedChange = { 
+                            autoConnect = it 
+                            PrefsManager.setAutoConnectEnabled(context, it)
+                        },
+                         colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+                
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 1.dp, modifier = Modifier.padding(vertical = 12.dp))
+                
+                // On Wi-Fi
+                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.auto_connect_wifi_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.auto_connect_wifi_summary), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = autoConnectWifi,
+                        onCheckedChange = { 
+                            autoConnectWifi = it 
+                            PrefsManager.setAutoConnectWifiEnabled(context, it)
+                        },
+                         colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+                
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 1.dp, modifier = Modifier.padding(vertical = 12.dp))
+
+                // On Mobile
+                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.auto_connect_mobile_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.auto_connect_mobile_summary), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = autoConnectMobile,
+                        onCheckedChange = { 
+                            autoConnectMobile = it 
+                            PrefsManager.setAutoConnectMobileEnabled(context, it)
+                        },
+                         colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LanguageSettings(context: Context, onLanguageSelected: () -> Unit) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Card(
+             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+             modifier = Modifier.fillMaxWidth()
+        ) {
+            Column {
+                Text(
+                    "English", 
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            changeLanguage(context, "en")
+                            onLanguageSelected()
+                        }
+                        .padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Text(
+                    "Русский", 
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            changeLanguage(context, "ru")
+                            onLanguageSelected()
+                        }
+                        .padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DonationSettings(context: Context) {
+    val tonAddress = "UQAbDu4gRTfT814NWq-1E-ENhC57qGzR80WfOgaB_LXOsUN-"
+    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Favorite,
+            contentDescription = null,
+            tint = Color(0xFFFF4081),
+            modifier = Modifier.size(64.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = stringResource(R.string.donate_page_header),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = stringResource(R.string.donate_page_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Card(
+             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+             modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                 Row(verticalAlignment = Alignment.CenterVertically) {
+                     Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = Color(0xFF0088CC))
+                     Spacer(modifier = Modifier.width(8.dp))
+                     Text(stringResource(R.string.donate_ton_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                 }
+                 Spacer(modifier = Modifier.height(8.dp))
+                 
+                 Box(
+                     modifier = Modifier
+                         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                         .padding(12.dp)
+                         .clickable {
+                             val clip = android.content.ClipData.newPlainText("TON Address", tonAddress)
+                             clipboardManager.setPrimaryClip(clip)
+                             Toast.makeText(context, context.getString(R.string.address_copied_toast), Toast.LENGTH_SHORT).show()
+                         }
+                 ) {
+                     Text(
+                         text = tonAddress,
+                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                         fontSize = 12.sp,
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.8f),
+                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                     )
+                 }
+                 
+                 Spacer(modifier = Modifier.height(16.dp))
+                 
+                 Button(
+                    onClick = {
+                        val clip = android.content.ClipData.newPlainText("TON Address", tonAddress)
+                        clipboardManager.setPrimaryClip(clip)
+                         Toast.makeText(context, context.getString(R.string.address_copied_toast), Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.copy_address_btn))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ToggleCard(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                Text(text = description, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun LogViewerDialog(onDismiss: () -> Unit) { // Kept for reference, though moved to separate activity mostly
+    // ... logic same as before if needed, but we now use LogsActivity
+}
+
+@Composable
+fun SubscriptionsSettings(context: Context) {
+    val scope = rememberCoroutineScope()
+    val subManager = remember { com.carnelia.vpn.data.SubscriptionManager(context) }
+    var subscriptions by remember { mutableStateOf(subManager.getSubscriptions()) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newSubName by remember { mutableStateOf("") }
+    var newSubUrl by remember { mutableStateOf("") }
+    var updatingId by remember { mutableStateOf<String?>(null) }
+
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("Добавить сервер") },
+            title = { Text(stringResource(R.string.add_subscription_title)) },
             text = {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
-                        value = newServerName,
-                        onValueChange = { newServerName = it },
-                        label = { Text("Имя сервера") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                        value = newSubName,
+                        onValueChange = { newSubName = it },
+                        label = { Text(stringResource(R.string.subscription_name_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
-                        value = newServerUrl,
-                        onValueChange = { newServerUrl = it },
-                        label = { Text("URL или ключ доступа") },
+                        value = newSubUrl,
+                        onValueChange = { newSubUrl = it },
+                        label = { Text(stringResource(R.string.subscription_url_hint)) },
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        if (newServerName.isNotEmpty() && newServerUrl.isNotEmpty()) {
-                            // Parse and add server
-                            val config = VpnServerConfig(
-                                id = "server-${System.currentTimeMillis()}",
-                                name = newServerName,
-                                protocol = VpnProtocol.OUTLINE,
-                                host = "example.com",
-                                port = 1234,
-                                config = emptyMap()
-                            )
-                            servers = servers + config
-                            newServerName = ""
-                            newServerUrl = ""
-                            showAddDialog = false
+                TextButton(onClick = {
+                    val name = newSubName.trim().ifBlank { newSubUrl.trim() }
+                    val url = newSubUrl.trim()
+                    if (url.isNotBlank()) {
+                        subManager.addSubscription(name, url)
+                        subscriptions = subManager.getSubscriptions()
+                        scope.launch {
+                            val id = subscriptions.firstOrNull { it.url == url }?.id
+                            if (id != null) subManager.updateSubscription(id)
+                            subscriptions = subManager.getSubscriptions()
                         }
                     }
-                ) {
-                    Text("Добавить")
-                }
+                    newSubName = ""; newSubUrl = ""; showAddDialog = false
+                }) { Text(stringResource(R.string.add_action)) }
             },
             dismissButton = {
-                Button(onClick = { showAddDialog = false }) {
-                    Text("Отмена")
+                TextButton(onClick = { newSubName = ""; newSubUrl = ""; showAddDialog = false }) {
+                    Text(stringResource(R.string.cancel_action))
+                }
+            }
+        )
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Button(
+            onClick = { showAddDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.add_subscription_title), color = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        if (subscriptions.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.no_subscriptions_yet), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(subscriptions) { sub ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(sub.name, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text(
+                                    "${sub.serverCount} servers",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (updatingId == sub.id) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                IconButton(onClick = {
+                                    updatingId = sub.id
+                                    scope.launch {
+                                        subManager.updateSubscription(sub.id)
+                                        subscriptions = subManager.getSubscriptions()
+                                        updatingId = null
+                                    }
+                                }, modifier = Modifier.size(36.dp)) {
+                                    Icon(Icons.Default.Refresh, null, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            IconButton(onClick = {
+                                subManager.removeSubscription(sub.id)
+                                subscriptions = subManager.getSubscriptions()
+                            }, modifier = Modifier.size(36.dp)) {
+                                Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ─── Double Tunnel Settings ───────────────────────────────────────────────────
+
+@Composable
+fun DoubleTunnelSettings(context: Context) {
+    val repository = remember { com.carnelia.vpn.data.ServerRepository(context) }
+    var enabled by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.isDoubleTunnelEnabled(context)) }
+    var selectedServerId by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.getDoubleTunnelServerId(context)) }
+    var showPicker by remember { mutableStateOf(false) }
+
+    val allServers = remember { repository.getServers() }
+    val activeServer = remember { repository.getLastUsedServer() }
+    val candidateServers = remember(allServers, activeServer) {
+        allServers.filter { it.id != activeServer?.id }
+    }
+    val selectedName = remember(selectedServerId, candidateServers) {
+        candidateServers.find { it.id == selectedServerId }?.name
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Warning card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.double_tunnel_warning),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Enable toggle
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.double_tunnel_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(stringResource(R.string.double_tunnel_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = { v ->
+                        enabled = v
+                        com.carnelia.vpn.utils.PrefsManager.setDoubleTunnelEnabled(context, v)
+                    }
+                )
+            }
+        }
+
+        if (enabled) {
+            Spacer(Modifier.height(16.dp))
+
+            // First server label (current active)
+            Text(
+                stringResource(R.string.double_tunnel_first_server),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(4.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Language, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(activeServer?.name ?: stringResource(R.string.no_server_selected), color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Second server selector
+            Text(
+                stringResource(R.string.double_tunnel_second_server),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(4.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showPicker = true }
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.VpnLock, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        selectedName ?: stringResource(R.string.double_tunnel_not_selected),
+                        modifier = Modifier.weight(1f),
+                        color = if (selectedName != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+    }
+
+    // Server picker dialog
+    if (showPicker) {
+        AlertDialog(
+            onDismissRequest = { showPicker = false },
+            title = { Text(stringResource(R.string.double_tunnel_select)) },
+            text = {
+                LazyColumn {
+                    items(candidateServers) { server ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedServerId = server.id
+                                    com.carnelia.vpn.utils.PrefsManager.setDoubleTunnelServerId(context, server.id)
+                                    showPicker = false
+                                }
+                                .padding(vertical = 12.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = server.id == selectedServerId,
+                                onClick = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(server.name, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPicker = false }) {
+                    Text(stringResource(R.string.cancel_action))
                 }
             }
         )
     }
 }
 
+// ─── Noise Mode Settings ──────────────────────────────────────────────────────
+
 @Composable
-fun ServerItem(
-    server: VpnServerConfig,
-    onDelete: () -> Unit
-) {
-    Card(
+fun NoiseModeSettings(context: Context) {
+    var enabled by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.isNoiseModeEnabled(context)) }
+    var intensity by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.getNoiseModeIntensity(context)) }
+
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Enable toggle
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = server.name,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "${server.protocol.name} • ${server.host}:${server.port}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.noise_mode_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(stringResource(R.string.noise_mode_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = { v ->
+                        enabled = v
+                        com.carnelia.vpn.utils.PrefsManager.setNoiseModeEnabled(context, v)
+                        if (!v) com.carnelia.vpn.core.NoiseModeManager.stop()
+                    }
                 )
             }
         }
+
+        if (enabled) {
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                stringResource(R.string.noise_intensity_label),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(8.dp))
+
+            listOf(
+                "low" to R.string.noise_low,
+                "medium" to R.string.noise_medium,
+                "high" to R.string.noise_high
+            ).forEach { (value, labelRes) ->
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (intensity == value)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                            intensity = value
+                            com.carnelia.vpn.utils.PrefsManager.setNoiseModeIntensity(context, value)
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = intensity == value,
+                            onClick = null
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(labelRes),
+                            color = if (intensity == value)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ─── Backup & Restore Settings ────────────────────────────────────────────────
+@Composable
+fun BackupSettings(context: Context) {
+    var message by remember { mutableStateOf<String?>(null) }
+
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        Text(
+            stringResource(R.string.backup_desc),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                val result = com.carnelia.vpn.data.BackupManager.exportToClipboard(context)
+                message = if (result != null) context.getString(R.string.backup_exported)
+                          else context.getString(R.string.backup_nothing_to_export)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Icon(Icons.Default.SaveAlt, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.backup_export))
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = {
+                val count = com.carnelia.vpn.data.BackupManager.importFromClipboard(context)
+                message = if (count > 0) context.getString(R.string.backup_imported, count)
+                          else context.getString(R.string.backup_import_error)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Icon(Icons.Default.ContentPaste, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.backup_import), color = MaterialTheme.colorScheme.onSecondaryContainer)
+        }
+
+        message?.let { msg ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(msg, modifier = Modifier.padding(12.dp), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+// ─── Schedule Settings ────────────────────────────────────────────────────────
+@Composable
+fun ScheduleSettings(context: Context) {
+    var enabled by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.isScheduleEnabled(context)) }
+    var connectHour by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.getScheduleConnectHour(context)) }
+    var connectMin by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.getScheduleConnectMin(context)) }
+    var disconnectHour by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.getScheduleDisconnectHour(context)) }
+    var disconnectMin by remember { mutableStateOf(com.carnelia.vpn.utils.PrefsManager.getScheduleDisconnectMin(context)) }
+
+    fun saveAndUpdate() {
+        com.carnelia.vpn.utils.PrefsManager.setScheduleEnabled(context, enabled)
+        com.carnelia.vpn.utils.PrefsManager.setScheduleConnectHour(context, connectHour)
+        com.carnelia.vpn.utils.PrefsManager.setScheduleConnectMin(context, connectMin)
+        com.carnelia.vpn.utils.PrefsManager.setScheduleDisconnectHour(context, disconnectHour)
+        com.carnelia.vpn.utils.PrefsManager.setScheduleDisconnectMin(context, disconnectMin)
+        com.carnelia.vpn.service.VpnScheduleManager.updateSchedule(context)
+    }
+
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
+        ToggleCard(
+            title = stringResource(R.string.schedule_enabled),
+            description = stringResource(R.string.schedule_desc),
+            checked = enabled,
+            onCheckedChange = { enabled = it; saveAndUpdate() }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Connect time
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.schedule_connect_at), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    NumberPickerItem(
+                        title = "H",
+                        value = connectHour,
+                        range = 0..23,
+                        onValueChange = { connectHour = it; saveAndUpdate() }
+                    )
+                    Text(":", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineMedium)
+                    NumberPickerItem(
+                        title = "M",
+                        value = connectMin,
+                        range = 0..59,
+                        onValueChange = { connectMin = it; saveAndUpdate() }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Disconnect time
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.schedule_disconnect_at), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    NumberPickerItem(
+                        title = "H",
+                        value = disconnectHour,
+                        range = 0..23,
+                        onValueChange = { disconnectHour = it; saveAndUpdate() }
+                    )
+                    Text(":", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineMedium)
+                    NumberPickerItem(
+                        title = "M",
+                        value = disconnectMin,
+                        range = 0..59,
+                        onValueChange = { disconnectMin = it; saveAndUpdate() }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                stringResource(R.string.schedule_note),
+                modifier = Modifier.padding(12.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+// ============================================================
+//  v2.4.0 — Network Boost Settings
+// ============================================================
+@Composable
+fun NetworkBoostSettings(context: Context) {
+    var dualNet by remember { mutableStateOf(PrefsManager.isDualNetworkEnabled(context)) }
+    var smartPort by remember { mutableStateOf(PrefsManager.isSmartPortEnabled(context)) }
+    var portHopping by remember { mutableStateOf(PrefsManager.isPortHoppingEnabled(context)) }
+    var portHoppingRange by remember { mutableStateOf(PrefsManager.getPortHoppingRange(context)) }
+    var portHoppingInterval by remember { mutableStateOf(PrefsManager.getPortHoppingInterval(context).toString()) }
+    var httpCamouflage by remember { mutableStateOf(PrefsManager.isHttpCamouflageEnabled(context)) }
+    var camouflageHost by remember { mutableStateOf(PrefsManager.getHttpCamouflageHost(context)) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // ── Section: Private Network Bypass ───────────────────────
+        Text(
+            text = stringResource(R.string.private_network_bypass_section),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // Smart Port
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.smart_port_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.smart_port_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = smartPort,
+                        onCheckedChange = {
+                            smartPort = it
+                            PrefsManager.setSmartPortEnabled(context, it)
+                        }
+                    )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+
+                // Port Hopping
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.port_hopping_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.port_hopping_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = portHopping,
+                        onCheckedChange = {
+                            portHopping = it
+                            PrefsManager.setPortHoppingEnabled(context, it)
+                        }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = portHopping,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = portHoppingRange,
+                            onValueChange = {
+                                portHoppingRange = it
+                                PrefsManager.setPortHoppingRange(context, it)
+                            },
+                            label = { Text(stringResource(R.string.port_hopping_range_label)) },
+                            placeholder = { Text("10000-20000") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = portHoppingInterval,
+                            onValueChange = { v ->
+                                portHoppingInterval = v
+                                v.toIntOrNull()?.let { PrefsManager.setPortHoppingInterval(context, it) }
+                            },
+                            label = { Text(stringResource(R.string.port_hopping_interval_label)) },
+                            placeholder = { Text("5") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+
+                // HTTP Camouflage
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.http_camouflage_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.http_camouflage_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = httpCamouflage,
+                        onCheckedChange = {
+                            httpCamouflage = it
+                            PrefsManager.setHttpCamouflageEnabled(context, it)
+                        }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = httpCamouflage,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    OutlinedTextField(
+                        value = camouflageHost,
+                        onValueChange = {
+                            camouflageHost = it
+                            PrefsManager.setHttpCamouflageHost(context, it)
+                        },
+                        label = { Text(stringResource(R.string.http_camouflage_host_label)) },
+                        placeholder = { Text("www.google.com") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // ── Section: Dual Network Speed Boost ─────────────────────
+        Text(
+            text = stringResource(R.string.dual_network_section),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.dual_network_title), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.dual_network_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = dualNet,
+                        onCheckedChange = {
+                            dualNet = it
+                            PrefsManager.setDualNetworkEnabled(context, it)
+                        }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = dualNet,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.dual_network_note),
+                            modifier = Modifier.padding(10.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
     }
 }

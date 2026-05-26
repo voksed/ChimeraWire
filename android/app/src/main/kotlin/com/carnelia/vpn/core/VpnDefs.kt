@@ -1,17 +1,25 @@
 package com.carnelia.vpn.core
 
 import java.io.Serializable
+import androidx.annotation.Keep
 
 /**
  * VPN Protocol Support
  */
+@Keep
 enum class VpnProtocol {
     OUTLINE,
     OPENVPN,
     WIREGUARD,
+    AMNEZIA_WG,
+    VLESS,
+    VMESS,
+    TROJAN,
+    SHADOWSOCKS,
+    SOCKS,
+    HTTP,
     IKEV2,
-    CLOAK,
-    XRAY
+    CLOAK
 }
 
 /**
@@ -44,6 +52,7 @@ enum class VpnErrorCode(val code: Int) {
 /**
  * VPN Server Configuration
  */
+@Keep
 data class VpnServerConfig(
     val id: String,
     val name: String,
@@ -51,8 +60,12 @@ data class VpnServerConfig(
     val host: String,
     val port: Int,
     val config: Map<String, String>, // Protocol-specific config
+    val username: String? = null,
+    val password: String? = null,
     val country: String? = null,
-    val flag: String? = null
+    val flag: String? = null,
+    val subscriptionId: String? = null,
+    val group: String? = null         // v2.4.0: optional group/folder name
 ) : Serializable
 
 /**

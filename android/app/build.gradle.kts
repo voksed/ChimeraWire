@@ -7,17 +7,44 @@ android {
     compileSdk = 34
     namespace = "com.carnelia.vpn"
 
+    val targetAbi = (project.findProperty("targetAbi") as String?)?.trim()
+
     defaultConfig {
         applicationId = "com.carnelia.vpn"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0-alpha"
+        versionCode = 28
+        versionName = "2.4.0"
+        setProperty("archivesBaseName", "CarneliaVPN_v2.4.0")
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("release.jks")
+            storePassword = "***REMOVED***"
+            keyAlias = "carnelia"
+            keyPassword = "***REMOVED***"
+        }
+    }
+
+    flavorDimensions += "edition"
+
+    productFlavors {
+        create("vanilla") {
+            dimension = "edition"
+            buildConfigField("boolean", "WALLET_ENABLED", "false")
+        }
+        create("wallet") {
+            dimension = "edition"
+            buildConfigField("boolean", "WALLET_ENABLED", "true")
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false // ОТКЛЮЧЕНО для диагностики R8
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -27,11 +54,39 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // By default we build two APKs for the most common Android ABIs.
+    // You can override with -PtargetAbi=arm64-v8a or -PtargetAbi=armeabi-v7a.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            when (targetAbi) {
+                "arm64-v8a" -> include("arm64-v8a")
+                "armeabi-v7a" -> include("armeabi-v7a")
+                null, "" -> include("arm64-v8a", "armeabi-v7a")
+                else -> throw GradleException("Unsupported targetAbi: $targetAbi")
+            }
+            isUniversalApk = false
+        }
+    }
+
+    // Отключаем очистку папки release при сборке APK
+    tasks.whenTaskAdded {
+        if (name.startsWith("clean") || name.contains("Clean")) return@whenTaskAdded
+        if (name.contains("assemble") && name.contains("Release")) {
+            doFirst {
+                println("[INFO] Сборка без очистки папки release. Все APK сохраняются.")
+            }
+            outputs.upToDateWhen { false }
+        }
     }
 
     kotlinOptions {
@@ -45,8 +100,26 @@ android {
         kotlinCompilerExtensionVersion = "1.5.6"
     }
 
-    packagingOptions {
-        resources.excludes.add("META-INF/native-image/**")
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes.add("META-INF/native-image/**")
+            excludes.add("META-INF/*.kotlin_module")
+            excludes.add("META-INF/DEPENDENCIES")
+            excludes.add("META-INF/LICENSE*")
+            excludes.add("META-INF/NOTICE*")
+            excludes.add("DebugProbesKt.bin")
+            excludes.add("kotlin-tooling-metadata.json")
+            // Resolve Go class conflict
+            pickFirsts.add("go/**")
+            pickFirsts.add("go/Seq.class")
+            pickFirsts.add("go/Seq$*.class")
+            pickFirsts.add("go/Universe.class")
+            pickFirsts.add("go/Universe$*.class")
+            pickFirsts.add("go/error.class")
+        }
     }
 }
 
@@ -57,37 +130,64 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
 
     // Jetpack Compose & Material3
-    implementation("androidx.compose.ui:ui:1.6.0")
-    implementation("androidx.compose.material3:material3:1.1.1")
-    implementation("androidx.compose.foundation:foundation:1.6.0")
-    implementation("androidx.activity:activity-compose:1.8.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
     // AndroidX Core
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.core:core:1.12.0")
+    implementation("androidx.core:core-ktx:1.12.0")
+
     implementation("androidx.lifecycle:lifecycle-runtime:2.6.1")
     
-    // DataStore for settings persistence
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    // DataStore for settings persistence — removed (VpnConfigRepository unused, using SharedPreferences)
 
     // VPN & Networking
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    
-    // Outline VPN SDK (when available)
-    // implementation("org.outline:outline-android:1.0.0")
-    
-    // WireGuard Android
-    // implementation("com.wireguard.android:tunnel:1.0.20231115")
 
     // JSON serialization
     implementation("com.google.code.gson:gson:2.10.1")
 
+    // LibXray (Local AAR) - Disabled to avoid conflict with Outline
+    // implementation(files("libs/libv2ray.aar"))
+    
+    // OpenVPN (ics-openvpn)
+    // implementation("com.github.schwabe:ics-openvpn:v0.6.73-production")
+    implementation(project(":vpnLib"))
+
+    // Outline Tun2Socks (Must be provided in libs/)
+    implementation(files("libs/tun2socks.aar"))
+    // implementation("org.getoutline.client:tun2socks:0.0.1")
+
     // Logging
     implementation("com.google.code.findbugs:jsr305:3.0.2")
-    implementation("androidx.work:work-runtime-ktx:2.8.1")
 
     // Testing
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.0")
     testImplementation("junit:junit:4.13.2")
+
+    // QR Code
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.5.2")
+
+    // TON Wallet — TweetNaCl bundled as source (com.iwebpp.crypto.TweetNaclFast)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06") // EncryptedSharedPreferences
+    // Image loading for NFT / Jetton icons
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // OSM tile map
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+
+    // Biometric lock (v2.4.0)
+    implementation("androidx.biometric:biometric:1.1.0")
 }
