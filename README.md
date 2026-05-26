@@ -268,3 +268,9 @@ adb kill-server ; adb start-server ; adb devices
 ## Лицензия
 
 GPLv3. Смотри [LICENSE](LICENSE).
+
+---
+
+## Конфиденциальность
+
+Никакой аналитики, никаких серверов, никаких аккаунтов. Подробно — в [PRIVACY.md](PRIVACY.md).
