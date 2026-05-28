@@ -3,32 +3,43 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Shield Shape in Red -->
-    <path
-        android:fillColor="#FF1744"
-        android:pathData="M54,19 
-                          L82,29
-                          V49
-                          C82,68.6 70.2,85.5 54,91
-                          C37.8,85.5 26,68.6 26,49
-                          V29
-                          L54,19
-                          Z" />
 
-    <!-- "C" Letter Cutout (Background color to simulate cutout) -->
+    <!-- Shield (red, rounded top corners, bezier point at bottom) -->
     <path
-        android:fillColor="#1A1A1A"
-        android:pathData="M54,40
-                          C48.5,40 44,44.5 44,50
-                          C44,55.5 48.5,60 54,60
-                          C57.5,60 60.5,58 62,55
-                          L67,58
-                          C64.5,63.5 59.5,66 54,66
-                          C45,66 38,59 38,50
-                          C38,41 45,34 54,34
-                          C59.5,34 64.5,36.5 67,42
-                          L62,45
-                          C60.5,42 57.5,40 54,40
-                          Z" />
+        android:fillColor="#F03530"
+        android:pathData="M25.84,14.4 L82.16,14.4 A11.44,11.44,0,0,1,93.6,25.84 L93.6,62 C93.6,62 68.26,88.06 54,93.6 C39.74,88.06 14.4,62 14.4,62 L14.4,25.84 A11.44,11.44,0,0,1,25.84,14.4 Z"/>
+
+    <!-- Shield inner highlight (subtle top gloss) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.10"
+        android:pathData="M25.84,14.4 L82.16,14.4 A11.44,11.44,0,0,1,93.6,25.84 L93.6,48 C68,36 40,36 14.4,48 L14.4,25.84 A11.44,11.44,0,0,1,25.84,14.4 Z"/>
+
+    <!-- Padlock shackle (white arc, stroke only) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.93"
+        android:strokeWidth="6.6"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M43.47,60.73 A10.53,10.53,0,0,1,64.53,60.73"/>
+
+    <!-- Padlock body (white rounded rect) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.93"
+        android:pathData="M43.44,60.07 L64.56,60.07 Q70.72,60.07 70.72,66.23 L70.72,77.67 Q70.72,83.83 64.56,83.83 L43.44,83.83 Q37.28,83.83 37.28,77.67 L37.28,66.23 Q37.28,60.07 43.44,60.07 Z"/>
+
+    <!-- Keyhole circle -->
+    <path
+        android:fillColor="#AD1212"
+        android:fillAlpha="0.85"
+        android:pathData="M49.42,69.58 A4.58,4.58,0,1,0,58.58,69.58 A4.58,4.58,0,1,0,49.42,69.58 Z"/>
+
+    <!-- Keyhole slot -->
+    <path
+        android:fillColor="#AD1212"
+        android:fillAlpha="0.85"
+        android:pathData="M51.71,69.58 L56.29,69.58 L56.29,76.71 L51.71,76.71 Z"/>
+
 </vector>
