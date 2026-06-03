@@ -33,8 +33,20 @@ object XrayCoreManager {
     // Port Hopping coroutine job
     private var portHoppingJob: kotlinx.coroutines.Job? = null
 
+    // VLESS error auto-recovery
+    var onVlessProtocolError: (() -> Unit)? = null
+
+    private var vlessErrorCount = 0
+    private var vlessErrorWindowStart = 0L
+    private var lastRecoveryAt = 0L
+    private const val VLESS_ERROR_WINDOW_MS  = 15_000L
+    private const val VLESS_ERROR_THRESHOLD  = 5
+    private const val VLESS_RECOVERY_COOLDOWN = 45_000L  // min 45s between restarts
+
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
         stopCore() // Ensure clean state
+        vlessErrorCount = 0
+        vlessErrorWindowStart = 0L
 
         try {
             // 1. Prepare Executable
@@ -96,6 +108,7 @@ object XrayCoreManager {
                         for (line in reader.lineSequence()) {
                             if (!isActive) break
                             AppLogger.log("Xray: $line")
+                            checkVlessError(line)
                         }
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
@@ -134,6 +147,56 @@ object XrayCoreManager {
             streamJob = null
             xrayProcess?.destroy()
             xrayProcess = null
+        }
+    }
+
+    /**
+     * Detects repeated VLESS protocol failures (server responds with HTTP instead of VLESS,
+     * typically "unexpected response version. Expecting 0 but actually 72"). When the threshold
+     * is exceeded within the error window, fires onVlessProtocolError so the caller can restart
+     * xray without tearing down the tun2socks tunnel.
+     */
+    private fun checkVlessError(line: String) {
+        if (!line.contains("unexpected response version") &&
+            !line.contains("failed to decode response header")) return
+
+        val now = System.currentTimeMillis()
+        if (now - vlessErrorWindowStart > VLESS_ERROR_WINDOW_MS) {
+            vlessErrorCount = 0
+            vlessErrorWindowStart = now
+        }
+        vlessErrorCount++
+        AppLogger.log("Xray: VLESS error #$vlessErrorCount in window (threshold=$VLESS_ERROR_THRESHOLD)")
+
+        if (vlessErrorCount >= VLESS_ERROR_THRESHOLD) {
+            val now2 = System.currentTimeMillis()
+            vlessErrorCount = 0
+            vlessErrorWindowStart = 0L
+            if (now2 - lastRecoveryAt < VLESS_RECOVERY_COOLDOWN) {
+                AppLogger.log("Xray: VLESS recovery skipped (cooldown ${(VLESS_RECOVERY_COOLDOWN - (now2 - lastRecoveryAt))/1000}s remaining)")
+                return
+            }
+            lastRecoveryAt = now2
+            AppLogger.log("Xray: VLESS error threshold reached — triggering recovery")
+            xrayScope.launch(Dispatchers.Main) {
+                onVlessProtocolError?.invoke()
+            }
+        }
+    }
+
+    /**
+     * Hot-restart xray only (keeps the tun2socks tunnel alive).
+     * Called when VLESS protocol errors indicate a stale server session.
+     */
+    suspend fun restartCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
+        AppLogger.log("XrayCoreManager: Hot-restarting xray (tun2socks stays up)...")
+        streamJob?.cancel(); streamJob = null
+        xrayProcess?.destroy(); xrayProcess = null
+        kotlinx.coroutines.delay(500)
+        try {
+            startCore(context, config)
+        } catch (e: Exception) {
+            AppLogger.error("XrayCoreManager: Hot-restart failed", e)
         }
     }
 
@@ -209,9 +272,17 @@ object XrayCoreManager {
         // Log
         val accessLogPath = context.filesDir.absolutePath + "/xray_access.log"
         root.put("log", JSONObject()
-            .put("loglevel", "warning")
-            .put("access", accessLogPath)
+            .put("loglevel", "info")
         )
+
+        // Policy (matches V2RayTun defaults)
+        root.put("policy", JSONObject()
+            .put("levels", JSONObject()
+                .put("8", JSONObject()
+                    .put("handshake", 4)
+                    .put("connIdle", 300)
+                    .put("uplinkOnly", 1)
+                    .put("downlinkOnly", 1))))
 
         // DNS
         root.put("dns", buildDns(context))
@@ -247,35 +318,36 @@ object XrayCoreManager {
         }
         
         dns.put("servers", servers)
-        dns.put("queryStrategy", "UseIP") // Avoid DNS poisoning affecting Xray resolution if possible
+        dns.put("queryStrategy", "UseIPv4")
         return dns
     }
     
     private fun buildInbounds(context: Context): JSONArray {
         val inbounds = JSONArray()
-        
-        // 1. Local SOCKS/Shadowsocks Bridge for Tun2Socks
+
+        // 1. SOCKS5 inbound for hev-socks5-tunnel (same as V2RayTun)
+        // Using SOCKS5 instead of Shadowsocks avoids the deprecated Shadowsocks
+        // inbound that caused intermittent VLESS REALITY failures ("version 72").
         val localInbound = JSONObject()
         localInbound.put("tag", TAG_PROXY)
         localInbound.put("port", LOCAL_PORT)
         localInbound.put("listen", "127.0.0.1")
-        localInbound.put("protocol", "shadowsocks")
-        
+        localInbound.put("protocol", "socks")
+
         val settings = JSONObject()
-        settings.put("method", LOCAL_METHOD)
-        settings.put("password", LOCAL_PASSWORD)
-        settings.put("network", "tcp,udp")
-        
+        settings.put("auth", "noauth")
+        settings.put("udp", true)
+        settings.put("userLevel", 8)
         localInbound.put("settings", settings)
-        
-        // Sniffing
+
+        // Sniffing — identify domains for routing
         val sniffing = JSONObject()
         val sniffs = JSONArray()
         sniffs.put("http")
         sniffs.put("tls")
-        sniffs.put("quic")
         sniffing.put("enabled", true)
         sniffing.put("destOverride", sniffs)
+        sniffing.put("routeOnly", false)
         localInbound.put("sniffing", sniffing)
 
         inbounds.put(localInbound)
@@ -393,15 +465,8 @@ object XrayCoreManager {
 
         val rules = JSONArray()
 
-        // 1. Stealth Mode (Block UDP 443)
-        if (PrefsManager.isStealthModeEnabled(context)) {
-             val blockQuic = JSONObject()
-             blockQuic.put("type", "field")
-             blockQuic.put("port", "443")
-             blockQuic.put("network", "udp")
-             blockQuic.put("outboundTag", TAG_BLOCKED)
-             rules.put(blockQuic)
-        }
+        // Stealth Mode no longer blocks UDP 443 — blocking QUIC breaks apps like TikTok
+        // that use HTTP/3 as their primary transport. QUIC is proxied normally.
 
         // Private & reserved IP bypass — always direct, never proxy
         val privateRule = JSONObject()
@@ -423,14 +488,14 @@ object XrayCoreManager {
             put("240.0.0.0/4")
             // Multicast
             put("224.0.0.0/4")
-            // IPv6 loopback
+            // IPv6 — route all IPv6 direct; VLESS server is IPv4-only so IPv6
+            // destinations would hang (requests sent, no responses). Direct routing
+            // lets the OS use the device's native IPv6 (or fail cleanly).
             put("::1/128")
-            // IPv6 ULA — private addresses (RFC 4193)
             put("fc00::/7")
-            // IPv6 link-local
             put("fe80::/10")
-            // IPv6 multicast
             put("ff00::/8")
+            put("::/0")
         })
         rules.put(privateRule)
 
@@ -474,7 +539,10 @@ object XrayCoreManager {
              AppLogger.log("Fragmentation: Applied from prefs")
          }
          
-         sockopt.put("tcpKeepAliveInterval", 300)
+         sockopt.put("tcpKeepAliveInterval", 30)
+         // Disable TCP connection reuse — stale keep-alive connections return HTTP instead of
+         // VLESS (server closed its end), causing "unexpected response version 72" failures.
+         sockopt.put("v6only", false)
          
          streamSettings.put("sockopt", sockopt)
          outboundJson.put("streamSettings", streamSettings)

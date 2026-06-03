@@ -103,7 +103,10 @@ class CarheliaVpnService : VpnService() {
                         AppLogger.log("Service: ACTION_CONNECT proto=${config.protocol.name} name='${config.name}' host=${config.host}:${config.port}")
                         if (config.protocol.name == "VLESS") {
                             val pbk = (config.config["pbk"] ?: config.config["publicKey"] ?: "(null)").trim()
-                            AppLogger.log("Service: VLESS pbk='$pbk' security=${config.config["security"]}")
+                            val sni = config.config["sni"] ?: "(null)"
+                            val sid = config.config["sid"] ?: "(null)"
+                            val fp  = config.config["fp"]  ?: "(null)"
+                            AppLogger.log("Service: VLESS pbk='$pbk' security=${config.config["security"]} sni='$sni' sid='$sid' fp='$fp'")
                             // Hard guard: reject invalid VLESS REALITY public keys
                             if (config.config["security"] == "reality" && !isValidRealityPbk(pbk)) {
                                 AppLogger.error("Service: REJECTED VLESS REALITY config — invalid pbk='$pbk'. Ignoring connect request.")
@@ -292,27 +295,17 @@ class CarheliaVpnService : VpnService() {
             builder.addAddress("10.111.222.1", 32)
             builder.addRoute("0.0.0.0", 0)
 
-            // IPv6 — capture all IPv6 traffic to prevent leaks outside the tunnel
-            try {
-                builder.addAddress("fd00:cafe:beef::1", 128)
-                builder.addRoute("::", 0)
-            } catch (e: Exception) {
-                AppLogger.log("Service: IPv6 TUN setup skipped: ${e.message}")
-            }
-            
-            // Ultra-Low Latency DNS configuration (Cloudflare + Quad9)
-            // Using closest geo-distributed servers
+            // IPv4-only DNS — IPv6 DNS causes requests to IPv6 destinations that IPv4-only
+            // VLESS servers can't proxy, leading to high TX / near-zero RX (requests sent but
+            // no responses). Force IPv4 DNS so all resolution stays in IPv4 space.
             val currentDns = PrefsManager.getDnsServer(this)
             if (currentDns.isNotEmpty()) {
-                try { builder.addDnsServer(currentDns) } catch (_: Exception) {} // User selected
+                try { builder.addDnsServer(currentDns) } catch (_: Exception) {}
             }
-            // IPv4 fallback
             if (currentDns != "1.1.1.1") {
                 try { builder.addDnsServer("1.1.1.1") } catch (_: Exception) {}
             }
-            // IPv6 DNS — needed when IPv6 route is active
-            try { builder.addDnsServer("2606:4700:4700::1111") } catch (_: Exception) {} // Cloudflare IPv6
-            try { builder.addDnsServer("2001:4860:4860::8888") } catch (_: Exception) {} // Google IPv6
+            try { builder.addDnsServer("8.8.8.8") } catch (_: Exception) {}
             
             builder.setSession("Carnelia VPN")
             

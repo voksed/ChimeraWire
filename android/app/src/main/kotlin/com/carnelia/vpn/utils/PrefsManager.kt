@@ -46,7 +46,7 @@ object PrefsManager {
     fun isNetShieldEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_NET_SHIELD, true) // Default On
     fun setNetShieldEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_NET_SHIELD, enabled).apply()
 
-    fun isStealthModeEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_STEALTH_MODE, true) // Default On
+    fun isStealthModeEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_STEALTH_MODE, false)
     fun setStealthModeEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_STEALTH_MODE, enabled).apply()
 
     fun isSecureKeyCheckEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_SECURE_KEYS, true) // Default On

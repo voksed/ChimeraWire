@@ -5,6 +5,7 @@ import android.util.Base64
 import com.carnelia.vpn.core.VpnServerConfig
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.ConfigParser
+import com.carnelia.vpn.utils.HappDecryptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -65,16 +66,17 @@ class SubscriptionManager(private val context: Context) {
 
     suspend fun updateSubscription(id: String): Boolean {
         val sub = getSubscriptions().find { it.id == id } ?: return false
-        
+
         return try {
             val content = withContext(Dispatchers.IO) {
-                fetchUrl(sub.url)
+                resolveAndFetch(sub.url)
             }
             if (content.isBlank()) return false
             
-            val decoded = tryDecode(content)
-            
-            val configs = parseConfigs(decoded, sub.id)
+            val (configs, error) = parseAnySubscription(content, sub.id)
+            if (error != null) {
+                AppLogger.error("SubManager: ${sub.name}: $error")
+            }
             if (configs.isNotEmpty()) {
                 // We use remove+add because we want to sync the state exactly with the remote list
                 repository.removeSubscriptionServers(sub.id)
@@ -97,29 +99,93 @@ class SubscriptionManager(private val context: Context) {
         }
     }
     
+    private fun resolveAndFetch(url: String): String {
+        // Happ deeplink → decrypt to real HTTPS URL first
+        if (HappDecryptor.isHappUrl(url)) {
+            val resolved = HappDecryptor.resolveSubscriptionUrl(url)
+                ?: throw IOException("Не удалось расшифровать Happ-подписку")
+            return fetchUrl(resolved)
+        }
+        return fetchUrl(url)
+    }
+
     private fun fetchUrl(url: String): String {
-        val request = Request.Builder().url(url).build()
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("Unexpected code $response")
+        val req = Request.Builder()
+            .url(url)
+            .header("User-Agent", "v2rayN/6.0")
+            .build()
+        client.newCall(req).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
             return response.body?.string() ?: ""
         }
     }
     
-    private fun tryDecode(content: String): String {
-        val trimmed = content.trim()
-        // If already contains VPN scheme URLs, it's plain text — use as-is.
-        if (trimmed.contains("://")) return trimmed
-        // Standard V2Ray subscription servers return base64 with newlines every 76 chars.
-        // Strip all whitespace before decoding.
-        return try {
-            val stripped = trimmed.replace(Regex("\\s+"), "")
-            if (stripped.length < 20) return trimmed
-            val decoded = String(Base64.decode(stripped, Base64.DEFAULT), StandardCharsets.UTF_8)
-            // Accept decoded result only if it looks like VPN config lines
-            if (decoded.contains("://")) decoded else trimmed
-        } catch (e: Exception) {
-            trimmed
+    private val PROTO_SCHEMES = listOf("vless://", "vmess://", "ss://", "trojan://",
+        "wireguard://", "wireguard+amnezia://")
+
+    private fun extractProtocolLines(text: String): List<String> =
+        text.lines().mapNotNull { line ->
+            val t = line.trim()
+            if (PROTO_SCHEMES.any { t.startsWith(it, ignoreCase = true) }) t else null
         }
+
+    private fun tryBase64Decode(data: String): String? {
+        val stripped = data.replace(Regex("\\s+"), "")
+        if (stripped.length < 20) return null
+        // Standard base64
+        return try {
+            val dec = String(Base64.decode(stripped, Base64.DEFAULT), StandardCharsets.UTF_8)
+            if (dec.contains("://")) dec else null
+        } catch (_: Exception) {
+            // base64url variant
+            try {
+                val urlSafe = stripped.replace('-', '+').replace('_', '/')
+                val dec = String(Base64.decode(urlSafe, Base64.DEFAULT), StandardCharsets.UTF_8)
+                if (dec.contains("://")) dec else null
+            } catch (_: Exception) { null }
+        }
+    }
+
+    private fun parseAnySubscription(raw: String, subId: String): Pair<List<VpnServerConfig>, String?> {
+        val trimmed = raw.trim()
+        val isHtml = trimmed.startsWith("<!") || trimmed.startsWith("<html") ||
+                     trimmed.contains("<!DOCTYPE", ignoreCase = true)
+
+        if (isHtml) {
+            // Extract embedded protocol links from HTML
+            val regex = Regex("""(vless|vmess|ss|trojan|wireguard)://[^\s"'<>\\]+""", RegexOption.IGNORE_CASE)
+            val links = regex.findAll(trimmed).map { it.value.replace("&amp;", "&").trim() }.toList()
+            if (links.isNotEmpty()) {
+                val configs = links.mapNotNull { ConfigParser.parse(it)?.copy(subscriptionId = subId) }
+                return configs to null
+            }
+            return emptyList<VpnServerConfig>() to "Страница не содержит VPN-серверов."
+        }
+
+        // Try base64 decode
+        val decoded = tryBase64Decode(trimmed)
+        if (decoded != null) {
+            val lines = extractProtocolLines(decoded)
+            if (lines.isNotEmpty()) {
+                val configs = lines.mapNotNull { ConfigParser.parse(it)?.copy(subscriptionId = subId) }
+                if (configs.isNotEmpty()) return configs to null
+            }
+        }
+
+        // Try plain text
+        val plainLines = extractProtocolLines(trimmed)
+        if (plainLines.isNotEmpty()) {
+            val configs = plainLines.mapNotNull { ConfigParser.parse(it)?.copy(subscriptionId = subId) }
+            if (configs.isNotEmpty()) return configs to null
+        }
+
+        // Try SingBox JSON (detect and warn)
+        if (trimmed.startsWith("{") && trimmed.contains("\"outbounds\"")) {
+            return emptyList<VpnServerConfig>() to
+                "SingBox JSON формат. Используй V2Ray-подписку для полного импорта."
+        }
+
+        return emptyList<VpnServerConfig>() to "Неизвестный формат подписки."
     }
 
     private fun parseConfigs(content: String, subId: String): List<VpnServerConfig> {

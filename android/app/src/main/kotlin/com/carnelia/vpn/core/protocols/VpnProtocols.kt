@@ -7,9 +7,7 @@ import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.XrayCoreManager
 import com.carnelia.vpn.utils.AppLogger
 import kotlinx.coroutines.*
-import org.json.JSONObject
-import tun2socks.Tun2socks
-import shadowsocks.Shadowsocks
+import com.v2raytun.android.service.HevTunnel
 import de.blinkt.openvpn.core.VpnStatus
 import de.blinkt.openvpn.VpnProfile
 
@@ -136,28 +134,42 @@ class OpenVpnProtocol : IVpnProtocol {
  * Uses external libxray_core.so process + Tun2Socks (Local bridge)
  */
 class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
-    
+
     private var connectionState = ConnectionState.DISCONNECTED
     private var bytesSent = 0L
     private var bytesReceived = 0L
-    private var activeTunnel: tun2socks.Tunnel? = null
-    
+    // tun2socks replaced by hev-socks5-tunnel (same approach as V2RayTun)
+
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private var isRunning = false
-    
+    private var currentConfig: VpnServerConfig? = null
+
     private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
     private val bytesListeners = mutableListOf<(Long, Long) -> Unit>()
-    
+
+    private fun installVlessErrorRecovery(config: VpnServerConfig) {
+        XrayCoreManager.onVlessProtocolError = {
+            if (isRunning) {
+                AppLogger.log("XrayVpnProtocol: VLESS recovery — hot-restarting xray, tun2socks stays up")
+                scope.launch {
+                    XrayCoreManager.restartCore(context, config)
+                }
+            }
+        }
+    }
+
     override suspend fun prepare(): VpnErrorCode {
         return VpnErrorCode.NO_ERROR
     }
-    
+
     override suspend fun start(config: VpnServerConfig): VpnErrorCode {
         updateConnectionState(ConnectionState.CONNECTING)
         isRunning = true
-        
+        currentConfig = config
+
         try {
             AppLogger.log("XrayVpnProtocol: Starting Xray Core via Process...")
+            installVlessErrorRecovery(config)
             XrayCoreManager.startCore(context, config)
 
             // Poll until Xray actually binds port 10808 (max 5 sec)
@@ -199,6 +211,8 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
         updateConnectionState(ConnectionState.RECONNECTING)
         try {
             AppLogger.log("XrayVpnProtocol: Hot-switching server to ${config.host}:${config.port}")
+            currentConfig = config
+            installVlessErrorRecovery(config)
             XrayCoreManager.stopCore()
             delay(300)
             XrayCoreManager.startCore(context, config)
@@ -233,12 +247,12 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
         isRunning = false
         updateConnectionState(ConnectionState.DISCONNECTING)
         try {
-            activeTunnel?.disconnect()
-            activeTunnel = null
+            HevTunnel.stop()
             XrayCoreManager.stopCore()
         } catch(e: Exception) {
              AppLogger.error("XrayVpnProtocol: Stop error", e)
         }
+        XrayCoreManager.onVlessProtocolError = null
         scope.cancel()
         updateConnectionState(ConnectionState.DISCONNECTED)
     }
@@ -260,25 +274,19 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
         
         scope.launch {
             try {
-                AppLogger.log("XrayVpnProtocol: Connecting Tun2Socks to Local Xray Bridge...")
-                
-                // Config for Tun2Socks -> Localhost Xray Port
-                // Go/mobile shadowsocks client expects "method" as cipher field.
-                val jsonConfig = JSONObject()
-                jsonConfig.put("host", "127.0.0.1")
-                jsonConfig.put("port", XrayCoreManager.LOCAL_PORT)
-                jsonConfig.put("password", XrayCoreManager.LOCAL_PASSWORD)
-                jsonConfig.put("method", XrayCoreManager.LOCAL_METHOD)
-                
-                // Tun2Socks client
-                val client = Shadowsocks.newClientFromJSON(jsonConfig.toString())
-                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
-                
-                activeTunnel = tunnel
+                AppLogger.log("XrayVpnProtocol: Starting hev-socks5-tunnel bridge (SOCKS5)...")
+                HevTunnel.start(
+                    context = context,
+                    vpnInterface = fileDescriptor,
+                    socks5Port = XrayCoreManager.LOCAL_PORT,
+                    tunIp = "10.111.222.1",
+                    mtu = 1280
+                )
                 AppLogger.log("XrayVpnProtocol: Tunnel Established!")
-                
-                // Stats loop
+
+                // Stats loop + xray port watchdog
                 startStatsLoop()
+                startXrayWatchdog()
 
             } catch (e: Exception) {
                 AppLogger.error("XrayVpnProtocol: TUN Bridge Failed", e)
@@ -289,19 +297,55 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
     
     private fun startStatsLoop() {
         scope.launch {
-             val uid = android.os.Process.myUid()
-             while (isRunning) {
-                 try {
-                     val rx = android.net.TrafficStats.getUidRxBytes(uid)
-                     val tx = android.net.TrafficStats.getUidTxBytes(uid)
-                     if (rx != bytesReceived || tx != bytesSent) {
+            val uid = android.os.Process.myUid()
+            while (isRunning) {
+                try {
+                    val rx = android.net.TrafficStats.getUidRxBytes(uid)
+                    val tx = android.net.TrafficStats.getUidTxBytes(uid)
+                    if (rx != bytesReceived || tx != bytesSent) {
                         bytesReceived = rx
                         bytesSent = tx
                         bytesListeners.forEach { it(bytesSent, bytesReceived) }
-                     }
-                 } catch (e: Exception) {}
-                 delay(2000)
-             }
+                    }
+                } catch (e: Exception) {}
+                delay(2000)
+            }
+        }
+    }
+
+    /**
+     * Watchdog: every 20s checks that xray's port is still reachable.
+     * If xray has crashed or become unresponsive, hot-restarts it while
+     * keeping the tun2socks tunnel alive.
+     */
+    private fun startXrayWatchdog() {
+        val cfg = currentConfig ?: return
+        scope.launch {
+            var consecutiveFails = 0
+            while (isRunning) {
+                delay(20_000)
+                if (!isRunning) break
+                val alive = try {
+                    withContext(Dispatchers.IO) {
+                        java.net.Socket().use { s ->
+                            s.connect(java.net.InetSocketAddress("127.0.0.1", XrayCoreManager.LOCAL_PORT), 1000)
+                        }
+                    }
+                    true
+                } catch (_: Exception) { false }
+
+                if (!alive) {
+                    consecutiveFails++
+                    AppLogger.log("XrayVpnProtocol: Watchdog — xray unreachable (fail #$consecutiveFails)")
+                    if (consecutiveFails >= 2) {
+                        consecutiveFails = 0
+                        AppLogger.log("XrayVpnProtocol: Watchdog — hot-restarting xray")
+                        XrayCoreManager.restartCore(context, cfg)
+                    }
+                } else {
+                    consecutiveFails = 0
+                }
+            }
         }
     }
     
