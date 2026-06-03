@@ -7,33 +7,61 @@ android {
     compileSdk = 34
     namespace = "com.carnelia.vpn"
 
-    val targetAbi = (project.findProperty("targetAbi") as String?)?.trim()
-
     defaultConfig {
-        applicationId = "com.carnelia.vpn"
         minSdk = 26
         targetSdk = 34
-        versionCode = 29
-        versionName = "2.4.1"
-        setProperty("archivesBaseName", "CarneliaVPN_v2.4.1")
+        // applicationId, versionCode, versionName задаются в каждом flavor отдельно
     }
 
     signingConfigs {
-        create("release") {
+        // Ключи оригинального Carnelia VPN
+        create("carnelia") {
             storeFile = file("release.jks")
             storePassword = "***REMOVED***"
             keyAlias = "carnelia"
             keyPassword = "***REMOVED***"
         }
+        // Ключи null vpn
+        create("nullvpn") {
+            storeFile = file("nullvpn.jks")
+            storePassword = "***REMOVED***"
+            keyAlias = "nullvpn"
+            keyPassword = "***REMOVED***"
+        }
     }
 
-    flavorDimensions += "edition"
+    // Два измерения: brand (carnelia / null) + edition (vanilla / wallet)
+    flavorDimensions += listOf("brand", "edition")
 
     productFlavors {
+
+        // ---- Бренд: Carnelia VPN ----
+        create("carnelia") {
+            dimension = "brand"
+            applicationId = "com.carnelia.vpn"
+            versionCode = 30
+            versionName = "2.4.0"
+            signingConfig = signingConfigs.getByName("carnelia")
+            // app_name берётся из strings.xml ("Carnelia VPN")
+        }
+
+        // ---- Бренд: null vpn ----
+        create("null") {
+            dimension = "brand"
+            applicationId = "com.null.vpn"
+            versionCode = 1
+            versionName = "1.0.0"
+            signingConfig = signingConfigs.getByName("nullvpn")
+            resValue("string", "app_name", "null vpn")
+        }
+
+        // ---- Редакция: без кошелька ----
         create("vanilla") {
             dimension = "edition"
             buildConfigField("boolean", "WALLET_ENABLED", "false")
         }
+
+        // ---- Редакция: с крипто-кошельком ----
         create("wallet") {
             dimension = "edition"
             buildConfigField("boolean", "WALLET_ENABLED", "true")
@@ -42,9 +70,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false // ОТКЛЮЧЕНО для диагностики R8
-            isShrinkResources = false
-            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // signingConfig не задаём здесь — берётся из flavor
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -62,30 +90,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // By default we build two APKs for the most common Android ABIs.
-    // You can override with -PtargetAbi=arm64-v8a or -PtargetAbi=armeabi-v7a.
+    // Only package arm64-v8a — covers 99% of modern Android devices
+    // Reduces APK size by eliminating armeabi-v7a/x86/x86_64 from AAR libs (vpnLib, tun2socks)
     splits {
         abi {
             isEnable = true
             reset()
-            when (targetAbi) {
-                "arm64-v8a" -> include("arm64-v8a")
-                "armeabi-v7a" -> include("armeabi-v7a")
-                null, "" -> include("arm64-v8a", "armeabi-v7a")
-                else -> throw GradleException("Unsupported targetAbi: $targetAbi")
-            }
+            include("arm64-v8a")
             isUniversalApk = false
-        }
-    }
-
-    // Отключаем очистку папки release при сборке APK
-    tasks.whenTaskAdded {
-        if (name.startsWith("clean") || name.contains("Clean")) return@whenTaskAdded
-        if (name.contains("assemble") && name.contains("Release")) {
-            doFirst {
-                println("[INFO] Сборка без очистки папки release. Все APK сохраняются.")
-            }
-            outputs.upToDateWhen { false }
         }
     }
 
@@ -187,7 +199,4 @@ dependencies {
 
     // OSM tile map
     implementation("org.osmdroid:osmdroid-android:6.1.20")
-
-    // Biometric lock (v2.4.0)
-    implementation("androidx.biometric:biometric:1.1.0")
 }

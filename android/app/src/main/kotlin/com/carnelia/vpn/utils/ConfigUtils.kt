@@ -40,11 +40,14 @@ object ConfigParser {
             lower.startsWith("vless://") -> parseVless(trimmed)
             lower.startsWith("vmess://") -> parseVmess(trimmed)
             lower.startsWith("trojan://") -> parseTrojan(trimmed)
+            lower.startsWith("hysteria2://") || lower.startsWith("hy2://") -> parseHysteria2(trimmed)
             // WireGuard / AmneziaWG
             lower.startsWith("wireguard://") -> parseWireguardUri(trimmed)
             lower.startsWith("[interface]") ||
             lower.contains("\n[interface]") ||
             lower.contains("\r\n[interface]") -> parseWireguardIni(trimmed)
+            // Amnezia JSON export
+            lower.trimStart().startsWith("{") -> parseAmneziaJson(trimmed)
             // Simple heuristic for OpenVPN text content
             lower.contains("client") && lower.contains("remote ") -> parseOpenVpnContent(trimmed)
             lower.contains("dev tun") -> parseOpenVpnContent(trimmed)
@@ -54,8 +57,8 @@ object ConfigParser {
             // Attempt to decode base64 if no prefix
             isBase64(trimmed) -> parse(decodeBase64(trimmed)) ?: error("Failed to parse decoded config")
             else -> error(
-                "Unknown protocol or invalid format. Supported: vless://, vmess://, ss://, trojan://, wireguard://, OpenVPN",
-                "Неизвестный формат ключа. Поддерживается: vless, vmess, ss, trojan, wireguard, openvpn"
+                "Unknown protocol or invalid format. Supported: vless://, vmess://, ss://, trojan://, hysteria2://, wireguard://, OpenVPN, Amnezia JSON",
+                "Неизвестный формат ключа. Поддерживается: vless, vmess, ss, trojan, hysteria2, wireguard, openvpn, Amnezia JSON"
             )
         }
     }
@@ -82,6 +85,8 @@ object ConfigParser {
             lower.startsWith("vmess://") ||
             lower.startsWith("ss://") ||
             lower.startsWith("trojan://") ||
+            lower.startsWith("hysteria2://") ||
+            lower.startsWith("hy2://") ||
             lower.startsWith("wireguard://")
         ) {
             // URL keys should not contain whitespaces; collapse accidental line breaks/spaces.
@@ -91,7 +96,7 @@ object ConfigParser {
     }
 
     private fun extractFirstSupportedUrl(text: String): String? {
-        val regex = Regex("(?i)(vless|vmess|ss|trojan|wireguard)://[^\\s\"'<>]+")
+        val regex = Regex("(?i)(vless|vmess|ss|trojan|hysteria2|hy2|wireguard)://[^\\s\"'<>]+")
         val raw = regex.find(text)?.value ?: return null
         return raw.trimEnd('.', ',', ';', '!', '?', ')', ']', '}', '"', '\'', '»')
     }
@@ -302,19 +307,7 @@ object ConfigParser {
                     } catch (_: Exception) {
                         rawValue
                     }
-                    // For pbk (REALITY public key): URLDecoder converts unencoded '+' to space,
-                    // which corrupts standard-base64 encoded keys. Normalize to base64url:
-                    // convert spaces back to '+', then '+' → '-', '/' → '_', strip padding.
-                    val finalValue = if (key == "pbk" || key == "publickey" || key == "pk") {
-                        decodedValue
-                            .replace(' ', '+')   // restore any '+' that URLDecoder decoded as space
-                            .replace('+', '-')   // standard base64 → base64url
-                            .replace('/', '_')
-                            .trimEnd('=')
-                    } else {
-                        decodedValue
-                    }
-                    queryMap[key] = finalValue
+                    queryMap[key] = decodedValue
                 }
             }
 
@@ -553,6 +546,159 @@ object ConfigParser {
             port = port,
             config = cfg
         )
+    }
+
+    private fun parseHysteria2(url: String): VpnServerConfig {
+        try {
+            // hysteria2://password@host:port?sni=xxx&insecure=0&obfs=salamander&obfs-password=xxx#name
+            // hy2:// is an alias for hysteria2://
+            val normalized = if (url.lowercase().startsWith("hy2://")) "hysteria2://" + url.substring(5) else url
+            val uri = Uri.parse(normalized)
+            val host = uri.host ?: error("Hysteria2: Host missing", "Hysteria2: Не указан хост")
+            val port = uri.port.takeIf { it > 0 } ?: 443
+            val password = uri.userInfo ?: error("Hysteria2: Password missing", "Hysteria2: Не указан пароль")
+            val name = uri.fragment?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Hysteria2 Server"
+
+            val params = mutableMapOf<String, String>()
+            uri.queryParameterNames.forEach { key ->
+                uri.getQueryParameter(key)?.let { params[key] = it }
+            }
+
+            return VpnServerConfig(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                protocol = VpnProtocol.HYSTERIA2,
+                host = host,
+                port = port,
+                config = mapOf(
+                    "password" to password,
+                    "sni" to (params["sni"] ?: params["peer"] ?: host),
+                    "insecure" to (params["insecure"] ?: "0"),
+                    "obfs" to (params["obfs"] ?: ""),
+                    "obfs_password" to (params["obfs-password"] ?: ""),
+                    "up_mbps" to (params["up-mbps"] ?: params["upmbps"] ?: "0"),
+                    "down_mbps" to (params["down-mbps"] ?: params["downmbps"] ?: "0")
+                )
+            )
+        } catch (e: IllegalArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            error("Hysteria2 parse error: ${e.message}", "Ошибка разбора Hysteria2: ${e.message}")
+        }
+    }
+
+    /**
+     * Parses Amnezia VPN JSON export format:
+     * {"containers":[{"container":"awg","awg":{...}}],"hostName":"..."}
+     * Also supports a simple flat JSON:
+     * {"private_key":"...","public_key":"...","address":"...","endpoint":"host:port",...}
+     */
+    private fun parseAmneziaJson(jsonStr: String): VpnServerConfig {
+        try {
+            val root = org.json.JSONObject(jsonStr)
+
+            // Amnezia multi-container format
+            if (root.has("containers")) {
+                val containers = root.getJSONArray("containers")
+                val hostName = root.optString("hostName", "")
+                for (i in 0 until containers.length()) {
+                    val container = containers.getJSONObject(i)
+                    val type = container.optString("container", "").lowercase()
+                    when (type) {
+                        "awg" -> {
+                            val awg = container.getJSONObject("awg")
+                            val cfg = mutableMapOf<String, String>()
+                            cfg["private_key"] = awg.optString("client_priv_key")
+                            cfg["public_key"] = awg.optString("server_pub_key")
+                            cfg["preshared_key"] = awg.optString("psk_key", "")
+                            cfg["address"] = awg.optString("client_ip", "10.8.0.2/32")
+                            cfg["dns"] = awg.optString("dns", "1.1.1.1")
+                            cfg["Jc"] = awg.optString("jc", "")
+                            cfg["Jmin"] = awg.optString("jmin", "")
+                            cfg["Jmax"] = awg.optString("jmax", "")
+                            cfg["S1"] = awg.optString("s1", "")
+                            cfg["S2"] = awg.optString("s2", "")
+                            cfg["H1"] = awg.optString("h1", "")
+                            cfg["H2"] = awg.optString("h2", "")
+                            cfg["H3"] = awg.optString("h3", "")
+                            cfg["H4"] = awg.optString("h4", "")
+                            val port = awg.optInt("port", 51820)
+                            val serverIp = awg.optString("server_ip", hostName).ifBlank { hostName }
+                            cfg["endpoint"] = "$serverIp:$port"
+                            if (cfg["private_key"].isNullOrBlank()) error("Amnezia JSON: client_priv_key missing", "Amnezia JSON: нет приватного ключа")
+                            if (cfg["public_key"].isNullOrBlank()) error("Amnezia JSON: server_pub_key missing", "Amnezia JSON: нет публичного ключа сервера")
+                            return VpnServerConfig(
+                                id = UUID.randomUUID().toString(),
+                                name = root.optString("description", "AmneziaWG Server"),
+                                protocol = VpnProtocol.AMNEZIA_WG,
+                                host = serverIp,
+                                port = port,
+                                config = cfg
+                            )
+                        }
+                        "wg" -> {
+                            val wg = container.getJSONObject("wg")
+                            val cfg = mutableMapOf<String, String>()
+                            cfg["private_key"] = wg.optString("client_priv_key")
+                            cfg["public_key"] = wg.optString("server_pub_key")
+                            cfg["preshared_key"] = wg.optString("psk_key", "")
+                            cfg["address"] = wg.optString("client_ip", "10.8.0.2/32")
+                            val port = wg.optInt("port", 51820)
+                            val serverIp = wg.optString("server_ip", hostName).ifBlank { hostName }
+                            cfg["endpoint"] = "$serverIp:$port"
+                            return VpnServerConfig(
+                                id = UUID.randomUUID().toString(),
+                                name = root.optString("description", "WireGuard Server"),
+                                protocol = VpnProtocol.WIREGUARD,
+                                host = serverIp,
+                                port = port,
+                                config = cfg
+                            )
+                        }
+                        else -> {}
+                    }
+                }
+                error("Amnezia JSON: no supported container found (awg/wg)", "Amnezia JSON: не найден поддерживаемый контейнер")
+            }
+
+            // Flat JSON WireGuard/AmneziaWG format
+            if (root.has("private_key") || root.has("privateKey")) {
+                val cfg = mutableMapOf<String, String>()
+                cfg["private_key"] = root.optString("private_key", root.optString("privateKey"))
+                cfg["public_key"] = root.optString("public_key", root.optString("publicKey"))
+                cfg["preshared_key"] = root.optString("preshared_key", root.optString("presharedKey", ""))
+                cfg["address"] = root.optString("address", "10.0.0.2/32")
+                cfg["dns"] = root.optString("dns", "1.1.1.1")
+                val endpoint = root.optString("endpoint", "")
+                cfg["endpoint"] = endpoint
+                listOf("Jc","Jmin","Jmax","S1","S2","H1","H2","H3","H4").forEach { k ->
+                    val v = root.optString(k, root.optString(k.lowercase(), ""))
+                    if (v.isNotBlank()) cfg[k] = v
+                }
+                val (host, port) = if (endpoint.isNotBlank()) {
+                    val parts = endpoint.split(":")
+                    Pair(parts[0], parts.getOrNull(1)?.toIntOrNull() ?: 51820)
+                } else Pair("", 51820)
+                if (host.isBlank()) error("Flat JSON WireGuard: endpoint missing", "JSON WireGuard: не указан endpoint")
+                val isAmnezia = listOf("Jc","Jmin","Jmax","S1","S2","H1").any { cfg.containsKey(it) }
+                return VpnServerConfig(
+                    id = UUID.randomUUID().toString(),
+                    name = root.optString("name", if (isAmnezia) "AmneziaWG Server" else "WireGuard Server"),
+                    protocol = if (isAmnezia) VpnProtocol.AMNEZIA_WG else VpnProtocol.WIREGUARD,
+                    host = host,
+                    port = port,
+                    config = cfg
+                )
+            }
+
+            error("Unknown JSON VPN format", "Неизвестный JSON формат VPN конфига")
+        } catch (e: IllegalArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            error("JSON parse error: ${e.message}", "Ошибка разбора JSON: ${e.message}")
+        }
     }
 
     private fun parseTrojan(url: String): VpnServerConfig {

@@ -2,73 +2,27 @@ package com.carnelia.vpn.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import com.carnelia.vpn.core.VpnServerConfig
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.util.Base64
 
 /**
  * Repository for managing VPN servers
- * Persists data to EncryptedSharedPreferences (AES-256-GCM)
+ * Persists data to SharedPreferences
  */
 class ServerRepository(context: Context) {
 
-    private val prefs: SharedPreferences = try {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            "vpn_servers_enc",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    } catch (e: Exception) {
-        com.carnelia.vpn.utils.AppLogger.error("ServerRepository: EncryptedSharedPreferences failed, falling back to plain", e)
-        context.getSharedPreferences("vpn_servers", Context.MODE_PRIVATE)
-    }
+    private val prefs: SharedPreferences = context.getSharedPreferences("vpn_servers", Context.MODE_PRIVATE)
     private val gson = Gson()
     private val SERVERS_KEY = "saved_servers"
     private val LAST_USED_KEY = "last_used_server_id"
-    private var hasLoggedInitialSnapshot = false
+    private val DEFAULT_ADDED_KEY = "default_server_added"
+    private val DEFAULT_SERVER_VERSION_KEY = "default_server_version"
+    private val CURRENT_DEFAULT_VERSION = 2
 
     init {
-        migrateLegacyPrefs(context)
         cleanBrokenServers()
-    }
-
-    /**
-     * One-time migration: copy servers from old plain "vpn_servers" SharedPreferences
-     * (used by app versions before encrypted storage was added) into the current store.
-     * Runs only when the current store is empty AND legacy data exists.
-     */
-    private fun migrateLegacyPrefs(context: Context) {
-        // Skip if current store already has data
-        if (!prefs.getString(SERVERS_KEY, "[]").isNullOrEmpty()
-            && prefs.getString(SERVERS_KEY, "[]") != "[]") return
-
-        val legacy = context.getSharedPreferences("vpn_servers", Context.MODE_PRIVATE)
-        val legacyJson = legacy.getString(SERVERS_KEY, null) ?: return
-        if (legacyJson == "[]" || legacyJson.isBlank()) return
-
-        com.carnelia.vpn.utils.AppLogger.log("ServerRepository: Migrating legacy servers from 'vpn_servers' → 'vpn_servers_enc'")
-        try {
-            // Validate that it's parseable JSON before migrating
-            val array = gson.fromJson(legacyJson, Array<VpnServerConfig>::class.java)
-            if (!array.isNullOrEmpty()) {
-                prefs.edit().putString(SERVERS_KEY, legacyJson).apply()
-                val lastUsed = legacy.getString(LAST_USED_KEY, null)
-                if (!lastUsed.isNullOrBlank()) {
-                    prefs.edit().putString(LAST_USED_KEY, lastUsed).apply()
-                }
-                com.carnelia.vpn.utils.AppLogger.log("ServerRepository: Migrated ${array.size} servers successfully")
-            }
-        } catch (e: Exception) {
-            com.carnelia.vpn.utils.AppLogger.error("ServerRepository: Legacy migration failed", e)
-        }
+        checkAndAddDefaultServer()
     }
 
     /**
@@ -83,7 +37,9 @@ class ServerRepository(context: Context) {
                 (config.config["security"] == "reality" || config.config["security"] == "reality") &&
                 run {
                     val pbk = (config.config["pbk"] ?: config.config["publicKey"] ?: "").trim()
-                    !isValidRealityPublicKey(pbk)
+                    pbk.isBlank() || pbk.contains(':') || pbk.contains(' ') ||
+                        pbk.length < 30 || pbk.lowercase().startsWith("hash") ||
+                        pbk.lowercase().startsWith("placeholder") || pbk.lowercase().startsWith("example")
                 }
             if (isBroken) {
                 com.carnelia.vpn.utils.AppLogger.log("Repository: Removed broken VLESS REALITY server '${config.name}' (invalid publicKey).")
@@ -100,8 +56,22 @@ class ServerRepository(context: Context) {
         }
     }
 
+    private fun checkAndAddDefaultServer() {
+        // Remove the old default server if it exists
+        val servers = getServers().toMutableList()
+        val removed = servers.removeAll { it.id == "default_server_id" }
+        if (removed) {
+            saveServers(servers)
+            val lastId = prefs.getString(LAST_USED_KEY, null)
+            if (lastId == "default_server_id") {
+                prefs.edit().remove(LAST_USED_KEY).apply()
+            }
+        }
+    }
+
     fun getServers(): List<VpnServerConfig> {
         val json = prefs.getString(SERVERS_KEY, "[]")
+        com.carnelia.vpn.utils.AppLogger.log("Repository: Loaded raw JSON: $json")
         return try {
             // Use Array to avoid R8/ProGuard TypeToken issues with generics
             val array = gson.fromJson(json, Array<VpnServerConfig>::class.java)
@@ -109,10 +79,9 @@ class ServerRepository(context: Context) {
             
             if (array == null) {
                 com.carnelia.vpn.utils.AppLogger.log("Repository: Deserialized list is NULL")
-            } else if (!hasLoggedInitialSnapshot) {
-                hasLoggedInitialSnapshot = true
-                com.carnelia.vpn.utils.AppLogger.log("Repository: Loaded ${list.size} servers")
-                list.take(3).forEachIndexed { index, config ->
+            } else {
+                com.carnelia.vpn.utils.AppLogger.log("Repository: Deserialized list size: ${list.size}")
+                list.forEachIndexed { index, config ->
                     com.carnelia.vpn.utils.AppLogger.log("Repository: Item $index: id=${config.id}, protocol=${config.protocol}, host=${config.host}")
                 }
             }
@@ -121,16 +90,13 @@ class ServerRepository(context: Context) {
             // If Protocol is null, we might default it or skip.
             // But we must assume if Gson fails to load protocol, it is broken data.
             // However, debugging shows R8 sometimes causes issues here.
-            val result = list.filter { it.id.isNotBlank() }
-            if (result.isEmpty() && list.isNotEmpty()) {
+            val result = list?.filter { 
+               it != null && !it.id.isNullOrBlank()
+            } ?: emptyList()
+            if (result.isEmpty() && list != null && list.isNotEmpty()) {
                  com.carnelia.vpn.utils.AppLogger.log("Repository: WARNING - ALL items were filtered out! Check R8 obfuscation or data integrity.")
             }
-            val deduped = deduplicateServers(result)
-            if (deduped.size != result.size) {
-                com.carnelia.vpn.utils.AppLogger.log("Repository: Removed ${result.size - deduped.size} duplicate server entries")
-                saveServers(deduped)
-            }
-            deduped
+            result
         } catch (e: Exception) {
             // Log error but don't clear data immediately to allow recovery if it's just a read error
              com.carnelia.vpn.utils.AppLogger.error("Repository: Error loading servers", e)
@@ -143,14 +109,9 @@ class ServerRepository(context: Context) {
         // Allow multiple configs for same host (e.g. different keys/users)
         // Only check for exact ID duplication (which implies same object instance or explicit update)
         val index = current.indexOfFirst { it.id == config.id }
-        val semanticIndex = current.indexOfFirst { isSemanticallySameServer(it, config) }
         
         if (index == -1) {
-            if (semanticIndex != -1) {
-                current[semanticIndex] = config.copy(id = current[semanticIndex].id)
-            } else {
-                current.add(0, config) // Add to top
-            }
+            current.add(0, config) // Add to top
         } else {
              // Replace if exists
             current[index] = config
@@ -165,15 +126,9 @@ class ServerRepository(context: Context) {
         
         configs.forEach { config ->
             val index = current.indexOfFirst { it.id == config.id }
-            val semanticIndex = current.indexOfFirst { isSemanticallySameServer(it, config) }
             if (index == -1) {
-                if (semanticIndex == -1) {
-                    current.add(config)
-                    changed = true
-                } else if (current[semanticIndex] != config) {
-                    current[semanticIndex] = config.copy(id = current[semanticIndex].id)
-                    changed = true
-                }
+                current.add(config)
+                changed = true
             } else {
                 if (current[index] != config) {
                     current[index] = config
@@ -235,79 +190,5 @@ class ServerRepository(context: Context) {
     
     fun setLastUsedServer(server: VpnServerConfig) {
         prefs.edit().putString(LAST_USED_KEY, server.id).apply()
-    }
-
-    private fun deduplicateServers(servers: List<VpnServerConfig>): List<VpnServerConfig> {
-        val byId = LinkedHashSet<String>()
-        val bySemantic = LinkedHashSet<String>()
-        val deduped = mutableListOf<VpnServerConfig>()
-
-        for (server in servers) {
-            if (!byId.add(server.id)) continue
-            val semanticKey = semanticServerKey(server)
-            if (semanticKey != null && !bySemantic.add(semanticKey)) continue
-            deduped.add(server)
-        }
-
-        return deduped
-    }
-
-    private fun isSemanticallySameServer(a: VpnServerConfig, b: VpnServerConfig): Boolean {
-        val aKey = semanticServerKey(a) ?: return false
-        val bKey = semanticServerKey(b) ?: return false
-        return aKey == bKey
-    }
-
-    private fun semanticServerKey(config: VpnServerConfig): String? {
-        if (config.protocol != com.carnelia.vpn.core.VpnProtocol.VLESS) return null
-
-        val security = config.config["security"]?.trim()?.lowercase() ?: ""
-        if (security != "reality") return null
-
-        fun pick(vararg keys: String): String {
-            for (key in keys) {
-                val value = config.config[key]?.trim()
-                if (!value.isNullOrEmpty()) return value.lowercase()
-            }
-            return ""
-        }
-
-        val host = config.host.trim().lowercase()
-        val uuid = pick("uuid", "id")
-        val pbk = pick("pbk", "publicKey")
-        val sid = pick("sid", "shortId")
-        val sni = pick("sni", "serverName")
-
-        return listOf(
-            config.protocol.name,
-            host,
-            config.port.toString(),
-            security,
-            uuid,
-            pbk,
-            sid,
-            sni
-        ).joinToString("|")
-    }
-
-    private fun isValidRealityPublicKey(raw: String): Boolean {
-        val pbk = raw.trim()
-        if (pbk.isBlank()) return false
-        if (pbk.contains(':') || pbk.contains(' ')) return false
-        val lower = pbk.lowercase()
-        if (lower.startsWith("hash") || lower.startsWith("placeholder") || lower.startsWith("example")) return false
-        if (!pbk.matches(Regex("^[A-Za-z0-9_-]{30,120}$"))) return false
-
-        // REALITY key is base64url for 32 bytes (commonly 43 chars without '=' padding).
-        return try {
-            var normalized = pbk.replace('-', '+').replace('_', '/')
-            val padding = normalized.length % 4
-            if (padding != 0) {
-                normalized += "=".repeat(4 - padding)
-            }
-            Base64.getDecoder().decode(normalized).size == 32
-        } catch (_: Exception) {
-            false
-        }
     }
 }

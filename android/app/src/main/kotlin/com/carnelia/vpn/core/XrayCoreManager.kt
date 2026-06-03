@@ -27,26 +27,8 @@ object XrayCoreManager {
     private const val TAG_DIRECT = "direct"
     private const val TAG_BLOCKED = "blocked"
 
-    // SmartPortSelector — reused across sessions for port caching
-    private var smartPort: SmartPortSelector? = null
-
-    // Port Hopping coroutine job
-    private var portHoppingJob: kotlinx.coroutines.Job? = null
-
-    // VLESS error auto-recovery
-    var onVlessProtocolError: (() -> Unit)? = null
-
-    private var vlessErrorCount = 0
-    private var vlessErrorWindowStart = 0L
-    private var lastRecoveryAt = 0L
-    private const val VLESS_ERROR_WINDOW_MS  = 15_000L
-    private const val VLESS_ERROR_THRESHOLD  = 5
-    private const val VLESS_RECOVERY_COOLDOWN = 45_000L  // min 45s between restarts
-
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
         stopCore() // Ensure clean state
-        vlessErrorCount = 0
-        vlessErrorWindowStart = 0L
 
         try {
             // 1. Prepare Executable
@@ -61,24 +43,9 @@ object XrayCoreManager {
 
             // 2. Validate Config (Security Check)
             validateConfig(config)
-
-            // 2a. Smart Port Selection — probe reachable port for restrictive networks
-            val selector = smartPort ?: SmartPortSelector(context).also { smartPort = it }
-            val effectivePort = selector.selectBestPort(config.host, config.port)
-            val effectiveConfig = if (effectivePort != config.port) {
-                AppLogger.log("SmartPort: overriding port ${config.port} → $effectivePort for ${config.host}")
-                config.copy(port = effectivePort)
-            } else {
-                config
-            }
             
             // 3. Generate Config
-            val configJson = try {
-                buildConfig(context, effectiveConfig)
-            } catch (e: Exception) {
-                AppLogger.error("XrayCoreManager: buildConfig failed for ${effectiveConfig.protocol}/${effectiveConfig.host}", e)
-                throw e
-            }
+            val configJson = buildConfig(context, config)
             
             AppLogger.log("Xray Config Generated")
             // Not logging config details to avoid exposing UUIDs/keys in logs
@@ -86,17 +53,13 @@ object XrayCoreManager {
             val configFile = File(context.filesDir, "xray_config.json")
             configFile.writeText(configJson.toString())
 
-            // 3a. Start Port Hopping if enabled
-            startPortHopping(context, effectiveConfig)
-
             // 4. Launch Process
             val command = listOf(executablePath, "-config", configFile.absolutePath)
             
             val processBuilder = ProcessBuilder(command)
             processBuilder.directory(context.filesDir)
             processBuilder.redirectErrorStream(true) // Merge stderr into stdout
-            processBuilder.environment()["XRAY_LOCATION_ASSET"] = context.filesDir.absolutePath
-
+            
             xrayProcess = processBuilder.start()
             
             // Consume output continuously (Stream Gobbler)
@@ -108,7 +71,6 @@ object XrayCoreManager {
                         for (line in reader.lineSequence()) {
                             if (!isActive) break
                             AppLogger.log("Xray: $line")
-                            checkVlessError(line)
                         }
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
@@ -127,10 +89,6 @@ object XrayCoreManager {
 
             AppLogger.log("XrayCoreManager: Started successfully on PID ${getTag()}")
 
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            AppLogger.log("XrayCoreManager: Start Cancelled by user")
-            stopCore()
-            throw e
         } catch (e: Exception) {
             AppLogger.error("XrayCoreManager: Start Failed", e)
             stopCore()
@@ -139,125 +97,12 @@ object XrayCoreManager {
     }
 
     fun stopCore() {
-        portHoppingJob?.cancel()
-        portHoppingJob = null
         if (xrayProcess != null) {
             AppLogger.log("XrayCoreManager: Stopping process...")
             streamJob?.cancel()
             streamJob = null
             xrayProcess?.destroy()
             xrayProcess = null
-        }
-    }
-
-    /**
-     * Detects repeated VLESS protocol failures (server responds with HTTP instead of VLESS,
-     * typically "unexpected response version. Expecting 0 but actually 72"). When the threshold
-     * is exceeded within the error window, fires onVlessProtocolError so the caller can restart
-     * xray without tearing down the tun2socks tunnel.
-     */
-    private fun checkVlessError(line: String) {
-        if (!line.contains("unexpected response version") &&
-            !line.contains("failed to decode response header")) return
-
-        val now = System.currentTimeMillis()
-        if (now - vlessErrorWindowStart > VLESS_ERROR_WINDOW_MS) {
-            vlessErrorCount = 0
-            vlessErrorWindowStart = now
-        }
-        vlessErrorCount++
-        AppLogger.log("Xray: VLESS error #$vlessErrorCount in window (threshold=$VLESS_ERROR_THRESHOLD)")
-
-        if (vlessErrorCount >= VLESS_ERROR_THRESHOLD) {
-            val now2 = System.currentTimeMillis()
-            vlessErrorCount = 0
-            vlessErrorWindowStart = 0L
-            if (now2 - lastRecoveryAt < VLESS_RECOVERY_COOLDOWN) {
-                AppLogger.log("Xray: VLESS recovery skipped (cooldown ${(VLESS_RECOVERY_COOLDOWN - (now2 - lastRecoveryAt))/1000}s remaining)")
-                return
-            }
-            lastRecoveryAt = now2
-            AppLogger.log("Xray: VLESS error threshold reached — triggering recovery")
-            xrayScope.launch(Dispatchers.Main) {
-                onVlessProtocolError?.invoke()
-            }
-        }
-    }
-
-    /**
-     * Hot-restart xray only (keeps the tun2socks tunnel alive).
-     * Called when VLESS protocol errors indicate a stale server session.
-     */
-    suspend fun restartCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
-        AppLogger.log("XrayCoreManager: Hot-restarting xray (tun2socks stays up)...")
-        streamJob?.cancel(); streamJob = null
-        xrayProcess?.destroy(); xrayProcess = null
-        kotlinx.coroutines.delay(500)
-        try {
-            startCore(context, config)
-        } catch (e: Exception) {
-            AppLogger.error("XrayCoreManager: Hot-restart failed", e)
-        }
-    }
-
-    /**
-     * Port Hopping: periodically pick a random port from the configured range
-     * and restart xray on it. Works with servers advertising a port range via
-     * the "portHoppingRange" config key (e.g. "10000-20000").
-     */
-    private fun startPortHopping(context: Context, config: VpnServerConfig) {
-        portHoppingJob?.cancel()
-        portHoppingJob = null
-
-        if (!PrefsManager.isPortHoppingEnabled(context)) return
-        val range = PrefsManager.getPortHoppingRange(context)
-        val parts = range.split("-")
-        val lo = parts.getOrNull(0)?.toIntOrNull() ?: return
-        val hi = parts.getOrNull(1)?.toIntOrNull() ?: return
-        if (lo >= hi) return
-
-        val intervalMs = PrefsManager.getPortHoppingInterval(context) * 60_000L
-        AppLogger.log("PortHopping: enabled, range $lo-$hi, every ${intervalMs/60000}min")
-
-        portHoppingJob = xrayScope.launch {
-            kotlinx.coroutines.delay(intervalMs)
-            while (isActive) {
-                val newPort = (lo..hi).random()
-                AppLogger.log("PortHopping: switching to port $newPort")
-                val newConfig = config.copy(port = newPort)
-                smartPort?.clearCache()
-                try {
-                    val configJson = buildConfig(context, newConfig)
-                    val configFile = File(context.filesDir, "xray_config.json")
-                    configFile.writeText(configJson.toString())
-                    // Bounce the xray process
-                    xrayProcess?.destroy()
-                    xrayProcess = null
-                    val nativeLibDir = context.applicationInfo.nativeLibraryDir
-                    val execFile = File(nativeLibDir, "libxray_core.so")
-                    val pb = ProcessBuilder(listOf(execFile.absolutePath, "-config", configFile.absolutePath))
-                    pb.directory(context.filesDir)
-                    pb.redirectErrorStream(true)
-                    pb.environment()["XRAY_LOCATION_ASSET"] = context.filesDir.absolutePath
-                    xrayProcess = pb.start()
-                    val newStream = xrayProcess!!.inputStream
-                    streamJob?.cancel()
-                    streamJob = xrayScope.launch {
-                        try {
-                            newStream.bufferedReader().use { r ->
-                                for (line in r.lineSequence()) {
-                                    if (!isActive) break
-                                    AppLogger.log("Xray: $line")
-                                }
-                            }
-                        } catch (_: Exception) {}
-                    }
-                    AppLogger.log("PortHopping: restarted on port $newPort")
-                } catch (e: Exception) {
-                    AppLogger.error("PortHopping: restart failed", e)
-                }
-                kotlinx.coroutines.delay(intervalMs)
-            }
         }
     }
 
@@ -272,17 +117,9 @@ object XrayCoreManager {
         // Log
         val accessLogPath = context.filesDir.absolutePath + "/xray_access.log"
         root.put("log", JSONObject()
-            .put("loglevel", "info")
+            .put("loglevel", "warning")
+            .put("access", accessLogPath)
         )
-
-        // Policy (matches V2RayTun defaults)
-        root.put("policy", JSONObject()
-            .put("levels", JSONObject()
-                .put("8", JSONObject()
-                    .put("handshake", 4)
-                    .put("connIdle", 300)
-                    .put("uplinkOnly", 1)
-                    .put("downlinkOnly", 1))))
 
         // DNS
         root.put("dns", buildDns(context))
@@ -318,36 +155,35 @@ object XrayCoreManager {
         }
         
         dns.put("servers", servers)
-        dns.put("queryStrategy", "UseIPv4")
+        dns.put("queryStrategy", "UseIP") // Avoid DNS poisoning affecting Xray resolution if possible
         return dns
     }
     
     private fun buildInbounds(context: Context): JSONArray {
         val inbounds = JSONArray()
-
-        // 1. SOCKS5 inbound for hev-socks5-tunnel (same as V2RayTun)
-        // Using SOCKS5 instead of Shadowsocks avoids the deprecated Shadowsocks
-        // inbound that caused intermittent VLESS REALITY failures ("version 72").
+        
+        // 1. Local SOCKS/Shadowsocks Bridge for Tun2Socks
         val localInbound = JSONObject()
         localInbound.put("tag", TAG_PROXY)
         localInbound.put("port", LOCAL_PORT)
         localInbound.put("listen", "127.0.0.1")
-        localInbound.put("protocol", "socks")
-
+        localInbound.put("protocol", "shadowsocks")
+        
         val settings = JSONObject()
-        settings.put("auth", "noauth")
-        settings.put("udp", true)
-        settings.put("userLevel", 8)
+        settings.put("method", LOCAL_METHOD)
+        settings.put("password", LOCAL_PASSWORD)
+        settings.put("network", "tcp,udp")
+        
         localInbound.put("settings", settings)
-
-        // Sniffing — identify domains for routing
+        
+        // Sniffing
         val sniffing = JSONObject()
         val sniffs = JSONArray()
         sniffs.put("http")
         sniffs.put("tls")
+        sniffs.put("quic")
         sniffing.put("enabled", true)
         sniffing.put("destOverride", sniffs)
-        sniffing.put("routeOnly", false)
         localInbound.put("sniffing", sniffing)
 
         inbounds.put(localInbound)
@@ -373,18 +209,8 @@ object XrayCoreManager {
 
     private fun buildOutbounds(context: Context, vpnConfig: VpnServerConfig): JSONArray {
         val outbounds = JSONArray()
-        val isDoubleTunnel = PrefsManager.isDoubleTunnelEnabled(context)
-        val doubleServerId = PrefsManager.getDoubleTunnelServerId(context)
 
-        // Determine double tunnel second server
-        val secondConfig: VpnServerConfig? = if (isDoubleTunnel && doubleServerId.isNotBlank()) {
-            try {
-                com.carnelia.vpn.data.ServerRepository(context).getServers()
-                    .firstOrNull { it.id == doubleServerId && it.id != vpnConfig.id }
-            } catch (e: Exception) { null }
-        } else null
-
-        // 1. First hop (proxy_out — connects directly to server1)
+        // 1. Main proxy outbound
         val realOutbound = JSONObject()
         realOutbound.put("tag", TAG_PROXY_OUT)
         if (PrefsManager.isMuxEnabled(context)) {
@@ -394,41 +220,8 @@ object XrayCoreManager {
             realOutbound.put("mux", mux)
         }
         configureProtocol(realOutbound, vpnConfig)
-        // HTTP Camouflage override: if enabled and transport is plain TCP (no special tunnel),
-        // patch the streamSettings to use httpupgrade with the fake host.
-        if (PrefsManager.isHttpCamouflageEnabled(context)) {
-            val ss = realOutbound.optJSONObject("streamSettings")
-            if (ss != null) {
-                val net = ss.optString("network", "tcp")
-                val sec = ss.optString("security", "none")
-                if (net == "tcp" && sec != "reality") {
-                    val fakeHost = PrefsManager.getHttpCamouflageHost(context)
-                    ss.put("network", "httpupgrade")
-                    val hu = JSONObject()
-                    hu.put("path", "/")
-                    hu.put("host", fakeHost)
-                    hu.put("headers", JSONObject().put("Host", fakeHost))
-                    ss.put("httpupgradeSettings", hu)
-                    AppLogger.log("HttpCamouflage: TCP → httpupgrade with fake host $fakeHost")
-                }
-            }
-        }
         applySockOpt(context, realOutbound)
         outbounds.put(realOutbound)
-
-        // 2. Second hop (proxy_chain) — only if double tunnel configured
-        if (secondConfig != null) {
-            AppLogger.log("DoubleTunnel: ${vpnConfig.host} → ${secondConfig.host}")
-            val chainOutbound = JSONObject()
-            chainOutbound.put("tag", "proxy_chain")
-            configureProtocol(chainOutbound, secondConfig)
-            val chainStream = chainOutbound.optJSONObject("streamSettings") ?: JSONObject()
-            val chainSockopt = chainStream.optJSONObject("sockopt") ?: JSONObject()
-            chainSockopt.put("dialerProxy", TAG_PROXY_OUT)
-            chainStream.put("sockopt", chainSockopt)
-            chainOutbound.put("streamSettings", chainStream)
-            outbounds.put(chainOutbound)
-        }
 
         // 3. Direct
         val direct = JSONObject()
@@ -458,44 +251,27 @@ object XrayCoreManager {
             else -> routing.put("domainStrategy", "IPIfNonMatch")
         }
 
-        // Determine effective outbound tag (proxy_chain for double tunnel)
-        val isDoubleTunnel = PrefsManager.isDoubleTunnelEnabled(context)
-        val doubleServerId = PrefsManager.getDoubleTunnelServerId(context)
-        val effectiveProxy = if (isDoubleTunnel && doubleServerId.isNotBlank()) "proxy_chain" else TAG_PROXY_OUT
+        // Determine effective outbound tag
+        val effectiveProxy = TAG_PROXY_OUT
 
         val rules = JSONArray()
 
-        // Stealth Mode no longer blocks UDP 443 — blocking QUIC breaks apps like TikTok
-        // that use HTTP/3 as their primary transport. QUIC is proxied normally.
+        // 1. Stealth Mode (Block UDP 443)
+        if (PrefsManager.isStealthModeEnabled(context)) {
+             val blockQuic = JSONObject()
+             blockQuic.put("type", "field")
+             blockQuic.put("port", "443")
+             blockQuic.put("network", "udp")
+             blockQuic.put("outboundTag", TAG_BLOCKED)
+             rules.put(blockQuic)
+        }
 
-        // Private & reserved IP bypass — always direct, never proxy
+        // Private IP Bypass (hardcoded ranges, no geo files needed)
         val privateRule = JSONObject()
         privateRule.put("type", "field")
         privateRule.put("outboundTag", TAG_DIRECT)
         privateRule.put("ip", JSONArray().apply {
-            // IPv4 RFC 1918 private ranges
-            put("10.0.0.0/8")
-            put("172.16.0.0/12")
-            put("192.168.0.0/16")
-            // Loopback
-            put("127.0.0.0/8")
-            // Link-local / APIPA (RFC 3927)
-            put("169.254.0.0/16")
-            // CGNAT (RFC 6598 — many mobile operators use this)
-            put("100.64.0.0/10")
-            // Reserved / unspecified
-            put("0.0.0.0/8")
-            put("240.0.0.0/4")
-            // Multicast
-            put("224.0.0.0/4")
-            // IPv6 — route all IPv6 direct; VLESS server is IPv4-only so IPv6
-            // destinations would hang (requests sent, no responses). Direct routing
-            // lets the OS use the device's native IPv6 (or fail cleanly).
-            put("::1/128")
-            put("fc00::/7")
-            put("fe80::/10")
-            put("ff00::/8")
-            put("::/0")
+            put("10.0.0.0/8"); put("172.16.0.0/12"); put("192.168.0.0/16"); put("127.0.0.0/8")
         })
         rules.put(privateRule)
 
@@ -522,13 +298,9 @@ object XrayCoreManager {
     
     private fun applySockOpt(context: Context, outboundJson: JSONObject) {
          val streamSettings = outboundJson.optJSONObject("streamSettings") ?: JSONObject()
-         val sockopt = streamSettings.optJSONObject("sockopt") ?: JSONObject()
+         val sockopt = JSONObject()
          
-         val hasReality = streamSettings.optJSONObject("realitySettings") != null ||
-                          streamSettings.optString("security", "") == "reality" ||
-                          (streamSettings.optJSONObject("tlsSettings")?.optString("security", "") ?: "") == "reality"
-
-         if (PrefsManager.isFragmentationEnabled(context) && !hasReality) {
+         if (PrefsManager.isFragmentationEnabled(context)) {
              val fragment = JSONObject()
              // No "enabled" field — xray enables fragment by presence of the object itself
              fragment.put("packets", PrefsManager.getFragmentPackets(context))
@@ -539,10 +311,7 @@ object XrayCoreManager {
              AppLogger.log("Fragmentation: Applied from prefs")
          }
          
-         sockopt.put("tcpKeepAliveInterval", 30)
-         // Disable TCP connection reuse — stale keep-alive connections return HTTP instead of
-         // VLESS (server closed its end), causing "unexpected response version 72" failures.
-         sockopt.put("v6only", false)
+         sockopt.put("tcpKeepAliveInterval", 300)
          
          streamSettings.put("sockopt", sockopt)
          outboundJson.put("streamSettings", streamSettings)
@@ -559,6 +328,7 @@ object XrayCoreManager {
                 AppLogger.log("AmneziaWG: Connecting via Xray WireGuard (Jc/Jmin obfuscation not applied — requires amneziawg-go)")
                 configureWireguard(outbound, config)
             }
+            VpnProtocol.HYSTERIA2 -> configureHysteria2(outbound, config)
             VpnProtocol.SOCKS -> configureSocks(outbound, config)
             VpnProtocol.HTTP -> configureInternalHttp(outbound, config)
             else -> throw Exception("Unsupported protocol: ${config.protocol}")
@@ -616,9 +386,7 @@ object XrayCoreManager {
              streamSettings.put("realitySettings", reality)
            } else if (security == "tls") {
              val tls = JSONObject()
-             // Use host as fallback SNI — empty serverName breaks TLS handshake
-             val effectiveSni = config.config["sni"]?.takeIf { it.isNotBlank() } ?: config.host
-             tls.put("serverName", effectiveSni)
+             tls.put("serverName", config.config["sni"] ?: "")
              val fp = config.config["fp"] ?: ""
              if (fp.isNotBlank()) tls.put("fingerprint", fp)
              tls.put("allowInsecure", config.config["allowInsecure"] == "1")
@@ -829,6 +597,49 @@ object XrayCoreManager {
         outbound.put("settings", settings)
     }
 
+    private fun configureHysteria2(outbound: JSONObject, config: VpnServerConfig) {
+        outbound.put("protocol", "hysteria2")
+        val settings = JSONObject()
+        val servers = JSONArray()
+        val server = JSONObject()
+        server.put("address", config.host)
+        server.put("port", config.port)
+        server.put("password", config.config["password"] ?: "")
+
+        val upMbps = config.config["up_mbps"]?.toIntOrNull() ?: 0
+        val downMbps = config.config["down_mbps"]?.toIntOrNull() ?: 0
+        if (upMbps > 0 || downMbps > 0) {
+            val congestion = JSONObject()
+            congestion.put("type", "bbr")
+            if (upMbps > 0) congestion.put("up_mbps", upMbps)
+            if (downMbps > 0) congestion.put("down_mbps", downMbps)
+            server.put("congestion", congestion)
+        }
+
+        val obfs = config.config["obfs"] ?: ""
+        if (obfs.isNotBlank()) {
+            val obfsObj = JSONObject()
+            obfsObj.put("type", obfs)
+            val obfsPassword = config.config["obfs_password"] ?: ""
+            if (obfsPassword.isNotBlank()) obfsObj.put("password", obfsPassword)
+            server.put("obfs", obfsObj)
+        }
+
+        servers.put(server)
+        settings.put("servers", servers)
+        outbound.put("settings", settings)
+
+        val streamSettings = JSONObject()
+        streamSettings.put("network", "h3")
+        streamSettings.put("security", "tls")
+        val tls = JSONObject()
+        tls.put("serverName", config.config["sni"] ?: config.host)
+        tls.put("allowInsecure", config.config["insecure"] == "1")
+        tls.put("fingerprint", "chrome")
+        streamSettings.put("tlsSettings", tls)
+        outbound.put("streamSettings", streamSettings)
+    }
+
     private fun configureSocks(outbound: JSONObject, config: VpnServerConfig) {
         outbound.put("protocol", "socks")
         val settings = JSONObject()
@@ -879,146 +690,5 @@ object XrayCoreManager {
         val lower = pbk.lowercase()
         if (lower.startsWith("hash") || lower.startsWith("placeholder") || lower.startsWith("example")) return false
         return true
-    }
-
-    // в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
-    // Test-mode Xray: used by ConfigTuner to probe real latency with specific
-    // mux/fragmentation settings WITHOUT establishing a full VPN (no TUN).
-    // Starts a disposable Xray instance with SOCKS5 inbound on TEST_SOCKS_PORT.
-    // в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
-
-    const val TEST_SOCKS_PORT = 10807
-
-    private var testProcess: Process? = null
-    private var testStreamJob: kotlinx.coroutines.Job? = null
-
-    /**
-     * Start a lightweight Xray process for probing. Uses a temp config with only
-     * a SOCKS5 inbound + outbound configured with [muxEnabled], [muxConcurrency],
-     * [fragEnabled], [fragMode]. Returns true if the process started successfully.
-     */
-    suspend fun startTestCore(
-        context: Context,
-        config: VpnServerConfig,
-        muxEnabled: Boolean,
-        muxConcurrency: Int,
-        fragEnabled: Boolean,
-        fragMode: String
-    ): Boolean = withContext(Dispatchers.IO) {
-        stopTestCore()
-        return@withContext try {
-            val nativeLibDir = context.applicationInfo.nativeLibraryDir
-            val execFile = File(nativeLibDir, "libxray_core.so")
-            if (!execFile.exists()) return@withContext false
-
-            val selector = smartPort ?: SmartPortSelector(context).also { smartPort = it }
-            val effectivePort = selector.selectBestPort(config.host, config.port)
-            val effectiveConfig = config.copy(port = effectivePort)
-
-            val testCfg = buildTestConfig(context, effectiveConfig, muxEnabled, muxConcurrency, fragEnabled, fragMode)
-            val cfgFile = File(context.filesDir, "xray_test_config.json")
-            cfgFile.writeText(testCfg.toString())
-
-            val pb = ProcessBuilder(listOf(execFile.absolutePath, "-config", cfgFile.absolutePath))
-            pb.directory(context.filesDir)
-            pb.redirectErrorStream(true)
-            pb.environment()["XRAY_LOCATION_ASSET"] = context.filesDir.absolutePath
-            testProcess = pb.start()
-
-            // Drain stdout to prevent buffer deadlock
-            val stream = testProcess!!.inputStream
-            testStreamJob = xrayScope.launch {
-                try { stream.bufferedReader().use { r -> for (l in r.lineSequence()) { if (!isActive) break } } }
-                catch (_: Exception) {}
-            }
-
-            kotlinx.coroutines.delay(2200) // Give Xray time to bind the port
-            val alive = testProcess?.isAlive == true
-            if (!alive) stopTestCore()
-            alive
-        } catch (e: Exception) {
-            AppLogger.error("TestCore: failed to start", e)
-            stopTestCore()
-            false
-        }
-    }
-
-    fun stopTestCore() {
-        testStreamJob?.cancel(); testStreamJob = null
-        testProcess?.destroy(); testProcess = null
-    }
-
-    private fun buildTestConfig(
-        context: Context,
-        vpnConfig: VpnServerConfig,
-        muxEnabled: Boolean,
-        muxConcurrency: Int,
-        fragEnabled: Boolean,
-        fragMode: String
-    ): JSONObject {
-        val root = JSONObject()
-        // Minimal log вЂ” no access log for test runs
-        root.put("log", JSONObject().put("loglevel", "none"))
-
-        // SOCKS5 inbound only (no TUN)
-        val inbounds = JSONArray()
-        val socks = JSONObject()
-        socks.put("tag", "test_socks")
-        socks.put("port", TEST_SOCKS_PORT)
-        socks.put("listen", "127.0.0.1")
-        socks.put("protocol", "socks")
-        socks.put("settings", JSONObject().put("auth", "noauth").put("udp", false))
-        inbounds.put(socks)
-        root.put("inbounds", inbounds)
-
-        // Single outbound with candidate settings applied
-        val outbound = JSONObject()
-        outbound.put("tag", "proxy_test")
-        if (muxEnabled) {
-            outbound.put("mux", JSONObject().put("enabled", true).put("concurrency", muxConcurrency))
-        }
-        configureProtocol(outbound, vpnConfig)
-
-        // Apply fragmentation via sockopt
-        if (fragEnabled) {
-            val ss = outbound.optJSONObject("streamSettings") ?: JSONObject().also { outbound.put("streamSettings", it) }
-            val isReality = ss.optJSONObject("realitySettings") != null ||
-                            ss.optString("security", "") == "reality" ||
-                            (ss.optJSONObject("tlsSettings")?.optString("security", "") ?: "") == "reality"
-            
-            if (!isReality) {
-                val sockopt = ss.optJSONObject("sockopt") ?: JSONObject().also { ss.put("sockopt", it) }
-                val (packets, length, interval) = when (fragMode) {
-                    "light"      -> Triple("tlshello", "100-200", "10-20")
-                    "balanced"   -> Triple("tlshello", "50-100",  "20-50")
-                    "aggressive" -> Triple("tlshello", "10-50",   "50-100")
-                    else         -> Triple("tlshello", "100-200", "10-20")
-                }
-                sockopt.put("fragment", JSONObject()
-                    .put("packets", packets)
-                    .put("length",  length)
-                    .put("interval", interval))
-            }
-        }
-
-        val outbounds = JSONArray()
-        outbounds.put(outbound)
-        // Freedom for direct (fallback)
-        outbounds.put(JSONObject().put("tag", "direct").put("protocol", "freedom").put("settings", JSONObject()))
-        root.put("outbounds", outbounds)
-
-        // Minimal routing: all в†’ proxy_test
-        val routing = JSONObject()
-        routing.put("domainStrategy", "IPIfNonMatch")
-        val rules = JSONArray()
-        val defaultRule = JSONObject()
-        defaultRule.put("type", "field")
-        defaultRule.put("network", "tcp,udp")
-        defaultRule.put("outboundTag", "proxy_test")
-        rules.put(defaultRule)
-        routing.put("rules", rules)
-        root.put("routing", routing)
-
-        return root
     }
 }
