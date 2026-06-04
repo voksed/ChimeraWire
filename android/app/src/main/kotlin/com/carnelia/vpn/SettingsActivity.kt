@@ -56,8 +56,9 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val startPage = intent.getStringExtra("page")
         setContent {
-             SettingsScreen()
+            SettingsScreen(startPage = startPage)
         }
     }
     
@@ -101,12 +102,17 @@ enum class SettingsPage {
 }
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(startPage: String? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var themeIndex by remember { mutableStateOf(PrefsManager.getThemeIndex(context)) }
-    
+
+    val initialPage = when (startPage) {
+        "black_wall", "censorship" -> SettingsPage.CENSORSHIP_BYPASS
+        "subscriptions" -> SettingsPage.SUBSCRIPTIONS
+        else -> SettingsPage.MAIN
+    }
     // Navigation State
-    var currentScreen by remember { mutableStateOf(SettingsPage.MAIN) }
+    var currentScreen by remember { mutableStateOf(initialPage) }
 
     // Handle System Back Button
     BackHandler(enabled = currentScreen != SettingsPage.MAIN) {
@@ -990,7 +996,7 @@ fun CensorshipBypassSettings(context: Context) {
                         modifier = Modifier.size(28.dp))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("⬛ BLACK WALL",
+                        Text("BLACK WALL",
                             style = MaterialTheme.typography.titleMedium,
                             color = if (blackWallEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold)

@@ -344,6 +344,26 @@ fun CarheliaApp(
                     )
                 )
 
+                // Black Wall
+                val blackWallActive = remember { com.carnelia.vpn.core.BlackWallEngine.isEnabled(context) }
+                NavigationDrawerItem(
+                    label = { Text("Black Wall") },
+                    selected = false,
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, SettingsActivity::class.java).putExtra("page", "black_wall")
+                        )
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (blackWallActive) Color(0xFF00AAFF) else Color.White) },
+                    badge = if (blackWallActive) {{ Text(com.carnelia.vpn.core.BlackWallEngine.getLevel(context).label, fontSize = 10.sp, color = Color(0xFF00AAFF)) }} else null,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = Color.White
+                    )
+                )
+
                 // Subscriptions
                 NavigationDrawerItem(
                     label = { Text("Подписки") },
