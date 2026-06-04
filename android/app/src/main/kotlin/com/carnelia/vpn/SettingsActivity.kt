@@ -965,14 +965,107 @@ fun CensorshipBypassSettings(context: Context) {
     var stealthModeEnabled by remember { mutableStateOf(PrefsManager.isStealthModeEnabled(context)) }
     var fragEnabled by remember { mutableStateOf(PrefsManager.isFragmentationEnabled(context)) }
     var fragMode by remember { mutableStateOf(PrefsManager.getFragmentationMode(context)) }
-    
+    var blackWallEnabled by remember { mutableStateOf(com.carnelia.vpn.core.BlackWallEngine.isEnabled(context)) }
+    var blackWallLevel by remember { mutableStateOf(com.carnelia.vpn.core.BlackWallEngine.getLevel(context)) }
+
     // Custom Frag Values
     var customPackets by remember { mutableStateOf(PrefsManager.getFragmentPackets(context)) }
     var customLength by remember { mutableStateOf(PrefsManager.getFragmentLength(context)) }
     var customInterval by remember { mutableStateOf(PrefsManager.getFragmentInterval(context)) }
 
     Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
-        
+
+        // ── BLACK WALL ────────────────────────────────────────────────
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = if (blackWallEnabled) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                                 else MaterialTheme.colorScheme.surfaceVariant
+            ),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Security, null,
+                        tint = if (blackWallEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("⬛ BLACK WALL",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (blackWallEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold)
+                        Text("Anti-DPI Stealth Engine",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = blackWallEnabled,
+                        onCheckedChange = {
+                            blackWallEnabled = it
+                            com.carnelia.vpn.core.BlackWallEngine.setEnabled(context, it)
+                        }
+                    )
+                }
+
+                if (blackWallEnabled) {
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Уровень защиты", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp))
+
+                    com.carnelia.vpn.core.BlackWallEngine.StealthLevel.entries
+                        .filter { it != com.carnelia.vpn.core.BlackWallEngine.StealthLevel.OFF }
+                        .forEach { level ->
+                        val selected = blackWallLevel == level
+                        Card(
+                            onClick = {
+                                blackWallLevel = level
+                                com.carnelia.vpn.core.BlackWallEngine.setLevel(context, level)
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                                 else MaterialTheme.colorScheme.surface
+                            ),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(level.label, fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold
+                                                                   else androidx.compose.ui.text.font.FontWeight.Normal,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                                else MaterialTheme.colorScheme.onSurface)
+                                    Text(level.description, fontSize = 11.sp,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                                else MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (selected) Icon(Icons.Default.Check, null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        when (blackWallLevel) {
+                            com.carnelia.vpn.core.BlackWallEngine.StealthLevel.GHOST ->
+                                "• Фрагментация TLS ClientHello (1-5 байт)\n• Маскировка SNI под CDN-домен"
+                            com.carnelia.vpn.core.BlackWallEngine.StealthLevel.PHANTOM ->
+                                "• Фрагментация TLS (1-3 байт)\n• SNI-маскировка\n• Рандомный uTLS fingerprint"
+                            com.carnelia.vpn.core.BlackWallEngine.StealthLevel.WRAITH ->
+                                "• Максимальная фрагментация (1-2 байт)\n• SNI-маскировка + uTLS\n• Шумовой трафик (имитация браузера)"
+                            else -> ""
+                        },
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+        }
+
         Text(
             text = stringResource(R.string.advanced_anti_dpi_title),
             style = MaterialTheme.typography.titleMedium,

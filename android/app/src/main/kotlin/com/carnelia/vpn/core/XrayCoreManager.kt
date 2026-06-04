@@ -126,7 +126,7 @@ object XrayCoreManager {
                 put("settings", JSONObject().apply {
                     put("servers", JSONArray().put(JSONObject().apply {
                         put("address", "127.0.0.1")
-                        put("port", 10810) // Hysteria2 SOCKS5 port
+                        put("port", SingboxCoreManager.SOCKS5_PORT) // sing-box SOCKS5 port
                     }))
                 })
             }).put(JSONObject().apply {
@@ -293,6 +293,10 @@ object XrayCoreManager {
         }
         configureProtocol(realOutbound, vpnConfig)
         applySockOpt(context, realOutbound)
+        // Black Wall: apply after protocol config so streamSettings exists
+        if (BlackWallEngine.isEnabled(context)) {
+            BlackWallEngine.applyToXrayOutbound(context, realOutbound, vpnConfig)
+        }
         outbounds.put(realOutbound)
 
         // 3. Direct

@@ -337,16 +337,21 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
             AppLogger.log("SingboxVpnProtocol: Starting sing-box (${config.protocol})...")
             com.carnelia.vpn.core.SingboxCoreManager.startCore(context, config)
 
+            // Wait for sing-box SOCKS5
             var waited = 0
             while (waited < 6000) {
                 try {
                     withContext(Dispatchers.IO) {
-                        java.net.Socket("127.0.0.1", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT).use {}
+                        java.net.Socket("127.0.0.1", com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT).use {}
                     }
                     break
                 } catch (_: Exception) { delay(200); waited += 200 }
             }
-            if (waited >= 6000) throw Exception("Sing-box port ${com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT} not ready")
+            if (waited >= 6000) throw Exception("Sing-box SOCKS5 port ${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT} not ready")
+
+            // Start Xray as SS:10808 → SOCKS5:10812 bridge (tun2socks → Xray → sing-box)
+            AppLogger.log("SingboxVpnProtocol: Starting Xray SS bridge → sing-box :${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}...")
+            com.carnelia.vpn.core.XrayCoreManager.startCoreAsSocks5Bridge(context)
 
             AppLogger.log("SingboxVpnProtocol: Ready after ${waited}ms")
             updateConnectionState(ConnectionState.CONNECTED)
@@ -365,6 +370,7 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
         try {
             activeTunnel?.disconnect(); activeTunnel = null
             com.carnelia.vpn.core.SingboxCoreManager.stopCore()
+            com.carnelia.vpn.core.XrayCoreManager.stopCore()
         } catch (_: Exception) {}
         scope.cancel()
         updateConnectionState(ConnectionState.DISCONNECTED)
@@ -379,12 +385,12 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
         if (!isRunning) return
         scope.launch {
             try {
-                AppLogger.log("SingboxVpnProtocol: Connecting Tun2Socks → Sing-box SS :${com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT}")
+                AppLogger.log("SingboxVpnProtocol: Tun2Socks → Xray SS:${com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT} → sing-box SOCKS5:${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}")
                 val json = org.json.JSONObject().apply {
                     put("host", "127.0.0.1")
-                    put("port", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT)
-                    put("password", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PASSWORD)
-                    put("method", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_METHOD)
+                    put("port", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT)
+                    put("password", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PASSWORD)
+                    put("method", com.carnelia.vpn.core.XrayCoreManager.LOCAL_METHOD)
                 }
                 val client = shadowsocks.Shadowsocks.newClientFromJSON(json.toString())
                 activeTunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)

@@ -14,11 +14,11 @@ object SingboxCoreManager {
     private var streamJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    const val LOCAL_PORT = 10811
-    const val LOCAL_PASSWORD = "local-singbox-bridge"
-    const val LOCAL_METHOD = "chacha20-ietf-poly1305"
+    // sing-box exposes SOCKS5 on this port for Xray to forward into
+    const val SOCKS5_PORT = 10812
 
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
+        appContext = context
         stopCore()
 
         val binary = File(context.applicationInfo.nativeLibraryDir, "libsingbox.so")
@@ -49,7 +49,7 @@ object SingboxCoreManager {
         if (process?.isAlive == false) {
             throw Exception("Sing-box died immediately (exit ${process?.exitValue()})")
         }
-        AppLogger.log("SingboxCoreManager: Started on port $LOCAL_PORT")
+        AppLogger.log("SingboxCoreManager: Started SOCKS5 on port $SOCKS5_PORT")
     }
 
     fun stopCore() {
@@ -69,14 +69,12 @@ object SingboxCoreManager {
         // DNS
         root.put("dns", buildDns(context))
 
-        // Inbounds — Shadowsocks local bridge for tun2socks
+        // Inbounds — SOCKS5 for Xray bridge
         root.put("inbounds", JSONArray().put(JSONObject().apply {
-            put("type", "shadowsocks")
-            put("tag", "ss-in")
+            put("type", "socks")
+            put("tag", "socks-in")
             put("listen", "127.0.0.1")
-            put("listen_port", LOCAL_PORT)
-            put("method", LOCAL_METHOD)
-            put("password", LOCAL_PASSWORD)
+            put("listen_port", SOCKS5_PORT)
         }))
 
         // Outbounds
@@ -124,7 +122,17 @@ object SingboxCoreManager {
         return arr
     }
 
+    private lateinit var appContext: Context
+
     private fun buildProxyOutbound(config: VpnServerConfig): JSONObject {
+        val out = buildProxyOutboundInternal(config)
+        if (::appContext.isInitialized && BlackWallEngine.isEnabled(appContext)) {
+            BlackWallEngine.applyToSingboxOutbound(appContext, out, config)
+        }
+        return out
+    }
+
+    private fun buildProxyOutboundInternal(config: VpnServerConfig): JSONObject {
         return when (config.protocol) {
             VpnProtocol.HYSTERIA2 -> buildHysteria2(config)
             VpnProtocol.TUIC      -> buildTuic(config)

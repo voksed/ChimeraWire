@@ -236,8 +236,6 @@ fun CarheliaApp(
     // Server List Dialog State
     var showServerList by remember { mutableStateOf(false) }
     var showSubscriptionsDialog by remember { mutableStateOf(false) }
-    var warpLoading by remember { mutableStateOf(false) }
-    var warpError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(showServerList) {
         if (!showServerList) {
@@ -345,66 +343,6 @@ fun CarheliaApp(
                         unselectedTextColor = Color.White
                     )
                 )
-
-                // Cloudflare WARP
-                NavigationDrawerItem(
-                    label = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("WARP")
-                            if (warpLoading) {
-                                Spacer(Modifier.width(8.dp))
-                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = Color(0xFFFF6600))
-                            }
-                        }
-                    },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        val warpConfig = if (com.carnelia.vpn.core.WarpManager.isRegistered(context)) {
-                            com.carnelia.vpn.core.WarpManager.buildVpnConfig(context)
-                        } else null
-
-                        if (warpConfig != null) {
-                            // Already registered — connect immediately
-                            repository.addServer(warpConfig)
-                            activeConfig = warpConfig
-                            repository.setLastUsedServer(warpConfig)
-                            onConnect(warpConfig)
-                        } else {
-                            // Register first
-                            warpLoading = true
-                            warpError = null
-                            scope.launch {
-                                try {
-                                    val cfg = com.carnelia.vpn.core.WarpManager.register(context)
-                                    repository.addServer(cfg)
-                                    activeConfig = cfg
-                                    repository.setLastUsedServer(cfg)
-                                    onConnect(cfg)
-                                } catch (e: Exception) {
-                                    warpError = e.message
-                                } finally {
-                                    warpLoading = false
-                                }
-                            }
-                        }
-                    },
-                    icon = { Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFFFF6600)) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = Color.White
-                    )
-                )
-
-                if (warpError != null) {
-                    Text(
-                        "WARP: ${warpError}",
-                        color = Color.Red,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
-                    )
-                }
 
                 // Subscriptions
                 NavigationDrawerItem(
@@ -908,6 +846,29 @@ fun ServerSelectionDialog(
     var isPinging by remember { mutableStateOf(false) }
     val pingScope = rememberCoroutineScope()
 
+    // Protocols that use UDP — TCP socket ping will always fail for them
+    val UDP_PROTOCOLS = setOf(
+        com.carnelia.vpn.core.VpnProtocol.HYSTERIA2,
+        com.carnelia.vpn.core.VpnProtocol.TUIC,
+        com.carnelia.vpn.core.VpnProtocol.WARP,
+        com.carnelia.vpn.core.VpnProtocol.WIREGUARD,
+        com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG
+    )
+
+    fun icmpPing(host: String): Int? {
+        return try {
+            val start = System.currentTimeMillis()
+            val proc = Runtime.getRuntime().exec(arrayOf("ping", "-c", "1", "-W", "2", host))
+            val exit = proc.waitFor()
+            val elapsed = (System.currentTimeMillis() - start).toInt()
+            if (exit == 0) {
+                val output = proc.inputStream.bufferedReader().readText()
+                val match = Regex("time[=<]([0-9.]+)").find(output)
+                match?.groupValues?.get(1)?.toFloatOrNull()?.toInt() ?: elapsed
+            } else null
+        } catch (_: Exception) { null }
+    }
+
     fun pingServers(list: List<VpnServerConfig>) {
         if (isPinging) return
         isPinging = true
@@ -916,11 +877,15 @@ fun ServerSelectionDialog(
             val results = mutableMapOf<String, Int?>()
             for (server in list) {
                 if (!isActive) break
-                val ping = try {
-                    val start = System.currentTimeMillis()
-                    java.net.Socket().use { it.connect(java.net.InetSocketAddress(server.host, server.port), 3000) }
-                    (System.currentTimeMillis() - start).toInt()
-                } catch (e: Exception) { null }
+                val ping = if (server.protocol in UDP_PROTOCOLS) {
+                    icmpPing(server.host)
+                } else {
+                    try {
+                        val start = System.currentTimeMillis()
+                        java.net.Socket().use { it.connect(java.net.InetSocketAddress(server.host, server.port), 3000) }
+                        (System.currentTimeMillis() - start).toInt()
+                    } catch (e: Exception) { null }
+                }
                 results[server.id] = ping
                 withContext(Dispatchers.Main) { pingResults = results.toMap() }
             }
@@ -1118,8 +1083,10 @@ fun ServerSelectionDialog(
                                             )
                                         }
                                         val pingMs = pingResults[server.id]
+                                        val isUdp = server.protocol in UDP_PROTOCOLS
                                         val pingText = when {
                                             !pingResults.containsKey(server.id) -> server.host
+                                            pingMs == null && isUdp -> "◈ UDP · ${server.host}"
                                             pingMs == null -> "✕ timeout"
                                             pingMs < 100 -> "● ${pingMs}ms"
                                             pingMs < 300 -> "● ${pingMs}ms"
@@ -1127,6 +1094,7 @@ fun ServerSelectionDialog(
                                         }
                                         val pingColor = when {
                                             !pingResults.containsKey(server.id) -> Color.Gray
+                                            pingMs == null && isUdp -> Color(0xFF8888FF)
                                             pingMs == null -> Color(0xFFFF4444)
                                             pingMs < 100 -> Color(0xFF00CC66)
                                             pingMs < 300 -> Color(0xFFFFAA00)
