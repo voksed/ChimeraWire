@@ -314,26 +314,231 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
 }
 
 /**
- * Factory for creating protocol instances
+ * Sing-box protocol — uses libsingbox.so for Hysteria2, TUIC, WireGuard, WARP, VLESS, VMess, Trojan, SS
+ * Exposes SS:10811 for tun2socks (same bridge pattern as XrayVpnProtocol on :10808)
+ */
+class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
+
+    private var connectionState = ConnectionState.DISCONNECTED
+    private var bytesSent = 0L
+    private var bytesReceived = 0L
+    private var activeTunnel: tun2socks.Tunnel? = null
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
+    private var isRunning = false
+    private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
+    private val bytesListeners = mutableListOf<(Long, Long) -> Unit>()
+
+    override suspend fun prepare() = VpnErrorCode.NO_ERROR
+
+    override suspend fun start(config: com.carnelia.vpn.core.VpnServerConfig): VpnErrorCode {
+        updateConnectionState(ConnectionState.CONNECTING)
+        isRunning = true
+        try {
+            AppLogger.log("SingboxVpnProtocol: Starting sing-box (${config.protocol})...")
+            com.carnelia.vpn.core.SingboxCoreManager.startCore(context, config)
+
+            var waited = 0
+            while (waited < 6000) {
+                try {
+                    withContext(Dispatchers.IO) {
+                        java.net.Socket("127.0.0.1", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT).use {}
+                    }
+                    break
+                } catch (_: Exception) { delay(200); waited += 200 }
+            }
+            if (waited >= 6000) throw Exception("Sing-box port ${com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT} not ready")
+
+            AppLogger.log("SingboxVpnProtocol: Ready after ${waited}ms")
+            updateConnectionState(ConnectionState.CONNECTED)
+            return VpnErrorCode.NO_ERROR
+        } catch (e: Exception) {
+            AppLogger.error("SingboxVpnProtocol: Start failed", e)
+            com.carnelia.vpn.core.SingboxCoreManager.stopCore()
+            updateConnectionState(ConnectionState.ERROR)
+            return VpnErrorCode.CONNECTION_FAILED
+        }
+    }
+
+    override suspend fun stop() {
+        isRunning = false
+        updateConnectionState(ConnectionState.DISCONNECTING)
+        try {
+            activeTunnel?.disconnect(); activeTunnel = null
+            com.carnelia.vpn.core.SingboxCoreManager.stopCore()
+        } catch (_: Exception) {}
+        scope.cancel()
+        updateConnectionState(ConnectionState.DISCONNECTED)
+    }
+
+    override fun getConnectionState() = connectionState
+    override fun getBytesTransferred() = Pair(bytesSent, bytesReceived)
+    override fun onConnectionStateChanged(listener: (ConnectionState) -> Unit) { stateListeners.add(listener) }
+    override fun onBytesChanged(listener: (Long, Long) -> Unit) { bytesListeners.add(listener) }
+
+    override fun onNetworkInterfaceCreated(fileDescriptor: android.os.ParcelFileDescriptor) {
+        if (!isRunning) return
+        scope.launch {
+            try {
+                AppLogger.log("SingboxVpnProtocol: Connecting Tun2Socks → Sing-box SS :${com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT}")
+                val json = org.json.JSONObject().apply {
+                    put("host", "127.0.0.1")
+                    put("port", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PORT)
+                    put("password", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_PASSWORD)
+                    put("method", com.carnelia.vpn.core.SingboxCoreManager.LOCAL_METHOD)
+                }
+                val client = shadowsocks.Shadowsocks.newClientFromJSON(json.toString())
+                activeTunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
+                AppLogger.log("SingboxVpnProtocol: Tunnel established!")
+                val uid = android.os.Process.myUid()
+                while (isRunning) {
+                    val rx = android.net.TrafficStats.getUidRxBytes(uid)
+                    val tx = android.net.TrafficStats.getUidTxBytes(uid)
+                    if (rx != bytesReceived || tx != bytesSent) {
+                        bytesReceived = rx; bytesSent = tx
+                        bytesListeners.forEach { it(bytesSent, bytesReceived) }
+                    }
+                    kotlinx.coroutines.delay(2000)
+                }
+            } catch (e: Exception) {
+                AppLogger.error("SingboxVpnProtocol: Tunnel failed", e)
+                stop()
+            }
+        }
+    }
+
+    private fun updateConnectionState(s: ConnectionState) {
+        if (connectionState != s) { connectionState = s; stateListeners.forEach { it(s) } }
+    }
+}
+
+/**
+ * Hysteria2 protocol:
+ *   Hysteria2 binary → SOCKS5 on :10810
+ *   Xray (SS inbound :10808 → SOCKS5 outbound :10810) → Tun2Socks (same as other protocols)
+ */
+class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
+
+    private var connectionState = ConnectionState.DISCONNECTED
+    private var bytesSent = 0L
+    private var bytesReceived = 0L
+    private var activeTunnel: tun2socks.Tunnel? = null
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
+    private var isRunning = false
+    private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
+    private val bytesListeners = mutableListOf<(Long, Long) -> Unit>()
+
+    override suspend fun prepare() = VpnErrorCode.NO_ERROR
+
+    override suspend fun start(config: com.carnelia.vpn.core.VpnServerConfig): VpnErrorCode {
+        updateConnectionState(ConnectionState.CONNECTING)
+        isRunning = true
+        try {
+            // Step 1: Start Hysteria2 — SOCKS5 on port 10810
+            AppLogger.log("Hysteria2VpnProtocol: Starting hysteria2 process...")
+            com.carnelia.vpn.core.Hysteria2ProcessManager.start(context, config)
+
+            // Step 2: Start Xray as SS:10808 → SOCKS5:10810 bridge
+            AppLogger.log("Hysteria2VpnProtocol: Starting Xray SS bridge → Hy2 SOCKS5...")
+            com.carnelia.vpn.core.XrayCoreManager.startCoreAsSocks5Bridge(context)
+
+            // Step 3: Wait for Xray port
+            var waited = 0
+            while (waited < 5000) {
+                try {
+                    withContext(Dispatchers.IO) {
+                        java.net.Socket("127.0.0.1", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT).use {}
+                    }
+                    break
+                } catch (_: Exception) { delay(200); waited += 200 }
+            }
+            updateConnectionState(ConnectionState.CONNECTED)
+            return VpnErrorCode.NO_ERROR
+        } catch (e: Exception) {
+            AppLogger.error("Hysteria2VpnProtocol: Start failed", e)
+            com.carnelia.vpn.core.Hysteria2ProcessManager.stop()
+            com.carnelia.vpn.core.XrayCoreManager.stopCore()
+            updateConnectionState(ConnectionState.ERROR)
+            return VpnErrorCode.CONNECTION_FAILED
+        }
+    }
+
+    override suspend fun stop() {
+        isRunning = false
+        updateConnectionState(ConnectionState.DISCONNECTING)
+        try {
+            activeTunnel?.disconnect(); activeTunnel = null
+            com.carnelia.vpn.core.Hysteria2ProcessManager.stop()
+            com.carnelia.vpn.core.XrayCoreManager.stopCore()
+        } catch (_: Exception) {}
+        scope.cancel()
+        updateConnectionState(ConnectionState.DISCONNECTED)
+    }
+
+    override fun getConnectionState() = connectionState
+    override fun getBytesTransferred() = Pair(bytesSent, bytesReceived)
+    override fun onConnectionStateChanged(l: (ConnectionState) -> Unit) { stateListeners.add(l) }
+    override fun onBytesChanged(l: (Long, Long) -> Unit) { bytesListeners.add(l) }
+
+    override fun onNetworkInterfaceCreated(fileDescriptor: android.os.ParcelFileDescriptor) {
+        if (!isRunning) return
+        scope.launch {
+            try {
+                // Same as XrayVpnProtocol — tun2socks → local Xray SS :10808
+                val jsonConfig = org.json.JSONObject()
+                jsonConfig.put("host", "127.0.0.1")
+                jsonConfig.put("port", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT)
+                jsonConfig.put("password", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PASSWORD)
+                jsonConfig.put("method", com.carnelia.vpn.core.XrayCoreManager.LOCAL_METHOD)
+                val client = shadowsocks.Shadowsocks.newClientFromJSON(jsonConfig.toString())
+                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
+                activeTunnel = tunnel
+                AppLogger.log("Hysteria2VpnProtocol: Tun2Socks tunnel established!")
+                // Stats
+                val uid = android.os.Process.myUid()
+                while (isRunning) {
+                    val rx = android.net.TrafficStats.getUidRxBytes(uid)
+                    val tx = android.net.TrafficStats.getUidTxBytes(uid)
+                    if (rx != bytesReceived || tx != bytesSent) {
+                        bytesReceived = rx; bytesSent = tx
+                        bytesListeners.forEach { it(bytesSent, bytesReceived) }
+                    }
+                    kotlinx.coroutines.delay(2000)
+                }
+            } catch (e: Exception) {
+                AppLogger.error("Hysteria2VpnProtocol: Tunnel failed", e)
+                stop()
+            }
+        }
+    }
+
+    private fun updateConnectionState(s: ConnectionState) {
+        if (connectionState != s) { connectionState = s; stateListeners.forEach { it(s) } }
+    }
+}
+
+/**
+ * Auto-selects the best core engine per protocol:
+ *   Sing-box  → Hysteria2, TUIC, WARP, WireGuard, AmneziaWG (native obfuscation omitted)
+ *   Xray      → VLESS+REALITY/XTLS, VMess, Trojan, Shadowsocks, SOCKS, HTTP
+ *   OpenVPN   → OpenVPN
+ *   Outline   → Outline SDK
  */
 object ProtocolFactory {
+
+    private val SINGBOX_PROTOCOLS = setOf(
+        com.carnelia.vpn.core.VpnProtocol.HYSTERIA2,
+        com.carnelia.vpn.core.VpnProtocol.TUIC,
+        com.carnelia.vpn.core.VpnProtocol.WARP,
+        com.carnelia.vpn.core.VpnProtocol.WIREGUARD,
+        com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG
+    )
+
     fun createProtocol(context: Context, protocol: com.carnelia.vpn.core.VpnProtocol): IVpnProtocol {
-        return when (protocol) {
-            com.carnelia.vpn.core.VpnProtocol.OUTLINE -> OutlineVpnProtocol()
-            
-            com.carnelia.vpn.core.VpnProtocol.SHADOWSOCKS,
-            com.carnelia.vpn.core.VpnProtocol.WIREGUARD,
-            com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG,
-            com.carnelia.vpn.core.VpnProtocol.VLESS,
-            com.carnelia.vpn.core.VpnProtocol.VMESS,
-            com.carnelia.vpn.core.VpnProtocol.SOCKS,
-            com.carnelia.vpn.core.VpnProtocol.HTTP,
-            com.carnelia.vpn.core.VpnProtocol.TROJAN,
-            com.carnelia.vpn.core.VpnProtocol.HYSTERIA2 -> XrayVpnProtocol(context)
-            
-            com.carnelia.vpn.core.VpnProtocol.OPENVPN -> OpenVpnProtocol()
-            
-            else -> XrayVpnProtocol(context) 
+        return when {
+            protocol == com.carnelia.vpn.core.VpnProtocol.OUTLINE -> OutlineVpnProtocol()
+            protocol == com.carnelia.vpn.core.VpnProtocol.OPENVPN -> OpenVpnProtocol()
+            protocol in SINGBOX_PROTOCOLS -> SingboxVpnProtocol(context)
+            else -> XrayVpnProtocol(context) // VLESS, VMess, Trojan, SS, SOCKS, HTTP
         }
     }
 }

@@ -99,6 +99,37 @@ class SubscriptionManager(private val context: Context) {
         } else {
             url
         }
+
+        // Try Happ User-Agent first for happ-sourced URLs, fallback to v2rayNG
+        val isHappSource = url.lowercase().startsWith("happ://")
+        val userAgents = if (isHappSource) listOf(
+            "HappProxy/4.6.0 (com.happproxy; build:2; Android 14; Pixel 9 Build/AP3A.240905.015)",
+            "HappProxy/4.5.0 (Android; arm64-v8a)",
+            "okhttp/4.12.0",
+            "v2rayNG/1.8.0"
+        ) else listOf("v2rayNG/1.8.0")
+
+        for (ua in userAgents) {
+            try {
+                val request = Request.Builder()
+                    .url(resolvedUrl)
+                    .header("User-Agent", ua)
+                    .header("Accept", "application/json, text/plain, */*")
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) return@use
+                    val body = response.body?.string() ?: return@use
+                    // Check if response looks like real server data (not the "Приложение не поддерживается" list)
+                    if (body.isNotBlank() && !body.contains("0.0.0.0") && !body.contains("не поддерживается")) {
+                        AppLogger.log("SubManager: Fetched with UA=$ua (${body.length} bytes)")
+                        return body
+                    }
+                    AppLogger.log("SubManager: UA=$ua returned blocked content, trying next...")
+                }
+            } catch (_: Exception) {}
+        }
+
+        // Final attempt without fake checks
         val request = Request.Builder()
             .url(resolvedUrl)
             .header("User-Agent", "v2rayNG/1.8.0")
@@ -147,7 +178,7 @@ class SubscriptionManager(private val context: Context) {
 
     private fun looksLikeProxyList(s: String): Boolean {
         val proxyPrefixes = listOf("vless://", "vmess://", "ss://", "trojan://",
-            "hysteria2://", "hy2://", "wireguard://", "socks://", "http://", "https://")
+            "hysteria2://", "hy2://", "tuic://", "wireguard://", "socks://", "http://", "https://")
         return s.lines().any { line -> proxyPrefixes.any { line.trimStart().lowercase().startsWith(it) } }
     }
 
@@ -298,6 +329,14 @@ class SubscriptionManager(private val context: Context) {
                         protocol = com.carnelia.vpn.core.VpnProtocol.SHADOWSOCKS, host = server, port = port,
                         config = mapOf("method" to ob.optString("method", "chacha20-ietf-poly1305"), "password" to ob.optString("password")),
                         subscriptionId = subId
+                    )
+                    "tuic" -> com.carnelia.vpn.core.VpnServerConfig(
+                        id = java.util.UUID.randomUUID().toString(), name = tag,
+                        protocol = com.carnelia.vpn.core.VpnProtocol.TUIC, host = server, port = port,
+                        config = mapOf(
+                            "uuid" to ob.optString("uuid"), "password" to ob.optString("password"),
+                            "sni" to server, "alpn" to "h3", "cc" to "bbr", "udp_relay_mode" to "native", "insecure" to "0"
+                        ), subscriptionId = subId
                     )
                     "hysteria2" -> com.carnelia.vpn.core.VpnServerConfig(
                         id = java.util.UUID.randomUUID().toString(), name = tag,

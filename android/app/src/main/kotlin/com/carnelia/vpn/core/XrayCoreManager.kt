@@ -96,6 +96,78 @@ object XrayCoreManager {
         }
     }
 
+    /** Starts Xray as a simple SS:10808 → SOCKS5:10810 bridge for Hysteria2 */
+    suspend fun startCoreAsSocks5Bridge(context: Context) = withContext(Dispatchers.IO) {
+        val nativeLibDir = context.applicationInfo.nativeLibraryDir
+        val executableFile = File(nativeLibDir, "libxray_core.so")
+        if (!executableFile.exists()) throw Exception("Xray binary not found")
+
+        val config = JSONObject().apply {
+            put("log", JSONObject().put("loglevel", "warning"))
+            put("dns", buildDns(context))
+            put("inbounds", JSONArray().put(JSONObject().apply {
+                put("tag", TAG_PROXY)
+                put("port", LOCAL_PORT)
+                put("listen", "127.0.0.1")
+                put("protocol", "shadowsocks")
+                put("settings", JSONObject().apply {
+                    put("method", LOCAL_METHOD)
+                    put("password", LOCAL_PASSWORD)
+                    put("network", "tcp,udp")
+                })
+                put("sniffing", JSONObject().apply {
+                    put("enabled", true)
+                    put("destOverride", JSONArray().put("http").put("tls").put("quic"))
+                })
+            }))
+            put("outbounds", JSONArray().put(JSONObject().apply {
+                put("tag", TAG_PROXY_OUT)
+                put("protocol", "socks")
+                put("settings", JSONObject().apply {
+                    put("servers", JSONArray().put(JSONObject().apply {
+                        put("address", "127.0.0.1")
+                        put("port", 10810) // Hysteria2 SOCKS5 port
+                    }))
+                })
+            }).put(JSONObject().apply {
+                put("tag", TAG_DIRECT)
+                put("protocol", "freedom")
+                put("settings", JSONObject())
+            }).put(JSONObject().apply {
+                put("tag", TAG_BLOCKED)
+                put("protocol", "blackhole")
+                put("settings", JSONObject())
+            }))
+            put("routing", buildRouting(context))
+        }
+
+        val configFile = File(context.filesDir, "xray_config.json")
+        configFile.writeText(config.toString())
+
+        val pb = ProcessBuilder(listOf(executableFile.absolutePath, "-config", configFile.absolutePath))
+        pb.directory(context.filesDir)
+        pb.redirectErrorStream(true)
+        xrayProcess = pb.start()
+
+        streamJob?.cancel()
+        streamJob = xrayScope.launch {
+            try {
+                xrayProcess!!.inputStream.bufferedReader().use { r ->
+                    for (line in r.lineSequence()) {
+                        if (!isActive) break
+                        AppLogger.log("Xray: $line")
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
+        kotlinx.coroutines.delay(300)
+        if (xrayProcess?.isAlive == false) {
+            throw Exception("Xray bridge died immediately")
+        }
+        AppLogger.log("XrayCoreManager: SOCKS5 bridge started (SS:10808 → :10810)")
+    }
+
     fun stopCore() {
         if (xrayProcess != null) {
             AppLogger.log("XrayCoreManager: Stopping process...")
@@ -389,7 +461,7 @@ object XrayCoreManager {
              tls.put("serverName", config.config["sni"] ?: "")
              val fp = config.config["fp"] ?: ""
              if (fp.isNotBlank()) tls.put("fingerprint", fp)
-             tls.put("allowInsecure", config.config["allowInsecure"] == "1")
+             // allowInsecure removed in Xray 25+; skip cert check by omitting pinnedPeerCertSha256
              val alpn = config.config["alpn"] ?: ""
              if (alpn.isNotBlank()) {
                  val alpnArr = JSONArray()
@@ -606,36 +678,32 @@ object XrayCoreManager {
         server.put("port", config.port)
         server.put("password", config.config["password"] ?: "")
 
-        val upMbps = config.config["up_mbps"]?.toIntOrNull() ?: 0
-        val downMbps = config.config["down_mbps"]?.toIntOrNull() ?: 0
-        if (upMbps > 0 || downMbps > 0) {
-            val congestion = JSONObject()
-            congestion.put("type", "bbr")
-            if (upMbps > 0) congestion.put("up_mbps", upMbps)
-            if (downMbps > 0) congestion.put("down_mbps", downMbps)
-            server.put("congestion", congestion)
-        }
-
-        val obfs = config.config["obfs"] ?: ""
-        if (obfs.isNotBlank()) {
+        // Obfs salamander (must be inside server object)
+        val obfsType = config.config["obfs"] ?: ""
+        val obfsPass = config.config["obfs_password"] ?: ""
+        if (obfsType.isNotBlank() && obfsPass.isNotBlank()) {
             val obfsObj = JSONObject()
-            obfsObj.put("type", obfs)
-            val obfsPassword = config.config["obfs_password"] ?: ""
-            if (obfsPassword.isNotBlank()) obfsObj.put("password", obfsPassword)
+            obfsObj.put("type", obfsType)       // "salamander"
+            obfsObj.put("password", obfsPass)
             server.put("obfs", obfsObj)
         }
+
+        // Bandwidth hints (optional)
+        val upMbps = config.config["up_mbps"]?.toIntOrNull() ?: 0
+        val downMbps = config.config["down_mbps"]?.toIntOrNull() ?: 0
+        if (upMbps > 0) server.put("up_mbps", upMbps)
+        if (downMbps > 0) server.put("down_mbps", downMbps)
 
         servers.put(server)
         settings.put("servers", servers)
         outbound.put("settings", settings)
 
+        // Hysteria2 in Xray uses TLS via streamSettings (no network field needed)
         val streamSettings = JSONObject()
-        streamSettings.put("network", "h3")
         streamSettings.put("security", "tls")
         val tls = JSONObject()
         tls.put("serverName", config.config["sni"] ?: config.host)
-        tls.put("allowInsecure", config.config["insecure"] == "1")
-        tls.put("fingerprint", "chrome")
+        // allowInsecure removed in Xray 25+
         streamSettings.put("tlsSettings", tls)
         outbound.put("streamSettings", streamSettings)
     }

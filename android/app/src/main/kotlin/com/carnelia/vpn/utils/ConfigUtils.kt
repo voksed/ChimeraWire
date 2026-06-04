@@ -41,6 +41,7 @@ object ConfigParser {
             lower.startsWith("vmess://") -> parseVmess(trimmed)
             lower.startsWith("trojan://") -> parseTrojan(trimmed)
             lower.startsWith("hysteria2://") || lower.startsWith("hy2://") -> parseHysteria2(trimmed)
+            lower.startsWith("tuic://") -> parseTuic(trimmed)
             // WireGuard / AmneziaWG
             lower.startsWith("wireguard://") -> parseWireguardUri(trimmed)
             lower.startsWith("[interface]") ||
@@ -87,6 +88,7 @@ object ConfigParser {
             lower.startsWith("trojan://") ||
             lower.startsWith("hysteria2://") ||
             lower.startsWith("hy2://") ||
+            lower.startsWith("tuic://") ||
             lower.startsWith("wireguard://")
         ) {
             // URL keys should not contain whitespaces; collapse accidental line breaks/spaces.
@@ -96,7 +98,7 @@ object ConfigParser {
     }
 
     private fun extractFirstSupportedUrl(text: String): String? {
-        val regex = Regex("(?i)(vless|vmess|ss|trojan|hysteria2|hy2|wireguard)://[^\\s\"'<>]+")
+        val regex = Regex("(?i)(vless|vmess|ss|trojan|hysteria2|hy2|tuic|wireguard)://[^\\s\"'<>]+")
         val raw = regex.find(text)?.value ?: return null
         return raw.trimEnd('.', ',', ';', '!', '?', ')', ']', '}', '"', '\'', '»')
     }
@@ -594,6 +596,44 @@ object ConfigParser {
      * Also supports a simple flat JSON:
      * {"private_key":"...","public_key":"...","address":"...","endpoint":"host:port",...}
      */
+    // tuic://[uuid]:[password]@host:port?sni=xxx&alpn=h3&cc=bbr&udp_relay_mode=native#name
+    private fun parseTuic(url: String): VpnServerConfig {
+        try {
+            val uri = Uri.parse(url)
+            val host = uri.host ?: error("TUIC: host missing", "TUIC: нет хоста")
+            val port = uri.port.takeIf { it > 0 } ?: 443
+            val userInfo = uri.userInfo ?: ""
+            val colonIdx = userInfo.indexOf(':')
+            val uuid = if (colonIdx >= 0) userInfo.substring(0, colonIdx) else userInfo
+            val password = if (colonIdx >= 0) userInfo.substring(colonIdx + 1) else ""
+            val name = uri.fragment?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "TUIC Server"
+
+            val params = mutableMapOf<String, String>()
+            uri.queryParameterNames.forEach { k -> uri.getQueryParameter(k)?.let { params[k] = it } }
+
+            return VpnServerConfig(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                protocol = VpnProtocol.TUIC,
+                host = host,
+                port = port,
+                config = mapOf(
+                    "uuid" to uuid,
+                    "password" to password,
+                    "sni" to (params["sni"] ?: host),
+                    "alpn" to (params["alpn"] ?: "h3"),
+                    "cc" to (params["congestion_control"] ?: params["cc"] ?: "bbr"),
+                    "udp_relay_mode" to (params["udp_relay_mode"] ?: "native"),
+                    "insecure" to (params["allow_insecure"] ?: params["insecure"] ?: "0")
+                )
+            )
+        } catch (e: IllegalArgumentException) { throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            error("TUIC parse error: ${e.message}", "Ошибка разбора TUIC: ${e.message}")
+        }
+    }
+
     private fun parseAmneziaJson(jsonStr: String): VpnServerConfig {
         try {
             val root = org.json.JSONObject(jsonStr)

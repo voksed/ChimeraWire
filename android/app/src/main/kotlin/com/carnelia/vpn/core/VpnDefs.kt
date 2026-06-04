@@ -20,7 +20,9 @@ enum class VpnProtocol {
     HTTP,
     IKEV2,
     CLOAK,
-    HYSTERIA2
+    HYSTERIA2,
+    TUIC,
+    WARP
 }
 
 /**

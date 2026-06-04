@@ -236,6 +236,8 @@ fun CarheliaApp(
     // Server List Dialog State
     var showServerList by remember { mutableStateOf(false) }
     var showSubscriptionsDialog by remember { mutableStateOf(false) }
+    var warpLoading by remember { mutableStateOf(false) }
+    var warpError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(showServerList) {
         if (!showServerList) {
@@ -343,6 +345,66 @@ fun CarheliaApp(
                         unselectedTextColor = Color.White
                     )
                 )
+
+                // Cloudflare WARP
+                NavigationDrawerItem(
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("WARP")
+                            if (warpLoading) {
+                                Spacer(Modifier.width(8.dp))
+                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = Color(0xFFFF6600))
+                            }
+                        }
+                    },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        val warpConfig = if (com.carnelia.vpn.core.WarpManager.isRegistered(context)) {
+                            com.carnelia.vpn.core.WarpManager.buildVpnConfig(context)
+                        } else null
+
+                        if (warpConfig != null) {
+                            // Already registered — connect immediately
+                            repository.addServer(warpConfig)
+                            activeConfig = warpConfig
+                            repository.setLastUsedServer(warpConfig)
+                            onConnect(warpConfig)
+                        } else {
+                            // Register first
+                            warpLoading = true
+                            warpError = null
+                            scope.launch {
+                                try {
+                                    val cfg = com.carnelia.vpn.core.WarpManager.register(context)
+                                    repository.addServer(cfg)
+                                    activeConfig = cfg
+                                    repository.setLastUsedServer(cfg)
+                                    onConnect(cfg)
+                                } catch (e: Exception) {
+                                    warpError = e.message
+                                } finally {
+                                    warpLoading = false
+                                }
+                            }
+                        }
+                    },
+                    icon = { Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFFFF6600)) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = Color.White
+                    )
+                )
+
+                if (warpError != null) {
+                    Text(
+                        "WARP: ${warpError}",
+                        color = Color.Red,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                    )
+                }
 
                 // Subscriptions
                 NavigationDrawerItem(

@@ -33,18 +33,29 @@ class ServerRepository(context: Context) {
         val servers = getServers().toMutableList()
         val before = servers.size
         servers.removeAll { config ->
-            val isBroken = config.protocol == com.carnelia.vpn.core.VpnProtocol.VLESS &&
-                (config.config["security"] == "reality" || config.config["security"] == "reality") &&
+            // Filter 1: unreachable host (0.0.0.0 or blank) or bogus port (0 or 1)
+            val isUnreachable = config.host.isBlank() ||
+                config.host == "0.0.0.0" ||
+                config.host == "127.0.0.1" ||
+                config.port <= 1
+            if (isUnreachable) {
+                com.carnelia.vpn.utils.AppLogger.log("Repository: Removed unreachable server '${config.name}' (${config.host}:${config.port})")
+                return@removeAll true
+            }
+
+            // Filter 2: broken VLESS REALITY (invalid publicKey)
+            val isBrokenReality = config.protocol == com.carnelia.vpn.core.VpnProtocol.VLESS &&
+                config.config["security"] == "reality" &&
                 run {
                     val pbk = (config.config["pbk"] ?: config.config["publicKey"] ?: "").trim()
                     pbk.isBlank() || pbk.contains(':') || pbk.contains(' ') ||
                         pbk.length < 30 || pbk.lowercase().startsWith("hash") ||
                         pbk.lowercase().startsWith("placeholder") || pbk.lowercase().startsWith("example")
                 }
-            if (isBroken) {
+            if (isBrokenReality) {
                 com.carnelia.vpn.utils.AppLogger.log("Repository: Removed broken VLESS REALITY server '${config.name}' (invalid publicKey).")
             }
-            isBroken
+            isBrokenReality
         }
         if (servers.size != before) {
             saveServers(servers)
