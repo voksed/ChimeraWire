@@ -76,6 +76,7 @@ import androidx.compose.foundation.Image
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.activity.result.ActivityResultLauncher
+import com.carnelia.vpn.ui.rememberWindowSize
 
 class MainActivity : ComponentActivity() {
 
@@ -350,9 +351,7 @@ fun CarheliaApp(
                     label = { Text("Black Wall") },
                     selected = false,
                     onClick = {
-                        context.startActivity(
-                            Intent(context, SettingsActivity::class.java).putExtra("page", "black_wall")
-                        )
+                        context.startActivity(Intent(context, BlackWallActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
                     icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (blackWallActive) Color(0xFF00AAFF) else Color.White) },
@@ -395,6 +394,7 @@ fun CarheliaApp(
                         unselectedTextColor = Color.White
                     )
                 )
+
             }
         }
     ) {
@@ -441,6 +441,8 @@ fun CarheliaApp(
             },
             containerColor = Color(0xFF0A0A0A)
         ) { paddingValues ->
+            val windowSize = rememberWindowSize()
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -451,129 +453,111 @@ fun CarheliaApp(
                     )
                     .padding(paddingValues)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // 1. Connection Status Text (Small & Clean)
-                    Text(
-                        text = when (connectionState) {
-                            ConnectionState.CONNECTED -> stringResource(R.string.status_secured)
-                            ConnectionState.CONNECTING -> stringResource(R.string.status_connecting)
-                            ConnectionState.RECONNECTING -> stringResource(R.string.status_switching)
-                            else -> stringResource(R.string.status_not_protected)
-                        },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = when (connectionState) {
-                            ConnectionState.CONNECTED -> Color(0xFF00FF00)
-                            ConnectionState.RECONNECTING -> Color(0xFFFFAA00)
-                            ConnectionState.ERROR -> Color(0xFFFF1744)
-                            else -> Color.Gray
-                        },
-                        letterSpacing = 1.sp
-                    )
-                    if (connectionState == ConnectionState.CONNECTED) {
-                        Text(text = connectionDuration, fontSize = 24.sp, fontWeight = FontWeight.Light, color = Color.White, modifier = Modifier.padding(top = 8.dp))
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // 2. Central Connect Button (Circular Modern Look)
-                    Box(
-                        modifier = Modifier
-                            .size(200.dp)
-                            .shadow(24.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = if (connectionState == ConnectionState.CONNECTED) {
-                                         if (currentTheme == AppTheme.TON) listOf(Color(0xFF0088CC), Color(0xFF003D5C))
-                                         else listOf(Color(0xFFFF1744), Color(0xFFB71C1C))
-                                    } else {
-                                        listOf(Color(0xFF2C2C2C), Color(0xFF1A1A1A))
-                                    }
-                                )
-                            )
-                            .clickable {
-                                if (connectionState == ConnectionState.CONNECTED) {
-                                    onDisconnect()
-                                } else {
-                                    val server = activeConfig ?: repository.getServers().firstOrNull()
-                                    if (server != null) {
-                                        onConnect(server)
-                                    } else {
-                                        showServerList = true
-                                    }
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PowerSettingsNew,
-                            contentDescription = "Connect",
-                            modifier = Modifier.size(80.dp),
-                            tint = Color.White.copy(alpha = if(connectionState == ConnectionState.CONNECTED) 1f else 0.5f)
-                        )
-                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .border(4.dp, 
-                                    if (connectionState == ConnectionState.CONNECTED) Color.White.copy(alpha=0.2f)
-                                    else Color.White.copy(alpha=0.1f), 
-                                    CircleShape
-                                )
-                         )
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // 3. Stats Row (Minimalist)
+                if (windowSize.isLandscape) {
+                    // ── Landscape / Tablet landscape: two-column layout ──
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                             Icon(Icons.Default.ArrowDownward, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-                             Text(formatBytes(stats.bytesReceived), color = Color.White, fontSize = 12.sp)
-                         }
-                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                             Icon(Icons.Default.ArrowUpward, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-                             Text(formatBytes(stats.bytesSent), color = Color.White, fontSize = 12.sp)
-                         }
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // 4. Server Selection Pill
-                    Surface(
-                         onClick = { showServerList = true },
-                         shape = RoundedCornerShape(50),
-                         color = Color(0xFF1F1F1F),
-                         border = BorderStroke(1.dp, Color(0xFF333333)),
-                         modifier = Modifier.height(56.dp).fillMaxWidth().padding(bottom = 16.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                        // Left pane: connect button + stats
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Box(modifier = Modifier.size(8.dp).background(
-                                color = if(activeConfig != null) Color.Green else Color.Red,
-                                shape = CircleShape
-                            ))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                activeConfig?.name ?: stringResource(R.string.select_server_btn),
-                                color = Color.White,
-                                modifier = Modifier.weight(1f)
+                            ConnectButton(
+                                connectionState = connectionState,
+                                currentTheme = currentTheme,
+                                buttonSize = windowSize.connectButtonDp,
+                                onConnect = {
+                                    val server = activeConfig ?: repository.getServers().firstOrNull()
+                                    if (server != null) onConnect(server) else showServerList = true
+                                },
+                                onDisconnect = onDisconnect
                             )
-                            Icon(Icons.Default.KeyboardArrowUp, null, tint = Color.Gray)
+                            Spacer(modifier = Modifier.height(20.dp))
+                            StatsRow(stats = stats)
+                        }
+
+                        // Right pane: status + duration + server picker
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            ConnectionStatusText(connectionState = connectionState)
+                            if (connectionState == ConnectionState.CONNECTED) {
+                                Text(
+                                    text = connectionDuration,
+                                    fontSize = if (windowSize.isTablet) 32.sp else 22.sp,
+                                    fontWeight = FontWeight.Light,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(32.dp))
+                            }
+                            ServerPickerPill(
+                                activeConfig = activeConfig,
+                                onClick = { showServerList = true }
+                            )
                         }
                     }
+                } else {
+                    // ── Portrait: original single-column layout ──
+                    val hPadding = if (windowSize.isTablet) 48.dp else 24.dp
+                    Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = hPadding, vertical = 24.dp)
+                            .then(
+                                if (windowSize.isTablet)
+                                    Modifier.widthIn(max = 480.dp).align(Alignment.Center)
+                                else Modifier.fillMaxSize()
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        ConnectionStatusText(connectionState = connectionState)
+
+                        if (connectionState == ConnectionState.CONNECTED) {
+                            Text(
+                                text = connectionDuration,
+                                fontSize = if (windowSize.isTablet) 32.sp else 24.sp,
+                                fontWeight = FontWeight.Light,
+                                color = Color.White,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        ConnectButton(
+                            connectionState = connectionState,
+                            currentTheme = currentTheme,
+                            buttonSize = windowSize.connectButtonDp,
+                            onConnect = {
+                                val server = activeConfig ?: repository.getServers().firstOrNull()
+                                if (server != null) onConnect(server) else showServerList = true
+                            },
+                            onDisconnect = onDisconnect
+                        )
+
+                        Spacer(modifier = Modifier.height(32.dp))
+                        StatsRow(stats = stats)
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        ServerPickerPill(
+                            activeConfig = activeConfig,
+                            onClick = { showServerList = true }
+                        )
+                    }
+                    } // end Box (tablet portrait centering)
                 }
             }
         }
@@ -600,6 +584,121 @@ fun formatBytes(bytes: Long): String {
          bytes < 1024 -> "$bytes B"
         bytes < 1024 * 1024 -> "${bytes / 1024} KB"
         else -> String.format("%.1f MB", bytes / (1024 * 1024.0))
+    }
+}
+
+// ── Reusable connect-screen sub-composables ────────────────────────────────
+
+@Composable
+fun ConnectionStatusText(connectionState: ConnectionState) {
+    Text(
+        text = when (connectionState) {
+            ConnectionState.CONNECTED    -> stringResource(R.string.status_secured)
+            ConnectionState.CONNECTING   -> stringResource(R.string.status_connecting)
+            ConnectionState.RECONNECTING -> stringResource(R.string.status_switching)
+            else -> stringResource(R.string.status_not_protected)
+        },
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        color = when (connectionState) {
+            ConnectionState.CONNECTED    -> Color(0xFF00FF00)
+            ConnectionState.RECONNECTING -> Color(0xFFFFAA00)
+            ConnectionState.ERROR        -> Color(0xFFFF1744)
+            else -> Color.Gray
+        },
+        letterSpacing = 1.sp
+    )
+}
+
+@Composable
+fun ConnectButton(
+    connectionState: ConnectionState,
+    currentTheme: AppTheme,
+    buttonSize: androidx.compose.ui.unit.Dp,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit
+) {
+    val iconSize = (buttonSize.value * 0.4f).dp
+    Box(
+        modifier = Modifier
+            .size(buttonSize)
+            .shadow(24.dp, CircleShape)
+            .clip(CircleShape)
+            .background(
+                brush = Brush.radialGradient(
+                    colors = if (connectionState == ConnectionState.CONNECTED) {
+                        if (currentTheme == AppTheme.TON) listOf(Color(0xFF0088CC), Color(0xFF003D5C))
+                        else listOf(Color(0xFFFF1744), Color(0xFFB71C1C))
+                    } else {
+                        listOf(Color(0xFF2C2C2C), Color(0xFF1A1A1A))
+                    }
+                )
+            )
+            .clickable { if (connectionState == ConnectionState.CONNECTED) onDisconnect() else onConnect() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.PowerSettingsNew,
+            contentDescription = "Connect",
+            modifier = Modifier.size(iconSize),
+            tint = Color.White.copy(alpha = if (connectionState == ConnectionState.CONNECTED) 1f else 0.5f)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(4.dp,
+                    if (connectionState == ConnectionState.CONNECTED) Color.White.copy(alpha = 0.2f)
+                    else Color.White.copy(alpha = 0.1f),
+                    CircleShape
+                )
+        )
+    }
+}
+
+@Composable
+fun StatsRow(stats: com.carnelia.vpn.core.VpnStats) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 32.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.ArrowDownward, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+            Text(formatBytes(stats.bytesReceived), color = Color.White, fontSize = 12.sp)
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.ArrowUpward, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+            Text(formatBytes(stats.bytesSent), color = Color.White, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+fun ServerPickerPill(activeConfig: com.carnelia.vpn.core.VpnServerConfig?, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = Color(0xFF1F1F1F),
+        border = BorderStroke(1.dp, Color(0xFF333333)),
+        modifier = Modifier.height(56.dp).fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
+            Box(modifier = Modifier.size(8.dp).background(
+                color = if (activeConfig != null) Color.Green else Color.Red,
+                shape = CircleShape
+            ))
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                activeConfig?.name ?: stringResource(R.string.select_server_btn),
+                color = Color.White,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(Icons.Default.KeyboardArrowUp, null, tint = Color.Gray)
+        }
     }
 }
 
