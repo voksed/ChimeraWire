@@ -37,6 +37,7 @@ object ConfigParser {
 
         return when {
             lower.startsWith("ss://") -> parseShadowsocks(trimmed)
+            lower.startsWith("ss2022://") -> parseShadowsocks2022(trimmed)
             lower.startsWith("vless://") -> parseVless(trimmed)
             lower.startsWith("vmess://") -> parseVmess(trimmed)
             lower.startsWith("trojan://") -> parseTrojan(trimmed)
@@ -85,6 +86,7 @@ object ConfigParser {
             lower.startsWith("vless://") ||
             lower.startsWith("vmess://") ||
             lower.startsWith("ss://") ||
+            lower.startsWith("ss2022://") ||
             lower.startsWith("trojan://") ||
             lower.startsWith("hysteria2://") ||
             lower.startsWith("hy2://") ||
@@ -98,7 +100,7 @@ object ConfigParser {
     }
 
     private fun extractFirstSupportedUrl(text: String): String? {
-        val regex = Regex("(?i)(vless|vmess|ss|trojan|hysteria2|hy2|tuic|wireguard)://[^\\s\"'<>]+")
+        val regex = Regex("(?i)(vless|vmess|ss2022|ss|trojan|hysteria2|hy2|tuic|wireguard)://[^\\s\"'<>]+")
         val raw = regex.find(text)?.value ?: return null
         return raw.trimEnd('.', ',', ';', '!', '?', ')', ']', '}', '"', '\'', '»')
     }
@@ -250,6 +252,35 @@ object ConfigParser {
         } catch (e: Exception) {
             e.printStackTrace()
             error("Shadowsocks error: ${e.message}", "Ошибка Shadowsocks: ${e.message}")
+        }
+    }
+
+    /**
+     * Shadowsocks 2022 (AEAD-2022) format:
+     * ss2022://method:password@host:port#name
+     * or ss2022://base64(method:password)@host:port#name
+     * Supported methods: 2022-blake3-aes-128-gcm, 2022-blake3-aes-256-gcm, 2022-blake3-chacha20-poly1305
+     */
+    private fun parseShadowsocks2022(url: String): VpnServerConfig {
+        try {
+            // Normalize to ss:// for common parsing, then override protocol
+            val normalized = "ss://" + url.substring("ss2022://".length)
+            val base = parseShadowsocks(normalized)
+            val method = base.config["method"] ?: ""
+            // Validate it's a 2022 cipher, otherwise treat as regular SS
+            val is2022 = method.startsWith("2022-") || method.contains("blake3")
+            return base.copy(
+                protocol = VpnProtocol.SHADOWSOCKS,
+                config = base.config.toMutableMap().apply {
+                    put("method", if (is2022) method else "2022-blake3-aes-256-gcm")
+                    put("ss2022", "true")
+                }
+            )
+        } catch (e: IllegalArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            error("SS2022 parse error: ${e.message}", "Ошибка разбора SS2022: ${e.message}")
         }
     }
 

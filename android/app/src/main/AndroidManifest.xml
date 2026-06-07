@@ -226,6 +226,12 @@
             android:theme="@style/Theme.CarheliaVPN"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
 
+        <activity
+            android:name=".LeakTestActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
         <service
             android:name=".service.GeoSpoofService"
             android:exported="false"

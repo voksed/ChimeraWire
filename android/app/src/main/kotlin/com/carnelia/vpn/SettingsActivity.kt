@@ -51,6 +51,7 @@ import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.LogLevel
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.launch
+import com.carnelia.vpn.ui.rememberWindowSize
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -98,7 +99,8 @@ enum class SettingsPage {
     TUNNEL,
     LANGUAGE,
     DONATION,
-    SUBSCRIPTIONS
+    SUBSCRIPTIONS,
+    PRIVACY_POLICY
 }
 
 @Composable
@@ -136,6 +138,7 @@ fun SettingsScreen(startPage: String? = null) {
                                 SettingsPage.LANGUAGE -> stringResource(R.string.language_title)
                                 SettingsPage.DONATION -> stringResource(R.string.donation_section_title)
                                 SettingsPage.SUBSCRIPTIONS -> stringResource(R.string.subscriptions_title)
+                                SettingsPage.PRIVACY_POLICY -> "Политика конфиденциальности"
                             },  
                             color = MaterialTheme.colorScheme.onSurface
                         ) 
@@ -162,14 +165,17 @@ fun SettingsScreen(startPage: String? = null) {
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
-                when(currentScreen) {
+            val windowSize = rememberWindowSize()
+
+            @Composable
+            fun DetailContent() {
+                when (currentScreen) {
                     SettingsPage.MAIN -> MainSettingsMenu(
                         context = context,
                         onNavigate = { page -> currentScreen = page }
                     )
                     SettingsPage.APPEARANCE -> AppearanceSettings(
-                        themeIndex = themeIndex, 
+                        themeIndex = themeIndex,
                         onThemeChange = { newIndex ->
                             themeIndex = newIndex
                             PrefsManager.setThemeIndex(context, newIndex)
@@ -183,6 +189,80 @@ fun SettingsScreen(startPage: String? = null) {
                     SettingsPage.LANGUAGE -> LanguageSettings(context) { currentScreen = SettingsPage.MAIN }
                     SettingsPage.DONATION -> DonationSettings(context)
                     SettingsPage.SUBSCRIPTIONS -> SubscriptionsSettings(context)
+                    SettingsPage.PRIVACY_POLICY -> PrivacyPolicyScreen(onBack = { currentScreen = SettingsPage.MAIN })
+                }
+            }
+
+            if (windowSize.useTwoPane) {
+                // ── Tablet: permanent two-pane (nav list | detail) ──
+                Row(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+                    // Left nav panel
+                    Column(
+                        modifier = Modifier
+                            .width(if (windowSize.isLargeTablet) 300.dp else 260.dp)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        val pages = listOf(
+                            Triple(SettingsPage.APPEARANCE,       Icons.Default.Palette,   stringResource(R.string.appearance_section)),
+                            Triple(SettingsPage.TUNNEL,           Icons.Default.Tune,      stringResource(R.string.tunnel_settings_section)),
+                            Triple(SettingsPage.SECURITY,         Icons.Default.Security,  stringResource(R.string.security_section)),
+                            Triple(SettingsPage.CONNECTION,       Icons.Default.Wifi,      stringResource(R.string.connection_section)),
+                            Triple(SettingsPage.AUTO_CONNECT,     Icons.Default.Bolt,      stringResource(R.string.smart_auto_connect_title)),
+                            Triple(SettingsPage.CENSORSHIP_BYPASS,Icons.Default.VpnLock,  stringResource(R.string.bypass_advanced_section)),
+                            Triple(SettingsPage.DONATION,         Icons.Default.Favorite,  stringResource(R.string.donate_dev_title)),
+                            Triple(SettingsPage.LANGUAGE,         Icons.Default.Language,  stringResource(R.string.language_title)),
+                            Triple(SettingsPage.SUBSCRIPTIONS,    Icons.Default.Refresh,    stringResource(R.string.subscriptions_title)),
+                            Triple(SettingsPage.PRIVACY_POLICY,   Icons.Default.PrivacyTip, "Конфиденциальность"),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        pages.forEach { (page, icon, label) ->
+                            val isSelected = currentScreen == page
+                            NavigationDrawerItem(
+                                label = { Text(label, fontSize = 14.sp) },
+                                selected = isSelected,
+                                icon = { Icon(icon, contentDescription = null) },
+                                onClick = { currentScreen = page },
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurface,
+                                )
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    VerticalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    // Right detail panel
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        if (currentScreen == SettingsPage.MAIN) {
+                            // On tablet, MAIN just shows placeholder — user selects from nav
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Default.Settings, contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                                Spacer(Modifier.height(12.dp))
+                                Text(stringResource(R.string.settings_title),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                    fontSize = 16.sp)
+                            }
+                        } else {
+                            DetailContent()
+                        }
+                    }
+                }
+            } else {
+                // ── Phone: original single-pane ──
+                Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+                    DetailContent()
                 }
             }
         }
@@ -250,6 +330,18 @@ fun MainSettingsMenu(
             onClick = { onNavigate(SettingsPage.DONATION) }
         )
 
+        // Backup & Restore
+        var showBackupDialog by remember { mutableStateOf(false) }
+        if (showBackupDialog) {
+            BackupDialog(context = context, onDismiss = { showBackupDialog = false })
+        }
+        SettingsCategoryItem(
+            icon = Icons.Default.SaveAlt,
+            title = stringResource(R.string.backup_section_title),
+            description = stringResource(R.string.backup_section_desc),
+            onClick = { showBackupDialog = true }
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
         HorizontalDivider(color = Color(0xFF2C2C2C))
         Spacer(modifier = Modifier.height(24.dp))
@@ -268,7 +360,16 @@ fun MainSettingsMenu(
             title = stringResource(R.string.show_app_logs),
             onClick = { context.startActivity(Intent(context, LogsActivity::class.java)) }
         )
-        
+
+        SettingsCategoryItem(
+            icon = Icons.Default.PrivacyTip,
+            title = "Политика конфиденциальности",
+            description = "Что мы собираем (спойлер: ничего)",
+            onClick = {
+                context.startActivity(Intent(context, PrivacyPolicyActivity::class.java))
+            }
+        )
+
         // Report Bug
         Button(
             onClick = { SettingsActivity.reportBug(context) },
@@ -1822,4 +1923,108 @@ fun NoiseModeSettings(context: Context) {
             }
         }
     }
+}
+
+@Composable
+fun BackupDialog(context: Context, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var password by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf<String?>(null) }
+    var isWorking by remember { mutableStateOf(false) }
+    val accentColor = MaterialTheme.colorScheme.primary
+
+    val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null && password.length >= 4) {
+            scope.launch {
+                isWorking = true
+                val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.carnelia.vpn.data.SecureBackupManager.exportToUri(context, uri, password)
+                }
+                isWorking = false
+                status = if (result.error != null) context.getString(R.string.backup_error, result.error)
+                         else context.getString(R.string.backup_exported_count, result.count)
+            }
+        }
+    }
+
+    val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null && password.length >= 4) {
+            scope.launch {
+                isWorking = true
+                val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.carnelia.vpn.data.SecureBackupManager.importFromUri(context, uri, password)
+                }
+                isWorking = false
+                status = if (result.error != null) context.getString(R.string.backup_error, result.error)
+                         else context.getString(R.string.backup_imported_count, result.count)
+            }
+        }
+    }
+
+    val strPasswordMin = stringResource(R.string.backup_password_min)
+    val strExportedFmt = stringResource(R.string.backup_exported_count)
+    val strImportedFmt = stringResource(R.string.backup_imported_count)
+    val strErrorFmt = stringResource(R.string.backup_error)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.backup_dialog_title), color = MaterialTheme.colorScheme.onSurface) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.backup_dialog_desc), color = Color.Gray, fontSize = 12.sp)
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it; status = null },
+                    label = { Text(stringResource(R.string.backup_password_label)) },
+                    singleLine = true,
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    enabled = !isWorking,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = accentColor,
+                        unfocusedBorderColor = Color(0xFF555555),
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                if (isWorking) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = accentColor)
+                }
+                status?.let { msg ->
+                    Text(msg, color = if (msg.startsWith("Error") || msg.startsWith("Ошибка")) Color.Red else Color(0xFF00CC66), fontSize = 12.sp)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            if (password.length >= 4) {
+                                val sdf = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US)
+                                exportLauncher.launch("carnelia_${sdf.format(java.util.Date())}.carnelia")
+                            } else status = strPasswordMin
+                        },
+                        enabled = !isWorking,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A3A1A))
+                    ) { Text(stringResource(R.string.backup_export_action), fontSize = 13.sp) }
+                    Button(
+                        onClick = {
+                            if (password.length >= 4) {
+                                importLauncher.launch(arrayOf("application/octet-stream", "*/*"))
+                            } else status = strPasswordMin
+                        },
+                        enabled = !isWorking,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1A3A))
+                    ) { Text(stringResource(R.string.backup_import_action), fontSize = 13.sp) }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close_button), color = Color.Gray) }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
+    )
 }

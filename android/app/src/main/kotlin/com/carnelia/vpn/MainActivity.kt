@@ -11,7 +11,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Security
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +79,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.activity.result.ActivityResultLauncher
 import com.carnelia.vpn.ui.rememberWindowSize
+import com.carnelia.vpn.utils.UpdateManager
+import com.carnelia.vpn.ui.RealityScannerDialog
+import com.carnelia.vpn.core.VpnProtocol
 
 class MainActivity : ComponentActivity() {
 
@@ -224,7 +229,25 @@ fun CarheliaApp(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val primary = MaterialTheme.colorScheme.primary
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val background = MaterialTheme.colorScheme.background
+    val surface = MaterialTheme.colorScheme.surface
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onBackground = MaterialTheme.colorScheme.onBackground
+    val outline = MaterialTheme.colorScheme.outline
+    val isDark = currentTheme.isDark
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    // Update check
+    var updateInfo by remember { mutableStateOf<UpdateManager.UpdateInfo?>(null) }
+    LaunchedEffect(Unit) {
+        updateInfo = UpdateManager.checkForUpdate()
+    }
+    updateInfo?.let { info ->
+        UpdateDialog(info = info, onDismiss = { updateInfo = null })
+    }
 
     // Data
     val connectionState by VpnGlobalState.connectionState.collectAsState()
@@ -316,17 +339,17 @@ fun CarheliaApp(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = Color(0xFF1A1A1A),
-                drawerContentColor = Color.White
+                drawerContainerColor = surface,
+                drawerContentColor = onSurface
             ) {
                 Spacer(Modifier.height(24.dp))
                 Text(
                     stringResource(R.string.menu_title),
                     modifier = Modifier.padding(start = 24.dp, bottom = 16.dp),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = primary
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = Color(0xFF333333))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = outline)
                 Spacer(Modifier.height(16.dp))
                 
                 // Settings
@@ -337,11 +360,11 @@ fun CarheliaApp(
                         context.startActivity(Intent(context, SettingsActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null, tint = Color.White) },
+                    icon = { Icon(Icons.Default.Tune, contentDescription = null, tint = onSurface) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = Color.White
+                        unselectedTextColor = onSurface
                     )
                 )
 
@@ -354,12 +377,12 @@ fun CarheliaApp(
                         context.startActivity(Intent(context, BlackWallActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (blackWallActive) Color(0xFF00AAFF) else Color.White) },
+                    icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (blackWallActive) Color(0xFF00AAFF) else onSurface) },
                     badge = if (blackWallActive) {{ Text(com.carnelia.vpn.core.BlackWallEngine.getLevel(context).label, fontSize = 10.sp, color = Color(0xFF00AAFF)) }} else null,
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = Color.White
+                        unselectedTextColor = onSurface
                     )
                 )
 
@@ -371,11 +394,27 @@ fun CarheliaApp(
                         showSubscriptionsDialog = true
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White) },
+                    icon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = onSurface) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = Color.White
+                        unselectedTextColor = onSurface
+                    )
+                )
+
+                // Leak Test
+                NavigationDrawerItem(
+                    label = { Text(stringResource(R.string.leak_test_title)) },
+                    selected = false,
+                    onClick = {
+                        context.startActivity(Intent(context, LeakTestActivity::class.java))
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Security, contentDescription = null, tint = onSurface) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = onSurface
                     )
                 )
 
@@ -387,11 +426,11 @@ fun CarheliaApp(
                         context.startActivity(Intent(context, GeoSpoofActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White) },
+                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = onSurface) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = Color.White
+                        unselectedTextColor = onSurface
                     )
                 )
 
@@ -405,41 +444,34 @@ fun CarheliaApp(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (currentTheme == AppTheme.TON) stringResource(R.string.ton_vpn_title) else stringResource(R.string.carnelia_vpn_title),
+                            text = stringResource(R.string.carnelia_vpn_title),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 2.sp,
-                            color = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFFF1744)
+                            color = primary
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFFF1744)
-                            )
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = primary)
                         }
                     },
                     actions = {
-                        // Share Button integrated in header
                         val canShare = activeConfig != null
                         if (canShare) {
                             IconButton(onClick = {
-                                shareContent = "${activeConfig?.protocol?.name?.lowercase()}://${activeConfig?.host}:${activeConfig?.port}" 
+                                shareContent = "${activeConfig?.protocol?.name?.lowercase()}://${activeConfig?.host}:${activeConfig?.port}"
                                 showShareDialog = true
                             }) {
-                                Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_tooltip), tint = Color.White)
+                                Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_tooltip), tint = onBackground)
                             }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF0A0A0A)
-                    ),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = background),
                     modifier = Modifier.shadow(elevation = 8.dp)
                 )
             },
-            containerColor = Color(0xFF0A0A0A)
+            containerColor = background
         ) { paddingValues ->
             val windowSize = rememberWindowSize()
 
@@ -447,8 +479,10 @@ fun CarheliaApp(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color(0xFF1A1A1A), Color(0xFF0A0A0A))
+                        brush = if (isDark) Brush.verticalGradient(
+                            colors = listOf(surfaceVariant, background)
+                        ) else Brush.verticalGradient(
+                            colors = listOf(background, background)
                         )
                     )
                     .padding(paddingValues)
@@ -495,7 +529,7 @@ fun CarheliaApp(
                                     text = connectionDuration,
                                     fontSize = if (windowSize.isTablet) 32.sp else 22.sp,
                                     fontWeight = FontWeight.Light,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
                                 )
                             } else {
@@ -530,7 +564,7 @@ fun CarheliaApp(
                                 text = connectionDuration,
                                 fontSize = if (windowSize.isTablet) 32.sp else 24.sp,
                                 fontWeight = FontWeight.Light,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.padding(top = 8.dp)
                             )
                         }
@@ -565,16 +599,38 @@ fun CarheliaApp(
 }
 
 @Composable
+fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.update_available_title, info.version), color = Color.White) },
+        text = {
+            Column {
+                Text(stringResource(R.string.update_current_version, "2.4.2"), color = Color.Gray, fontSize = 12.sp)
+                if (info.changelog.isNotBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(info.changelog, color = Color(0xFFCCCCCC), fontSize = 12.sp, maxLines = 8)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                UpdateManager.openDownload(context, info.downloadUrl)
+                onDismiss()
+            }) { Text(stringResource(R.string.update_action), color = Color(0xFFFF1744)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_later), color = Color.Gray) }
+        },
+        containerColor = Color(0xFF1A1A1A)
+    )
+}
+
+@Composable
 fun StatBox(label: String, value: String, currentTheme: AppTheme) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        Text(
-            label, 
-            fontSize = 11.sp, 
-            color = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFCC0000), 
-            fontWeight = FontWeight.Bold, 
-            letterSpacing = 1.sp
-        )
+        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     }
 }
 
@@ -601,10 +657,10 @@ fun ConnectionStatusText(connectionState: ConnectionState) {
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
         color = when (connectionState) {
-            ConnectionState.CONNECTED    -> Color(0xFF00FF00)
+            ConnectionState.CONNECTED    -> Color(0xFF00CC66)
             ConnectionState.RECONNECTING -> Color(0xFFFFAA00)
-            ConnectionState.ERROR        -> Color(0xFFFF1744)
-            else -> Color.Gray
+            ConnectionState.ERROR        -> MaterialTheme.colorScheme.error
+            else -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
         },
         letterSpacing = 1.sp
     )
@@ -618,69 +674,86 @@ fun ConnectButton(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit
 ) {
+    val primary = MaterialTheme.colorScheme.primary
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val surface = MaterialTheme.colorScheme.surface
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
     val iconSize = (buttonSize.value * 0.4f).dp
+    val isConnected = connectionState == ConnectionState.CONNECTED
+    val isDarkTheme = currentTheme.isDark
+
     Box(
-        modifier = Modifier
-            .size(buttonSize)
-            .shadow(24.dp, CircleShape)
-            .clip(CircleShape)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = if (connectionState == ConnectionState.CONNECTED) {
-                        if (currentTheme == AppTheme.TON) listOf(Color(0xFF0088CC), Color(0xFF003D5C))
-                        else listOf(Color(0xFFFF1744), Color(0xFFB71C1C))
-                    } else {
-                        listOf(Color(0xFF2C2C2C), Color(0xFF1A1A1A))
-                    }
-                )
-            )
-            .clickable { if (connectionState == ConnectionState.CONNECTED) onDisconnect() else onConnect() },
+        modifier = Modifier.size(buttonSize),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.PowerSettingsNew,
-            contentDescription = "Connect",
-            modifier = Modifier.size(iconSize),
-            tint = Color.White.copy(alpha = if (connectionState == ConnectionState.CONNECTED) 1f else 0.5f)
-        )
+        // Outer ring for glow effect on dark themes
+        if (isDarkTheme) {
+            Box(
+                modifier = Modifier
+                    .size(buttonSize)
+                    .clip(CircleShape)
+                    .background(primary.copy(alpha = if (isConnected) 0.15f else 0.07f))
+            )
+        }
+        // Main button
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .border(4.dp,
-                    if (connectionState == ConnectionState.CONNECTED) Color.White.copy(alpha = 0.2f)
-                    else Color.White.copy(alpha = 0.1f),
-                    CircleShape
+                .size(buttonSize - 8.dp)
+                .clip(CircleShape)
+                .background(
+                    when {
+                        isConnected -> primary
+                        isDarkTheme -> surfaceVariant
+                        else -> primary.copy(alpha = 0.1f)
+                    }
                 )
-        )
+                .border(
+                    width = if (isConnected) 0.dp else 2.dp,
+                    color = if (isConnected) Color.Transparent else primary.copy(alpha = 0.6f),
+                    shape = CircleShape
+                )
+                .clickable { if (isConnected) onDisconnect() else onConnect() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.PowerSettingsNew,
+                contentDescription = "Connect",
+                modifier = Modifier.size(iconSize),
+                tint = if (isConnected) onPrimary else primary.copy(alpha = 0.85f)
+            )
+        }
     }
 }
 
 @Composable
 fun StatsRow(stats: com.carnelia.vpn.core.VpnStats) {
+    val onBg = MaterialTheme.colorScheme.onBackground
     Row(
-        modifier = Modifier
-            .padding(horizontal = 32.dp)
-            .fillMaxWidth(),
+        modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.ArrowDownward, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-            Text(formatBytes(stats.bytesReceived), color = Color.White, fontSize = 12.sp)
+            Icon(Icons.Default.ArrowDownward, null, tint = onBg.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
+            Text(formatBytes(stats.bytesReceived), color = onBg, fontSize = 12.sp)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.ArrowUpward, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-            Text(formatBytes(stats.bytesSent), color = Color.White, fontSize = 12.sp)
+            Icon(Icons.Default.ArrowUpward, null, tint = onBg.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
+            Text(formatBytes(stats.bytesSent), color = onBg, fontSize = 12.sp)
         }
     }
 }
 
 @Composable
 fun ServerPickerPill(activeConfig: com.carnelia.vpn.core.VpnServerConfig?, onClick: () -> Unit) {
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val outline = MaterialTheme.colorScheme.outline
+    val onSurface = MaterialTheme.colorScheme.onSurface
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(50),
-        color = Color(0xFF1F1F1F),
-        border = BorderStroke(1.dp, Color(0xFF333333)),
+        color = surfaceVariant,
+        border = BorderStroke(1.dp, outline),
         modifier = Modifier.height(56.dp).fillMaxWidth()
     ) {
         Row(
@@ -688,16 +761,16 @@ fun ServerPickerPill(activeConfig: com.carnelia.vpn.core.VpnServerConfig?, onCli
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             Box(modifier = Modifier.size(8.dp).background(
-                color = if (activeConfig != null) Color.Green else Color.Red,
+                color = if (activeConfig != null) Color(0xFF00CC66) else MaterialTheme.colorScheme.error,
                 shape = CircleShape
             ))
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 activeConfig?.name ?: stringResource(R.string.select_server_btn),
-                color = Color.White,
+                color = onSurface,
                 modifier = Modifier.weight(1f)
             )
-            Icon(Icons.Default.KeyboardArrowUp, null, tint = Color.Gray)
+            Icon(Icons.Default.KeyboardArrowUp, null, tint = onSurface.copy(alpha = 0.5f))
         }
     }
 }
@@ -953,6 +1026,20 @@ fun ServerSelectionDialog(
     var showManualAdd by remember { mutableStateOf(false) }
     var serverToRename by remember { mutableStateOf<VpnServerConfig?>(null) }
     var renameText by remember { mutableStateOf("") }
+    var serverToScan by remember { mutableStateOf<VpnServerConfig?>(null) }
+
+    serverToScan?.let { scanServer ->
+        RealityScannerDialog(
+            server = scanServer,
+            repository = repository,
+            onDismiss = { serverToScan = null },
+            onApplied = { updated ->
+                servers = repository.getServers()
+                if (activeInfo?.id == updated.id) onServerSelected(updated)
+                serverToScan = null
+            }
+        )
+    }
 
     val filteredServers = remember(servers, selectedFilter) {
         when (selectedFilter) {
@@ -1066,7 +1153,7 @@ fun ServerSelectionDialog(
             Card(
                  modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f),
                  shape = RoundedCornerShape(24.dp),
-                 colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                     // Header
@@ -1075,7 +1162,7 @@ fun ServerSelectionDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(stringResource(R.string.select_server_btn), style = MaterialTheme.typography.titleLarge, color = Color.White)
+                        Text(stringResource(R.string.select_server_btn), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (isPinging) {
                                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Gray)
@@ -1181,9 +1268,9 @@ fun ServerSelectionDialog(
                             Card(
                                 onClick = { onServerSelected(server) },
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) 
-                                        (if (currentTheme == AppTheme.TON) Color(0xFF003D5C) else Color(0xFF5F0000))
-                                        else Color(0xFF1F1F1F)
+                                    containerColor = if (isSelected)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
@@ -1192,7 +1279,7 @@ fun ServerSelectionDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(server.name, color = Color.White, fontWeight = FontWeight.Bold)
+                                        Text(server.name, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                                         val subName = server.subscriptionId?.let { subNameById[it] }
                                         if (subName != null) {
                                             Text(
@@ -1220,6 +1307,21 @@ fun ServerSelectionDialog(
                                             else -> Color(0xFFFF4444)
                                         }
                                         Text(pingText, color = pingColor, fontSize = 12.sp, maxLines = 1)
+                                    }
+
+                                    // Reality Scanner button (only for VLESS REALITY)
+                                    if (server.protocol == VpnProtocol.VLESS && server.config["security"] == "reality") {
+                                        IconButton(
+                                            onClick = { serverToScan = server },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Search,
+                                                contentDescription = "Reality Scanner",
+                                                tint = Color(0xFF00AAFF).copy(alpha = 0.8f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
 
                                     // Rename Button
@@ -1264,7 +1366,7 @@ fun ServerSelectionDialog(
                         if (servers.isEmpty()) {
                             item {
                                 Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                                    Text("No servers found. Add one!", color = Color.Gray)
+                                    Text(stringResource(R.string.no_servers_found_add_one), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                 }
                             }
                         }

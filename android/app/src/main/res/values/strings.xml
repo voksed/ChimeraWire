@@ -43,7 +43,7 @@
     <string name="sent_label">SENT</string>
     <string name="quick_connect">QUICK CONNECT</string>
     <string name="disconnect_caps">DISCONNECT</string>
-    <string name="ton_vpn_title">TON VPN</string>
+    <string name="ton_vpn_title">CARNELIA VPN</string>
     <string name="voks_vpn_title">VOKS VPN</string>
     <string name="carnelia_vpn_title">CARNELIA VPN</string>
     <string name="status_active">● ACTIVE</string>
@@ -276,13 +276,13 @@ Last Error: %5$s
     <string name="theme_light_purple">Light Purple</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="theme_ton">Toncoin Style</string>
+    <string name="theme_ton">Ocean Blue</string>
     <string name="theme_system">System</string>
     <string name="theme_secret">Voks</string>
     
     <!-- Games -->
     <string name="game_miner_title">Carnelia Miner</string>
-    <string name="game_miner_score">Balance: %1$d TON</string>
+    <string name="game_miner_score">Balance: %1$d</string>
     <string name="game_miner_tap">TAP TO MINE</string>
 
     <!-- Donation & Theming -->
@@ -292,7 +292,7 @@ Last Error: %5$s
     <string name="app_theme_title">App Theme</string>
     <string name="donate_page_header">Support Carnelia VPN</string>
     <string name="donate_page_body">The app is completely free and ad-free.\nServers are paid from my own pocket.\nIf you like the service, you can support the project with any amount.</string>
-    <string name="donate_ton_title">TON Crypto</string>
+    <string name="donate_ton_title">Crypto</string>
     <string name="address_copied_toast">Address copied!</string>
     <string name="copy_address_btn">Copy Address</string>
 
@@ -418,4 +418,53 @@ Last Error: %5$s
     <!-- v2.4.0: Traffic Chart -->
     <string name="traffic_chart_title">Traffic by Day</string>
     <string name="traffic_chart_no_data">Connect to start collecting data</string>
+
+    <!-- v2.4.2: Leak Test -->
+    <string name="leak_test_title">Leak Test</string>
+    <string name="leak_test_checking">Checking…</string>
+    <string name="leak_test_no_data">No data. Tap refresh.</string>
+    <string name="leak_test_protected">Protected</string>
+    <string name="leak_test_protected_desc">Traffic is routed through VPN</string>
+    <string name="leak_test_not_connected">VPN not connected</string>
+    <string name="leak_test_not_connected_desc">Connect to VPN for protection</string>
+    <string name="leak_test_external_ip">External IP</string>
+    <string name="leak_test_unknown">Unknown</string>
+    <string name="leak_test_dns_servers">DNS Servers</string>
+    <string name="leak_test_dns_not_found">Not detected</string>
+    <string name="leak_test_servers_found">%d server(s) detected</string>
+    <string name="leak_test_disclaimer">This test checks your external IP and available DNS servers. If the IP belongs to your ISP — VPN is not working.</string>
+    <string name="leak_test_error">Error: %1$s</string>
+
+    <!-- v2.4.2: Auto-Update -->
+    <string name="update_available_title">Update %1$s available</string>
+    <string name="update_current_version">Current version: %1$s</string>
+    <string name="update_action">Update</string>
+    <string name="update_later">Later</string>
+
+    <!-- v2.4.2: Encrypted Backup -->
+    <string name="backup_dialog_title">Server Backup</string>
+    <string name="backup_dialog_desc">File is encrypted with AES-256. Min 4 characters.</string>
+    <string name="backup_password_label">Password</string>
+    <string name="backup_export_action">Export</string>
+    <string name="backup_import_action">Import</string>
+    <string name="backup_password_min">At least 4 characters</string>
+    <string name="backup_exported_count">Exported %1$d servers</string>
+    <string name="backup_imported_count">Imported %1$d servers</string>
+    <string name="backup_error">Error: %1$s</string>
+    <string name="backup_section_desc">Export/import servers to encrypted file</string>
+
+    <!-- v2.4.2: Reality Scanner -->
+    <string name="reality_scanner_title">Reality Scanner</string>
+    <string name="reality_scanner_starting">Starting scan…</string>
+    <string name="reality_scanner_tcp_ping">TCP ping</string>
+    <string name="reality_scanner_unavailable">unavailable</string>
+    <string name="reality_scanner_ports">Ports:</string>
+    <string name="reality_scanner_recommended">recommended</string>
+    <string name="reality_scanner_fingerprint">Fingerprint:</string>
+    <string name="reality_scanner_recommended_fp">Recommended: %1$s</string>
+    <string name="reality_scanner_apply_fp">Apply fingerprint: %1$s</string>
+    <string name="reality_scanner_timeout">timeout</string>
+    <string name="reality_scanner_error">Scan error</string>
+    <string name="reality_scanner_analyzing">Analyzing connection stability…</string>
+    <string name="reality_scanner_checking_port">Checking port %1$d…</string>
 </resources>

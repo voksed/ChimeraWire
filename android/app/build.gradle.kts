@@ -39,8 +39,8 @@ android {
         create("carnelia") {
             dimension = "brand"
             applicationId = "com.carnelia.vpn"
-            versionCode = 30
-            versionName = "2.4.0"
+            versionCode = 32
+            versionName = "2.4.2"
             signingConfig = signingConfigs.getByName("carnelia")
             // app_name берётся из strings.xml ("Carnelia VPN")
         }
@@ -90,13 +90,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // Only package arm64-v8a — covers 99% of modern Android devices
-    // Reduces APK size by eliminating armeabi-v7a/x86/x86_64 from AAR libs (vpnLib, tun2socks)
     splits {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a")
+            include("arm64-v8a", "x86_64")
             isUniversalApk = false
         }
     }

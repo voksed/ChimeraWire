@@ -272,16 +272,51 @@ class CarheliaVpnService : VpnService() {
         }
         val servers = serverRepository.getServers()
         if (servers.size < 2) return
-        val nextServer = servers.firstOrNull { it.id != currentConfig?.id } ?: return
         fallbackAttempts++
-        AppLogger.log("Service: Fallback attempt $fallbackAttempts → ${nextServer.name}")
-        scope.launch {
-            delay(2000)
-            currentConfig = nextServer
-            serverRepository.setLastUsedServer(nextServer)
-            VpnGlobalState.updateState(ConnectionState.RECONNECTING)
-            vpnManager.switchServer(nextServer)
-            startForeground(1, createNotification("Fallback: ${nextServer.name}"))
+        AppLogger.log("Service: Fallback attempt $fallbackAttempts — selecting best server by ping")
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            // Pick fastest reachable server (TCP ping, skip current and UDP-only)
+            val udpOnly = setOf(
+                com.carnelia.vpn.core.VpnProtocol.HYSTERIA2,
+                com.carnelia.vpn.core.VpnProtocol.TUIC,
+                com.carnelia.vpn.core.VpnProtocol.WARP,
+                com.carnelia.vpn.core.VpnProtocol.WIREGUARD,
+                com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG
+            )
+            val candidates = servers.filter { it.id != currentConfig?.id }
+            val ranked = candidates.map { server ->
+                val ping = if (server.protocol in udpOnly) {
+                    try {
+                        val proc = Runtime.getRuntime().exec(arrayOf("ping", "-c", "1", "-W", "2", server.host))
+                        val exit = proc.waitFor()
+                        if (exit == 0) {
+                            val out = proc.inputStream.bufferedReader().readText()
+                            Regex("time[=<]([0-9.]+)").find(out)?.groupValues?.get(1)?.toFloatOrNull()?.toInt() ?: 999
+                        } else 9999
+                    } catch (_: Exception) { 9999 }
+                } else {
+                    try {
+                        val start = System.currentTimeMillis()
+                        java.net.Socket().use { it.connect(java.net.InetSocketAddress(server.host, server.port), 3000) }
+                        (System.currentTimeMillis() - start).toInt()
+                    } catch (_: Exception) { 9999 }
+                }
+                server to ping
+            }.sortedBy { it.second }
+
+            val nextServer = ranked.firstOrNull { it.second < 9000 }?.first
+                ?: candidates.firstOrNull()
+                ?: return@launch
+
+            AppLogger.log("Service: Fallback → ${nextServer.name} (ping=${ranked.find { it.first.id == nextServer.id }?.second}ms)")
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                delay(1500)
+                currentConfig = nextServer
+                serverRepository.setLastUsedServer(nextServer)
+                VpnGlobalState.updateState(ConnectionState.RECONNECTING)
+                vpnManager.switchServer(nextServer)
+                startForeground(1, createNotification("Failover: ${nextServer.name}"))
+            }
         }
     }
 
