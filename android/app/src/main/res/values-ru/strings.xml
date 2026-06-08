@@ -469,4 +469,81 @@ Android: %2$s
     <string name="reality_scanner_error">Ошибка сканирования</string>
     <string name="reality_scanner_analyzing">Анализирую стабильность соединения…</string>
     <string name="reality_scanner_checking_port">Проверяю порт %1$d…</string>
+
+    <!-- v2.4.3: Tools Hub -->
+    <string name="tools_hub_title">Инструменты</string>
+
+    <!-- Fingerprint Check -->
+    <string name="fingerprint_title">Проверка отпечатка</string>
+    <string name="fingerprint_via_vpn">Маршрут через VPN — показан IP-адрес VPN</string>
+    <string name="fingerprint_no_vpn">VPN выключен — показан реальный IP</string>
+    <string name="fingerprint_ip">IP-адрес</string>
+    <string name="fingerprint_location">Местоположение</string>
+    <string name="fingerprint_isp">Провайдер</string>
+    <string name="fingerprint_org">Организация</string>
+    <string name="fingerprint_asn">ASN</string>
+    <string name="fingerprint_timezone">Часовой пояс</string>
+    <string name="fingerprint_flag_proxy">Прокси</string>
+    <string name="fingerprint_flag_hosting">Хостинг</string>
+    <string name="fingerprint_flag_mobile">Мобильный</string>
+
+    <!-- DNS Audit -->
+    <string name="dns_audit_title">DNS-аудит</string>
+    <string name="dns_audit_system_servers">Системные DNS-серверы</string>
+    <string name="dns_audit_resolving">разрешаем…</string>
+    <string name="dns_audit_failed">ошибка разрешения</string>
+
+    <!-- Route Tracer -->
+    <string name="route_tracer_title">Трассировка маршрута</string>
+    <string name="route_tracer_hint">Хост или IP</string>
+    <string name="route_tracer_btn">Трассировать</string>
+    <string name="route_tracer_hint_empty">Введите хост и нажмите «Трассировать»</string>
+
+    <!-- Traffic Graph -->
+    <string name="traffic_graph_title">График трафика</string>
+    <string name="traffic_graph_download">Загрузка</string>
+    <string name="traffic_graph_upload">Отдача</string>
+    <string name="traffic_graph_legend">Последние 60 сек · зелёный = загрузка · оранжевый = отдача</string>
+    <string name="traffic_graph_total_down">Всего получено</string>
+    <string name="traffic_graph_total_up">Всего отправлено</string>
+
+    <!-- TLS Inspector -->
+    <string name="tls_inspector_title">TLS-инспектор</string>
+    <string name="tls_host_label">Хост</string>
+    <string name="tls_port_label">Порт</string>
+    <string name="tls_inspect_btn">Проверить</string>
+    <string name="tls_version">Версия TLS</string>
+    <string name="tls_cipher">Шифр</string>
+    <string name="tls_chain_depth">Глубина цепочки</string>
+    <string name="tls_subject">Субъект</string>
+    <string name="tls_issuer">Издатель</string>
+    <string name="tls_valid_from">Действует с</string>
+    <string name="tls_valid_until">Действует до</string>
+    <string name="tls_sha256">SHA-256</string>
+
+    <!-- Packet Inspector -->
+    <string name="packet_inspector_title">Инспектор пакетов</string>
+    <string name="packet_inspector_empty">Трафик не захвачен</string>
+    <string name="packet_inspector_empty_hint">Подключись к VPN чтобы увидеть трафик</string>
+
+    <!-- TLS Inspector extras -->
+    <string name="tls_sans">SANs</string>
+    <string name="tls_sha256_fp">Отпечаток SHA-256</string>
+    <string name="tls_certs_suffix">%d серт.</string>
+
+    <!-- Tools Hub card strings -->
+    <string name="tool_leak_test_name">Leak Test</string>
+    <string name="tool_leak_test_desc">Проверка утечек IP и DNS</string>
+    <string name="tool_fingerprint_name">Отпечаток IP</string>
+    <string name="tool_fingerprint_desc">Геолокация, ASN, флаги прокси</string>
+    <string name="tool_dns_audit_name">DNS-аудит</string>
+    <string name="tool_dns_audit_desc">Разрешение доменов, поиск утечек DNS</string>
+    <string name="tool_route_tracer_name">Трассировка</string>
+    <string name="tool_route_tracer_desc">Маршрут через VPN-туннель</string>
+    <string name="tool_traffic_graph_name">График трафика</string>
+    <string name="tool_traffic_graph_desc">Скорость и задержки в реальном времени</string>
+    <string name="tool_tls_inspector_name">TLS-инспектор</string>
+    <string name="tool_tls_inspector_desc">Сертификаты, шифр, SNI</string>
+    <string name="tool_packet_inspector_name">Инспектор пакетов</string>
+    <string name="tool_packet_inspector_desc">Живой поток прокси-трафика</string>
 </resources>

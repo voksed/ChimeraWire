@@ -46,6 +46,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import com.carnelia.vpn.service.GeoSpoofService
 import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.rememberWindowSize
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
 import org.osmdroid.config.Configuration
@@ -237,23 +238,79 @@ fun GeoSpoofScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ---- Status card ----
-            StatusCard(isRunning = isRunning, onToggle = { toggleService() })
+        val windowSize = rememberWindowSize()
+        val currentLat = latText.replace(",", ".").toDoubleOrNull() ?: PrefsManager.getGeoLat(context)
+        val currentLon = lonText.replace(",", ".").toDoubleOrNull() ?: PrefsManager.getGeoLon(context)
 
-            // ---- Warning ----
+        // ── Map + Joystick block (reused in both portrait and landscape) ──
+        @Suppress("LocalVariableName")
+        @Composable
+        fun MapAndJoystickContent(mapModifier: Modifier = Modifier) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                MapLayer.entries.forEach { layer ->
+                    FilterChip(
+                        selected = mapLayer == layer,
+                        onClick = { mapLayer = layer },
+                        label = { Text(layer.title, fontSize = 11.sp) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { showFullMapPicker = true },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Установить метку (полный экран)") }
+            Spacer(Modifier.height(8.dp))
+            OSMTileMap(
+                latitude = currentLat,
+                longitude = currentLon,
+                mapLayer = mapLayer,
+                onPositionChange = { newLat, newLon ->
+                    latText = String.format(java.util.Locale.US, "%.6f", newLat)
+                    lonText = String.format(java.util.Locale.US, "%.6f", newLon)
+                    PrefsManager.setGeoCoords(context, newLat, newLon)
+                    if (isRunning) {
+                        val intent = Intent(context, GeoSpoofService::class.java).apply {
+                            action = GeoSpoofService.ACTION_SET_POINT
+                            putExtra(GeoSpoofService.EXTRA_LAT, newLat)
+                            putExtra(GeoSpoofService.EXTRA_LON, newLon)
+                        }
+                        context.startService(intent)
+                    }
+                },
+                followPoint = false,
+                modifier = mapModifier
+            )
+            Spacer(Modifier.height(12.dp))
+            Text("Джойстик: удерживайте, чтобы двигать точку",
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            LocationJoystick(
+                onDelta = { deltaLat, deltaLon, newBearing ->
+                    val updatedLat = (currentLat + deltaLat).coerceIn(-90.0, 90.0)
+                    val updatedLon = (currentLon + deltaLon).coerceIn(-180.0, 180.0)
+                    latText = String.format(java.util.Locale.US, "%.6f", updatedLat)
+                    lonText = String.format(java.util.Locale.US, "%.6f", updatedLon)
+                    bearing = newBearing
+                    applyPoint()
+                    applyMovement()
+                }
+            )
+        }
+
+        // ── Controls block (coords + presets + movement) ──
+        @Composable
+        fun ControlsContent() {
+            StatusCard(isRunning = isRunning, onToggle = { toggleService() })
             if (!isMockLocationEnabled(context)) {
+                Spacer(Modifier.height(16.dp))
                 MockWarningCard()
             }
-
-            // ---- Coordinates ----
+            Spacer(Modifier.height(16.dp))
+            // Coordinates
             SpoofCard(title = "📍 Координаты") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -284,253 +341,215 @@ fun GeoSpoofScreen(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = { applyPoint() },
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Применить координаты") }
+                Button(onClick = { applyPoint() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Применить координаты")
+                }
             }
+        }
 
-            // ---- OSM tile map + joystick ----
-            SpoofCard(title = "🗺️ OSM Карта и Джойстик") {
-                val currentLat = latText.replace(",", ".").toDoubleOrNull() ?: PrefsManager.getGeoLat(context)
-                val currentLon = lonText.replace(",", ".").toDoubleOrNull() ?: PrefsManager.getGeoLon(context)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+        if (windowSize.isLandscape) {
+            // ── Landscape: left=controls, right=map+joystick ──
+            Row(
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
+                // Left: scrollable controls
+                Column(
+                    modifier = Modifier
+                        .weight(0.42f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    MapLayer.entries.forEach { layer ->
-                        FilterChip(
-                            selected = mapLayer == layer,
-                            onClick = { mapLayer = layer },
-                            label = { Text(layer.title, fontSize = 11.sp) }
+                    ControlsContent()
+                    // City presets (compact in landscape)
+                    SpoofCard(title = "🌍 Пресеты") {
+                        GEO_PRESETS.chunked(if (windowSize.isLargeTablet) 4 else 3).forEach { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+                                row.forEach { preset ->
+                                    FilterChip(
+                                        selected = false,
+                                        onClick = {
+                                            latText = String.format(java.util.Locale.US, "%.6f", preset.lat)
+                                            lonText = String.format(java.util.Locale.US, "%.6f", preset.lon)
+                                            PrefsManager.setGeoCoords(context, preset.lat, preset.lon)
+                                            if (isRunning) {
+                                                val intent = Intent(context, GeoSpoofService::class.java).apply {
+                                                    action = GeoSpoofService.ACTION_SET_POINT
+                                                    putExtra(GeoSpoofService.EXTRA_LAT, preset.lat)
+                                                    putExtra(GeoSpoofService.EXTRA_LON, preset.lon)
+                                                }
+                                                context.startService(intent)
+                                            }
+                                            onShowToast("${preset.flag} ${preset.name}")
+                                        },
+                                        label = { Text("${preset.flag} ${preset.name}", fontSize = 10.sp) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                VerticalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+
+                // Right: map + joystick (fills height)
+                Column(
+                    modifier = Modifier
+                        .weight(0.58f)
+                        .fillMaxHeight()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    SpoofCard(title = "🗺️ OSM Карта и Джойстик",
+                        modifier = Modifier.weight(1f)) {
+                        MapAndJoystickContent(
+                            mapModifier = Modifier.fillMaxWidth().weight(1f).heightIn(min = 160.dp)
                         )
                     }
                 }
+            }
+        } else {
+            // ── Portrait: original single-column layout ──
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                ControlsContent()
 
-                Spacer(Modifier.height(8.dp))
-
-                OutlinedButton(
-                    onClick = { showFullMapPicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Установить метку (полный экран)")
+                // Map + joystick
+                SpoofCard(title = "🗺️ OSM Карта и Джойстик") {
+                    MapAndJoystickContent()
                 }
 
-                Spacer(Modifier.height(8.dp))
-
-                OSMTileMap(
-                    latitude = currentLat,
-                    longitude = currentLon,
-                    mapLayer = mapLayer,
-                    onPositionChange = { newLat, newLon ->
-                        latText = String.format(java.util.Locale.US, "%.6f", newLat)
-                        lonText = String.format(java.util.Locale.US, "%.6f", newLon)
-                        PrefsManager.setGeoCoords(context, newLat, newLon)
-                        if (isRunning) {
-                            val intent = Intent(context, GeoSpoofService::class.java).apply {
-                                action = GeoSpoofService.ACTION_SET_POINT
-                                putExtra(GeoSpoofService.EXTRA_LAT, newLat)
-                                putExtra(GeoSpoofService.EXTRA_LON, newLon)
-                            }
-                            context.startService(intent)
-                        }
-                    },
-                    followPoint = false
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                Text(
-                    "Джойстик: удерживайте, чтобы двигать точку",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-
-                LocationJoystick(
-                    onDelta = { deltaLat, deltaLon, newBearing ->
-                        val baseLat = latText.replace(",", ".").toDoubleOrNull() ?: currentLat
-                        val baseLon = lonText.replace(",", ".").toDoubleOrNull() ?: currentLon
-                        val updatedLat = (baseLat + deltaLat).coerceIn(-90.0, 90.0)
-                        val updatedLon = (baseLon + deltaLon).coerceIn(-180.0, 180.0)
-                        latText = String.format(java.util.Locale.US, "%.6f", updatedLat)
-                        lonText = String.format(java.util.Locale.US, "%.6f", updatedLon)
-                        bearing = newBearing
-                        applyPoint()
-                        applyMovement()
-                    }
-                )
-            }
-
-            if (showFullMapPicker) {
-                var pickerLat by remember { mutableStateOf(latText.replace(",", ".").toDoubleOrNull() ?: PrefsManager.getGeoLat(context).toDouble().let { it } ) }
-                var pickerLon by remember { mutableStateOf(lonText.replace(",", ".").toDoubleOrNull() ?: PrefsManager.getGeoLon(context).toDouble().let { it } ) }
-
-                Dialog(
-                    onDismissRequest = { showFullMapPicker = false },
-                    properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Выбор метки", style = MaterialTheme.typography.titleLarge)
-                                TextButton(onClick = { showFullMapPicker = false }) {
-                                    Text("Закрыть")
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                MapLayer.entries.forEach { layer ->
-                                    FilterChip(
-                                        selected = mapLayer == layer,
-                                        onClick = { mapLayer = layer },
-                                        label = { Text(layer.title, fontSize = 11.sp) }
-                                    )
-                                }
-                            }
-
-                            Spacer(Modifier.height(8.dp))
-
-                            OSMTileMap(
-                                latitude = pickerLat,
-                                longitude = pickerLon,
-                                mapLayer = mapLayer,
-                                onPositionChange = { newLat, newLon ->
-                                    pickerLat = newLat
-                                    pickerLon = newLon
-                                },
-                                followPoint = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                            )
-
-                            Spacer(Modifier.height(8.dp))
-
-                            Button(
-                                onClick = {
-                                    latText = String.format(java.util.Locale.US, "%.6f", pickerLat)
-                                    lonText = String.format(java.util.Locale.US, "%.6f", pickerLon)
-                                    applyPoint()
-                                    showFullMapPicker = false
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Установить метку")
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ---- City presets ----
-            SpoofCard(title = "🌍 Быстрые пресеты") {
-                GEO_PRESETS.chunked(3).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        row.forEach { preset ->
-                            FilterChip(
-                                selected = false,
-                                onClick = {
-                                    latText = String.format(java.util.Locale.US, "%.6f", preset.lat)
-                                    lonText = String.format(java.util.Locale.US, "%.6f", preset.lon)
-                                    PrefsManager.setGeoCoords(context, preset.lat, preset.lon)
-                                    if (isRunning) {
-                                        val intent = Intent(context, GeoSpoofService::class.java).apply {
-                                            action = GeoSpoofService.ACTION_SET_POINT
-                                            putExtra(GeoSpoofService.EXTRA_LAT, preset.lat)
-                                            putExtra(GeoSpoofService.EXTRA_LON, preset.lon)
+                // ---- City presets ----
+                SpoofCard(title = "🌍 Быстрые пресеты") {
+                    GEO_PRESETS.chunked(3).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            row.forEach { preset ->
+                                FilterChip(
+                                    selected = false,
+                                    onClick = {
+                                        latText = String.format(java.util.Locale.US, "%.6f", preset.lat)
+                                        lonText = String.format(java.util.Locale.US, "%.6f", preset.lon)
+                                        PrefsManager.setGeoCoords(context, preset.lat, preset.lon)
+                                        if (isRunning) {
+                                            val intent = Intent(context, GeoSpoofService::class.java).apply {
+                                                action = GeoSpoofService.ACTION_SET_POINT
+                                                putExtra(GeoSpoofService.EXTRA_LAT, preset.lat)
+                                                putExtra(GeoSpoofService.EXTRA_LON, preset.lon)
+                                            }
+                                            context.startService(intent)
                                         }
-                                        context.startService(intent)
-                                    }
-                                    onShowToast("${preset.flag} ${preset.name}")
-                                },
-                                label = { Text("${preset.flag} ${preset.name}", fontSize = 11.sp) },
-                                modifier = Modifier.weight(1f)
-                            )
+                                        onShowToast("${preset.flag} ${preset.name}")
+                                    },
+                                    label = { Text("${preset.flag} ${preset.name}", fontSize = 11.sp) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                         }
-                        // Fill empty slots in last row
-                        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                        Spacer(Modifier.height(4.dp))
                     }
-                    Spacer(Modifier.height(4.dp))
                 }
-            }
 
-            // ---- Movement ----
-            SpoofCard(title = "🚶 Симуляция движения") {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "Симуляция движения",
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Switch(
-                        checked = moveEnabled,
-                        onCheckedChange = {
-                            moveEnabled = it
-                            applyMovement()
+                // ---- Movement ----
+                SpoofCard(title = "🚶 Симуляция движения") {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Симуляция движения", modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.onSurface)
+                        Switch(checked = moveEnabled, onCheckedChange = { moveEnabled = it; applyMovement() })
+                    }
+                    if (moveEnabled) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Скорость", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(4.dp))
+                        SPEED_PRESETS.forEach { preset ->
+                            val selected = speed == preset.ms
+                            OutlinedButton(
+                                onClick = { speed = preset.ms; applyMovement() },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                )
+                            ) {
+                                Text(preset.label,
+                                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                            }
                         }
-                    )
+                        Spacer(Modifier.height(12.dp))
+                        Text("Направление (азимут: ${bearing.toInt()}°)", fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        CompassControl(bearing = bearing, onBearingChange = { bearing = it; applyMovement() })
+                    }
                 }
 
-                if (moveEnabled) {
-                    Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(32.dp))
+            } // end portrait Column
+        } // end if/else landscape
 
-                    // Speed chooser
-                    Text("Скорость", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(4.dp))
-                    SPEED_PRESETS.forEach { preset ->
-                        val selected = speed == preset.ms
-                        OutlinedButton(
-                            onClick = {
-                                speed = preset.ms
-                                applyMovement()
-                            },
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                            )
+        // ── Full-screen map picker dialog (shown from both orientations) ──
+        if (showFullMapPicker) {
+            var pickerLat by remember { mutableStateOf(currentLat) }
+            var pickerLon by remember { mutableStateOf(currentLon) }
+            Dialog(
+                onDismissRequest = { showFullMapPicker = false },
+                properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                preset.label,
-                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
+                            Text("Выбор метки", style = MaterialTheme.typography.titleLarge)
+                            TextButton(onClick = { showFullMapPicker = false }) { Text("Закрыть") }
                         }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            MapLayer.entries.forEach { layer ->
+                                FilterChip(selected = mapLayer == layer, onClick = { mapLayer = layer },
+                                    label = { Text(layer.title, fontSize = 11.sp) })
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        OSMTileMap(
+                            latitude = pickerLat,
+                            longitude = pickerLon,
+                            mapLayer = mapLayer,
+                            onPositionChange = { newLat, newLon -> pickerLat = newLat; pickerLon = newLon },
+                            followPoint = true,
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                latText = String.format(java.util.Locale.US, "%.6f", pickerLat)
+                                lonText = String.format(java.util.Locale.US, "%.6f", pickerLon)
+                                applyPoint()
+                                showFullMapPicker = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Установить метку") }
                     }
-
-                    Spacer(Modifier.height(12.dp))
-
-                    // Bearing compass
-                    Text("Направление (азимут: ${bearing.toInt()}°)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(8.dp))
-                    CompassControl(
-                        bearing = bearing,
-                        onBearingChange = {
-                            bearing = it
-                            applyMovement()
-                        }
-                    )
                 }
             }
-
-            Spacer(Modifier.height(32.dp))
         }
     }
 }
@@ -617,9 +636,13 @@ private fun MockWarningCard() {
 }
 
 @Composable
-private fun SpoofCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+private fun SpoofCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(2.dp)

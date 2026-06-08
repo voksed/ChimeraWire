@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -402,15 +403,15 @@ fun CarheliaApp(
                     )
                 )
 
-                // Leak Test
+                // Tools Hub
                 NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.leak_test_title)) },
+                    label = { Text("Инструменты") },
                     selected = false,
                     onClick = {
-                        context.startActivity(Intent(context, LeakTestActivity::class.java))
+                        context.startActivity(Intent(context, ToolsHubActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Security, contentDescription = null, tint = onSurface) },
+                    icon = { Icon(Icons.Default.Build, contentDescription = null, tint = onSurface) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
@@ -606,7 +607,7 @@ fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.update_available_title, info.version), color = Color.White) },
         text = {
             Column {
-                Text(stringResource(R.string.update_current_version, "2.4.2"), color = Color.Gray, fontSize = 12.sp)
+                Text(stringResource(R.string.update_current_version, "2.4.3"), color = Color.Gray, fontSize = 12.sp)
                 if (info.changelog.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(info.changelog, color = Color(0xFFCCCCCC), fontSize = 12.sp, maxLines = 8)

@@ -10,11 +10,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.security.KeyFactory
 import java.security.KeyPairGenerator
-import java.security.interfaces.ECPrivateKey
-import java.security.interfaces.ECPublicKey
-import java.security.spec.ECGenParameterSpec
 import java.util.Base64
 import java.util.UUID
 
@@ -158,41 +154,38 @@ object WarpManager {
     }
 
     private fun generateX25519KeyPair(): Pair<String, String> {
+        // API 31+: X25519 is natively supported. Do NOT call initialize() — X25519 has no parameters.
+        // PKCS8 private key DER: 48 bytes, last 32 = raw key.
+        // SubjectPublicKeyInfo DER: 44 bytes, last 32 = raw key.
         return try {
-            // Android 33+ has X25519 built-in
             val kpg = KeyPairGenerator.getInstance("X25519")
-            kpg.initialize(ECGenParameterSpec("x25519"))
             val kp = kpg.generateKeyPair()
             val priv = Base64.getEncoder().encodeToString(kp.private.encoded.takeLast(32).toByteArray())
-            val pub = Base64.getEncoder().encodeToString(kp.public.encoded.takeLast(32).toByteArray())
+            val pub  = Base64.getEncoder().encodeToString(kp.public.encoded.takeLast(32).toByteArray())
             Pair(priv, pub)
         } catch (_: Exception) {
-            // Fallback: generate via BouncyCastle / random bytes approach
             generateX25519Fallback()
         }
     }
 
     private fun generateX25519Fallback(): Pair<String, String> {
-        // Generate random 32-byte private key with Curve25519 clamping
-        val privateBytes = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
-        privateBytes[0] = (privateBytes[0].toInt() and 248).toByte()
-        privateBytes[31] = (privateBytes[31].toInt() and 127).toByte()
-        privateBytes[31] = (privateBytes[31].toInt() or 64).toByte()
-
-        // We can't easily compute the public key without native Curve25519
-        // Use Android KeyStore X25519 if available, otherwise use a known test key
-        // For production, use the WireGuard library if available
-        val privB64 = Base64.getEncoder().encodeToString(privateBytes)
-        // Compute public key using Android's built-in ECDH if available
-        val pubB64 = try {
-            val kpg = KeyPairGenerator.getInstance("EC")
-            kpg.initialize(ECGenParameterSpec("secp256r1"))
+        // Try AndroidOpenSSL provider explicitly (available on all Android versions)
+        return try {
+            val kpg = KeyPairGenerator.getInstance("X25519", "AndroidOpenSSL")
             val kp = kpg.generateKeyPair()
-            Base64.getEncoder().encodeToString((kp.public as ECPublicKey).encoded.takeLast(32).toByteArray())
+            val priv = Base64.getEncoder().encodeToString(kp.private.encoded.takeLast(32).toByteArray())
+            val pub  = Base64.getEncoder().encodeToString(kp.public.encoded.takeLast(32).toByteArray())
+            Pair(priv, pub)
         } catch (_: Exception) {
-            Base64.getEncoder().encodeToString(privateBytes.reversedArray()) // last resort
+            // Last resort: random clamped private key.
+            // Public key cannot be derived without native Curve25519.
+            // This will cause WARP registration to fail gracefully rather than crash.
+            val priv = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+            priv[0]  = (priv[0].toInt()  and 248).toByte()
+            priv[31] = (priv[31].toInt() and 127).toByte()
+            priv[31] = (priv[31].toInt() or  64).toByte()
+            Pair(Base64.getEncoder().encodeToString(priv), Base64.getEncoder().encodeToString(priv))
         }
-        return Pair(privB64, pubB64)
     }
 
     private fun deriveReservedBytes(accountId: String): List<Int> {

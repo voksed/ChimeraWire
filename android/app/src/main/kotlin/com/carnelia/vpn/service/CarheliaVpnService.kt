@@ -216,7 +216,10 @@ class CarheliaVpnService : VpnService() {
                 ConnectionState.CONNECTED -> {
                     // Start measuring session duration
                     connectionStartTime.set(System.currentTimeMillis())
-                    establishVpnInterface()
+                    // OpenVPN manages its own VPN service (de.blinkt.openvpn) — skip our TUN
+                    if (currentConfig?.protocol != com.carnelia.vpn.core.VpnProtocol.OPENVPN) {
+                        establishVpnInterface()
+                    }
                     // Dual Network (WiFi + Mobile boost)
                     dualNetworkManager.start()
                     if (dualNetworkManager.isDualActive()) {

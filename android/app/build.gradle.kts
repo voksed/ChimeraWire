@@ -39,8 +39,8 @@ android {
         create("carnelia") {
             dimension = "brand"
             applicationId = "com.carnelia.vpn"
-            versionCode = 32
-            versionName = "2.4.2"
+            versionCode = 33
+            versionName = "2.4.3"
             signingConfig = signingConfigs.getByName("carnelia")
             // app_name берётся из strings.xml ("Carnelia VPN")
         }
@@ -95,7 +95,7 @@ android {
             isEnable = true
             reset()
             include("arm64-v8a", "x86_64")
-            isUniversalApk = false
+            isUniversalApk = true
         }
     }
 

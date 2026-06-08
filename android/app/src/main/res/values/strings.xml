@@ -467,4 +467,81 @@ Last Error: %5$s
     <string name="reality_scanner_error">Scan error</string>
     <string name="reality_scanner_analyzing">Analyzing connection stability…</string>
     <string name="reality_scanner_checking_port">Checking port %1$d…</string>
+
+    <!-- v2.4.3: Tools Hub -->
+    <string name="tools_hub_title">Tools</string>
+
+    <!-- Fingerprint Check -->
+    <string name="fingerprint_title">Fingerprint Check</string>
+    <string name="fingerprint_via_vpn">Routing through VPN — showing VPN identity</string>
+    <string name="fingerprint_no_vpn">VPN is OFF — showing real IP identity</string>
+    <string name="fingerprint_ip">IP Address</string>
+    <string name="fingerprint_location">Location</string>
+    <string name="fingerprint_isp">ISP</string>
+    <string name="fingerprint_org">Organisation</string>
+    <string name="fingerprint_asn">ASN</string>
+    <string name="fingerprint_timezone">Timezone</string>
+    <string name="fingerprint_flag_proxy">Proxy</string>
+    <string name="fingerprint_flag_hosting">Hosting</string>
+    <string name="fingerprint_flag_mobile">Mobile</string>
+
+    <!-- DNS Audit -->
+    <string name="dns_audit_title">DNS Audit</string>
+    <string name="dns_audit_system_servers">System DNS Servers</string>
+    <string name="dns_audit_resolving">resolving…</string>
+    <string name="dns_audit_failed">resolution failed</string>
+
+    <!-- Route Tracer -->
+    <string name="route_tracer_title">Route Tracer</string>
+    <string name="route_tracer_hint">Target host / IP</string>
+    <string name="route_tracer_btn">Trace</string>
+    <string name="route_tracer_hint_empty">Enter a host and tap Trace</string>
+
+    <!-- Traffic Graph -->
+    <string name="traffic_graph_title">Traffic Graph</string>
+    <string name="traffic_graph_download">Download</string>
+    <string name="traffic_graph_upload">Upload</string>
+    <string name="traffic_graph_legend">Last 60 seconds · green = download · orange = upload</string>
+    <string name="traffic_graph_total_down">Total Down</string>
+    <string name="traffic_graph_total_up">Total Up</string>
+
+    <!-- TLS Inspector -->
+    <string name="tls_inspector_title">TLS Inspector</string>
+    <string name="tls_host_label">Host</string>
+    <string name="tls_port_label">Port</string>
+    <string name="tls_inspect_btn">Inspect</string>
+    <string name="tls_version">TLS Version</string>
+    <string name="tls_cipher">Cipher Suite</string>
+    <string name="tls_chain_depth">Chain Depth</string>
+    <string name="tls_subject">Subject</string>
+    <string name="tls_issuer">Issuer</string>
+    <string name="tls_valid_from">Valid From</string>
+    <string name="tls_valid_until">Valid Until</string>
+    <string name="tls_sha256">SHA-256</string>
+
+    <!-- Packet Inspector -->
+    <string name="packet_inspector_title">Packet Inspector</string>
+    <string name="packet_inspector_empty">No proxy traffic captured</string>
+    <string name="packet_inspector_empty_hint">Connect to VPN to see live traffic</string>
+
+    <!-- TLS Inspector extras -->
+    <string name="tls_sans">SANs</string>
+    <string name="tls_sha256_fp">SHA-256 Fingerprint</string>
+    <string name="tls_certs_suffix">%d certs</string>
+
+    <!-- Tools Hub card strings -->
+    <string name="tool_leak_test_name">Leak Test</string>
+    <string name="tool_leak_test_desc">IP &amp; DNS leak detection</string>
+    <string name="tool_fingerprint_name">Fingerprint Check</string>
+    <string name="tool_fingerprint_desc">IP geolocation, ASN, proxy flags</string>
+    <string name="tool_dns_audit_name">DNS Audit</string>
+    <string name="tool_dns_audit_desc">Resolve domains, detect DNS leaks</string>
+    <string name="tool_route_tracer_name">Route Tracer</string>
+    <string name="tool_route_tracer_desc">Traceroute through VPN tunnel</string>
+    <string name="tool_traffic_graph_name">Traffic Graph</string>
+    <string name="tool_traffic_graph_desc">Real-time speed &amp; latency graph</string>
+    <string name="tool_tls_inspector_name">TLS Inspector</string>
+    <string name="tool_tls_inspector_desc">Certificate chain, cipher, SNI</string>
+    <string name="tool_packet_inspector_name">Packet Inspector</string>
+    <string name="tool_packet_inspector_desc">Live proxy traffic stream</string>
 </resources>

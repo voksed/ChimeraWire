@@ -756,11 +756,70 @@ object XrayCoreManager {
     /** A valid REALITY public key is a base64url string (no ':' or spaces), at least 30 chars long. */
     private fun isValidRealityPublicKey(pbk: String): Boolean {
         if (pbk.length < 30) return false
-        // Reject obvious placeholders like "Hash32:", "placeholder", "example"
         if (pbk.contains(':')) return false
         if (pbk.contains(' ')) return false
         val lower = pbk.lowercase()
         if (lower.startsWith("hash") || lower.startsWith("placeholder") || lower.startsWith("example")) return false
         return true
+    }
+
+    // ── ConfigTuner test-core stubs ───────────────────────────────────────
+    // Temporary isolated Xray instance used by ConfigTuner to measure latency.
+    const val TEST_SOCKS_PORT = 10888
+    private var testProcess: Process? = null
+    private var testStreamJob: kotlinx.coroutines.Job? = null
+
+    suspend fun startTestCore(
+        context: Context,
+        config: VpnServerConfig,
+        muxEnabled: Boolean = false,
+        muxConcurrency: Int = 4,
+        fragEnabled: Boolean = false,
+        fragMode: String = "balanced"
+    ): Boolean = withContext(Dispatchers.IO) {
+        stopTestCore()
+        val binary = File(context.applicationInfo.nativeLibraryDir, "libxray.so")
+        if (!binary.exists()) return@withContext false
+        try {
+            val cfg = buildTestConfig(context, config)
+            val cfgFile = File(context.filesDir, "xray_test_config.json")
+            cfgFile.writeText(cfg)
+            val pb = ProcessBuilder(binary.absolutePath, "run", "-config", cfgFile.absolutePath)
+            pb.redirectErrorStream(true)
+            testProcess = pb.start()
+            testStreamJob = xrayScope.launch {
+                testProcess!!.inputStream.bufferedReader().use { r ->
+                    for (line in r.lineSequence()) {
+                        if (!isActive) break
+                        AppLogger.log("XrayTest: $line")
+                    }
+                }
+            }
+            kotlinx.coroutines.delay(600)
+            testProcess?.isAlive == true
+        } catch (e: Exception) {
+            AppLogger.error("XrayCoreManager.startTestCore", e)
+            false
+        }
+    }
+
+    fun stopTestCore() {
+        testStreamJob?.cancel(); testStreamJob = null
+        testProcess?.destroy(); testProcess = null
+    }
+
+    private fun buildTestConfig(context: Context, config: VpnServerConfig): String {
+        // Reuse main buildConfig but swap inbound port to TEST_SOCKS_PORT
+        val root = buildConfig(context, config)
+        val inbounds = root.optJSONArray("inbounds") ?: org.json.JSONArray()
+        for (i in 0 until inbounds.length()) {
+            val inb = inbounds.getJSONObject(i)
+            if (inb.optString("protocol") == "socks") {
+                inb.put("port", TEST_SOCKS_PORT)
+                break
+            }
+        }
+        root.put("inbounds", inbounds)
+        return root.toString(2)
     }
 }

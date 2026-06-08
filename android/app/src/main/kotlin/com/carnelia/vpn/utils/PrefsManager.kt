@@ -352,4 +352,42 @@ object PrefsManager {
 
     fun setBlackWallLevel(context: Context, level: String) =
         getPrefs(context).edit().putString("black_wall_level", level).apply()
+
+    // ── Dual Network (WiFi + Cellular bonding) ────────────────────────────
+    fun isDualNetworkEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean("dual_network_enabled", false)
+    fun setDualNetworkEnabled(context: Context, enabled: Boolean) =
+        getPrefs(context).edit().putBoolean("dual_network_enabled", enabled).apply()
+
+    // ── Smart Port Selector ───────────────────────────────────────────────
+    fun isSmartPortEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean("smart_port_enabled", false)
+    fun setSmartPortEnabled(context: Context, enabled: Boolean) =
+        getPrefs(context).edit().putBoolean("smart_port_enabled", enabled).apply()
+
+    // ── VPN Schedule ──────────────────────────────────────────────────────
+    fun isScheduleEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean("schedule_enabled", false)
+    fun setScheduleEnabled(context: Context, enabled: Boolean) =
+        getPrefs(context).edit().putBoolean("schedule_enabled", enabled).apply()
+
+    fun getScheduleConnectHour(context: Context): Int =
+        getPrefs(context).getInt("schedule_connect_hour", 9)
+    fun setScheduleConnectHour(context: Context, h: Int) =
+        getPrefs(context).edit().putInt("schedule_connect_hour", h).apply()
+
+    fun getScheduleConnectMin(context: Context): Int =
+        getPrefs(context).getInt("schedule_connect_min", 0)
+    fun setScheduleConnectMin(context: Context, m: Int) =
+        getPrefs(context).edit().putInt("schedule_connect_min", m).apply()
+
+    fun getScheduleDisconnectHour(context: Context): Int =
+        getPrefs(context).getInt("schedule_disconnect_hour", 23)
+    fun setScheduleDisconnectHour(context: Context, h: Int) =
+        getPrefs(context).edit().putInt("schedule_disconnect_hour", h).apply()
+
+    fun getScheduleDisconnectMin(context: Context): Int =
+        getPrefs(context).getInt("schedule_disconnect_min", 0)
+    fun setScheduleDisconnectMin(context: Context, m: Int) =
+        getPrefs(context).edit().putInt("schedule_disconnect_min", m).apply()
 }

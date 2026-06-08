@@ -232,6 +232,49 @@
             android:theme="@style/Theme.CarheliaVPN"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
 
+        <!-- v2.4.3: Tools Hub + security instruments -->
+        <activity
+            android:name=".ToolsHubActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".FingerprintCheckActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".DnsAuditActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".RouteTracerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".TrafficGraphActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".TlsInspectorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".PacketInspectorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
         <service
             android:name=".service.GeoSpoofService"
             android:exported="false"
