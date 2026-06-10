@@ -168,16 +168,15 @@ dependencies {
     // JSON serialization
     implementation("com.google.code.gson:gson:2.10.1")
 
-    // LibXray (Local AAR) - Disabled to avoid conflict with Outline
+    // LibXray (Local AAR)
     // implementation(files("libs/libv2ray.aar"))
-    
+
     // OpenVPN (ics-openvpn)
     // implementation("com.github.schwabe:ics-openvpn:v0.6.73-production")
     implementation(project(":vpnLib"))
 
-    // Outline Tun2Socks (Must be provided in libs/)
+    // Tun2Socks bridge (used by XrayVpnProtocol and SingboxVpnProtocol)
     implementation(files("libs/tun2socks.aar"))
-    // implementation("org.getoutline.client:tun2socks:0.0.1")
 
     // Logging
     implementation("com.google.code.findbugs:jsr305:3.0.2")

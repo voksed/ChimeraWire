@@ -8,8 +8,6 @@ import com.carnelia.vpn.core.XrayCoreManager
 import com.carnelia.vpn.utils.AppLogger
 import kotlinx.coroutines.*
 import org.json.JSONObject
-import tun2socks.Tun2socks
-import shadowsocks.Shadowsocks
 import de.blinkt.openvpn.core.VpnStatus
 import de.blinkt.openvpn.VpnProfile
 
@@ -527,7 +525,7 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
  *   Sing-box  → Hysteria2, TUIC, WARP, WireGuard, AmneziaWG (native obfuscation omitted)
  *   Xray      → VLESS+REALITY/XTLS, VMess, Trojan, Shadowsocks, SOCKS, HTTP
  *   OpenVPN   → OpenVPN
- *   Outline   → Outline SDK
+ *   Outline   → Sing-box (same as Shadowsocks)
  */
 object ProtocolFactory {
 
@@ -541,7 +539,7 @@ object ProtocolFactory {
 
     fun createProtocol(context: Context, protocol: com.carnelia.vpn.core.VpnProtocol): IVpnProtocol {
         return when {
-            protocol == com.carnelia.vpn.core.VpnProtocol.OUTLINE -> OutlineVpnProtocol()
+            protocol == com.carnelia.vpn.core.VpnProtocol.OUTLINE -> SingboxVpnProtocol(context)
             protocol == com.carnelia.vpn.core.VpnProtocol.OPENVPN -> OpenVpnProtocol()
             protocol in SINGBOX_PROTOCOLS -> SingboxVpnProtocol(context)
             else -> XrayVpnProtocol(context) // VLESS, VMess, Trojan, SS, SOCKS, HTTP
