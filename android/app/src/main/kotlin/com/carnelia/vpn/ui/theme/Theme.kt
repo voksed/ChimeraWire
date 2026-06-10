@@ -317,29 +317,29 @@ enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose
         outline = Color(0xFF424242)
     )),
     SECRET(R.string.theme_secret, darkColorScheme(
-        primary = Color(0xFFFFFFFF),
-        onPrimary = Color(0xFF000000),
-        primaryContainer = Color(0xFF333333),
-        onPrimaryContainer = Color(0xFFFFFFFF),
-        secondary = Color(0xFFCCCCCC),
-        onSecondary = Color(0xFF000000),
-        secondaryContainer = Color(0xFF666666),
-        onSecondaryContainer = Color(0xFFFFFFFF),
-        tertiary = Color(0xFFAAAAAA),
+        primary = Color(0xFF4D7FFF),      // electric blue
+        onPrimary = Color(0xFFFFFFFF),
+        primaryContainer = Color(0xFF0A1A50),
+        onPrimaryContainer = Color(0xFF9BB5FF),
+        secondary = Color(0xFF7A5AF8),    // deep violet
+        onSecondary = Color(0xFFFFFFFF),
+        secondaryContainer = Color(0xFF1A0A4A),
+        onSecondaryContainer = Color(0xFFB8A4FF),
+        tertiary = Color(0xFF00D4FF),     // cyan data stream
         onTertiary = Color(0xFF000000),
-        tertiaryContainer = Color(0xFF999999),
-        onTertiaryContainer = Color(0xFF000000),
-        error = Color(0xFFFF0000),
-        errorContainer = Color(0xFF330000),
+        tertiaryContainer = Color(0xFF003340),
+        onTertiaryContainer = Color(0xFF80EEFF),
+        error = Color(0xFFFF3355),
+        errorContainer = Color(0xFF330011),
         onError = Color(0xFFFFFFFF),
-        onErrorContainer = Color(0xFFFF0000),
-        background = Color(0xFF000000),
-        onBackground = Color(0xFFFFFFFF),
-        surface = Color(0xFF111111),
-        onSurface = Color(0xFFFFFFFF),
-        surfaceVariant = Color(0xFF222222),
-        onSurfaceVariant = Color(0xFFDDDDDD),
-        outline = Color(0xFF444444)
+        onErrorContainer = Color(0xFFFF3355),
+        background = Color(0xFF020612),   // deep space
+        onBackground = Color(0xFFC8D4FF),
+        surface = Color(0xFF07101E),
+        onSurface = Color(0xFFD4DFFF),
+        surfaceVariant = Color(0xFF10192E),
+        onSurfaceVariant = Color(0xFF8A9EC0),
+        outline = Color(0xFF1E2D50)
     ))
 }
 

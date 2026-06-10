@@ -375,10 +375,17 @@ class CarheliaVpnService : VpnService() {
             } else if (PrefsManager.isSplitTunnelingEnabled(this)) {
                 val selectedApps = PrefsManager.getSelectedApps(this)
                 val mode = PrefsManager.getSplitTunnelMode(this) // "allow" or "disallow"
+                // Never include the VPN app itself in allow-list — Xray runs under the same UID
+                // and routing its traffic through the TUN would create a loop.
+                val filteredApps = selectedApps.filter { it != packageName }
 
-                if (selectedApps.isNotEmpty()) {
-                    AppLogger.log("Service: Split Tunneling ($mode) for ${selectedApps.size} apps")
-                    for (pkg in selectedApps) {
+                if (mode == "allow" && filteredApps.isEmpty()) {
+                    // No valid apps to allow — fall through to global proxy
+                    AppLogger.log("Service: Split Tunneling allow-list empty after self-filter — Global Proxy")
+                    try { builder.addDisallowedApplication(packageName) } catch (_: Exception) {}
+                } else if (filteredApps.isNotEmpty()) {
+                    AppLogger.log("Service: Split Tunneling ($mode) for ${filteredApps.size} apps")
+                    for (pkg in filteredApps) {
                         try {
                             if (mode == "disallow") {
                                 builder.addDisallowedApplication(pkg)
@@ -389,15 +396,14 @@ class CarheliaVpnService : VpnService() {
                             AppLogger.error("Service: Failed to $mode app $pkg", e)
                         }
                     }
+                    // In disallow mode also exclude self so Xray reaches internet directly
+                    if (mode == "disallow") {
+                        try { builder.addDisallowedApplication(packageName) } catch (_: Exception) {}
+                    }
+                    // In allow mode: self (Xray) is not in allow list → bypasses VPN ✓
                 } else {
-                    AppLogger.log("Service: Split Tunneling active but list empty ($mode) (Proxying all).")
-                }
-
-                // Exclude self to avoid Xray Loop (since Xray runs under app's UID)
-                if (mode == "disallow" && !selectedApps.contains(packageName)) {
-                     try {
-                        builder.addDisallowedApplication(packageName)
-                    } catch (e: Exception) { }
+                    AppLogger.log("Service: Split Tunneling active but list empty ($mode) — Global Proxy")
+                    try { builder.addDisallowedApplication(packageName) } catch (_: Exception) {}
                 }
 
             } else {

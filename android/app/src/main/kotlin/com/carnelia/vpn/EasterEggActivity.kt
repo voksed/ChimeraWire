@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,16 @@ fun SpaceDodgerGame() {
 
     // Reusable objects to avoid GC pressure
     val shipPath = remember { androidx.compose.ui.graphics.Path() }
+
+    // Permanent signature — cached paint to avoid alloc on every frame
+    val voksPaint = remember {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.argb(70, 100, 140, 255)
+            textSize = 13f * density
+            typeface = android.graphics.Typeface.MONOSPACE
+            isAntiAlias = true
+        }
+    }
 
     // Game Loop - Optimized using withFrameNanos (smoother, synced to display)
     LaunchedEffect(Unit) {
@@ -163,13 +174,21 @@ fun SpaceDodgerGame() {
                 val eX = e.x * canvasWidth
                 val eY = e.y * canvasHeight
                 val eSize = 25.dp.toPx()
-                
+
                 drawRect(
                     color = if (isDarkTheme) Color.Red else Color(0xFFD32F2F), // Темно-красный для светлой темы
                     topLeft = Offset(eX - eSize/2, eY - eSize/2),
                     size = Size(eSize, eSize)
                 )
             }
+
+            // Permanent author signature — bottom-right corner
+            drawContext.canvas.nativeCanvas.drawText(
+                "// voks",
+                size.width - voksPaint.measureText("// voks") - 16f,
+                size.height - 20f,
+                voksPaint
+            )
         }
         
         // Score UI
@@ -192,13 +211,23 @@ fun SpaceDodgerGame() {
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold
                 )
-                 Text(
+                Text(
                     "Final Score: $score",
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 24.sp,
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                 Text(
+                if (isSecretThemeUnlocked) {
+                    Text(
+                        "[ voks VPN unlocked ]",
+                        color = Color(0xFF4D7FFF),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+                Text(
                     "Tap to restart",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 18.sp,
