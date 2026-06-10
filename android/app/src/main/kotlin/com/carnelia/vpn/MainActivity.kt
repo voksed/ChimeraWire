@@ -110,9 +110,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun importConfig(configStr: String) {
-        val config = com.carnelia.vpn.utils.ConfigParser.parse(configStr)
+        val trimmed = configStr.trim()
+        val repository = ServerRepository(this)
+
+        if (trimmed.startsWith("[")) {
+            val configs = com.carnelia.vpn.utils.ConfigImportExport.importFromJson(trimmed)
+            if (configs.isNotEmpty()) {
+                configs.forEach { repository.addServer(it) }
+                Toast.makeText(this, "Импортировано серверов: ${configs.size}", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        val config = com.carnelia.vpn.utils.ConfigParser.parse(trimmed)
         if (config != null) {
-            val repository = ServerRepository(this)
             repository.addServer(config)
             Toast.makeText(this, "Server imported: ${config.name}", Toast.LENGTH_SHORT).show()
         } else {

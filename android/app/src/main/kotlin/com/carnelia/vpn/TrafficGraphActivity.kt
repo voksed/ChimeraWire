@@ -53,16 +53,17 @@ fun TrafficGraphScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) {
         var prev = VpnGlobalState.stats.value
         while (isActive) {
-            delay(1000)
+            delay(2000)
             val cur = VpnGlobalState.stats.value
             val downBps = maxOf(0L, cur.bytesReceived - prev.bytesReceived)
             val upBps   = maxOf(0L, cur.bytesSent    - prev.bytesSent)
-            currentDown = downBps
-            currentUp   = upBps
+            // Convert 2-second delta to per-second rate for display
+            currentDown = downBps / 2
+            currentUp   = upBps / 2
             totalDown   = cur.bytesReceived
             totalUp     = cur.bytesSent
-            downHistory.add(downBps)
-            upHistory.add(upBps)
+            downHistory.add(downBps / 2)
+            upHistory.add(upBps / 2)
             if (downHistory.size > GRAPH_HISTORY) downHistory.removeAt(0)
             if (upHistory.size   > GRAPH_HISTORY) upHistory.removeAt(0)
             prev = cur
@@ -174,7 +175,8 @@ private fun SpeedGraph(
         fun List<Long>.toLinePath(): Path {
             val path = Path()
             if (isEmpty()) return path
-            val step = w / GRAPH_HISTORY.toFloat()
+            // Fixed step based on full history width so at 60 points graph spans 0..w
+            val step = w / (GRAPH_HISTORY - 1).toFloat()
             val startX = w - step * (size - 1)
             forEachIndexed { idx, v ->
                 val x = startX + idx * step

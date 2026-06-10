@@ -20,6 +20,7 @@ object XrayCoreManager {
     const val LOCAL_PORT = 10808
     const val LOCAL_PASSWORD = "local-xray-bridge"
     const val LOCAL_METHOD = "chacha20-ietf-poly1305"
+    const val LOCAL_HTTP_PORT = 10807  // localhost HTTP proxy for in-app diagnostics
     
     // Constants for internal tags
     private const val TAG_PROXY = "proxy"
@@ -105,21 +106,35 @@ object XrayCoreManager {
         val config = JSONObject().apply {
             put("log", JSONObject().put("loglevel", "warning"))
             put("dns", buildDns(context))
-            put("inbounds", JSONArray().put(JSONObject().apply {
-                put("tag", TAG_PROXY)
-                put("port", LOCAL_PORT)
-                put("listen", "127.0.0.1")
-                put("protocol", "shadowsocks")
-                put("settings", JSONObject().apply {
-                    put("method", LOCAL_METHOD)
-                    put("password", LOCAL_PASSWORD)
-                    put("network", "tcp,udp")
+            put("inbounds", JSONArray().apply {
+                // SS inbound for tun2socks bridge
+                put(JSONObject().apply {
+                    put("tag", TAG_PROXY)
+                    put("port", LOCAL_PORT)
+                    put("listen", "127.0.0.1")
+                    put("protocol", "shadowsocks")
+                    put("settings", JSONObject().apply {
+                        put("method", LOCAL_METHOD)
+                        put("password", LOCAL_PASSWORD)
+                        put("network", "tcp,udp")
+                    })
+                    put("sniffing", JSONObject().apply {
+                        put("enabled", true)
+                        put("destOverride", JSONArray().put("http").put("tls").put("quic"))
+                    })
                 })
-                put("sniffing", JSONObject().apply {
-                    put("enabled", true)
-                    put("destOverride", JSONArray().put("http").put("tls").put("quic"))
+                // Localhost HTTP proxy for in-app diagnostics
+                put(JSONObject().apply {
+                    put("tag", "local_http")
+                    put("port", LOCAL_HTTP_PORT)
+                    put("listen", "127.0.0.1")
+                    put("protocol", "http")
+                    put("settings", JSONObject().apply {
+                        put("auth", "noauth")
+                        put("udp", false)
+                    })
                 })
-            }))
+            })
             put("outbounds", JSONArray().put(JSONObject().apply {
                 put("tag", TAG_PROXY_OUT)
                 put("protocol", "socks")
@@ -260,7 +275,19 @@ object XrayCoreManager {
 
         inbounds.put(localInbound)
 
-        // 2. LAN Http Proxy (Optional)
+        // 2. Localhost HTTP proxy for in-app diagnostics (fingerprint check, leak test)
+        inbounds.put(JSONObject().apply {
+            put("tag", "local_http")
+            put("port", LOCAL_HTTP_PORT)
+            put("listen", "127.0.0.1")
+            put("protocol", "http")
+            put("settings", JSONObject().apply {
+                put("auth", "noauth")
+                put("udp", false)
+            })
+        })
+
+        // 3. LAN Http Proxy (Optional)
         if (PrefsManager.isAllowLanEnabled(context)) {
             val lanInbound = JSONObject()
             lanInbound.put("tag", "lan_proxy")
@@ -271,11 +298,11 @@ object XrayCoreManager {
              lanSettings.put("auth", "noauth")
              lanSettings.put("udp", true)
              lanInbound.put("settings", lanSettings)
-             
+
             inbounds.put(lanInbound)
             AppLogger.log("Allow LAN: Enabled on port 10809 (HTTP)")
         }
-        
+
         return inbounds
     }
 

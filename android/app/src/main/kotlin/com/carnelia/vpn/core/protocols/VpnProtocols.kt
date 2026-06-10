@@ -10,6 +10,8 @@ import kotlinx.coroutines.*
 import org.json.JSONObject
 import de.blinkt.openvpn.core.VpnStatus
 import de.blinkt.openvpn.VpnProfile
+import tun2socks.Tun2socks
+import shadowsocks.Shadowsocks
 
 /**
  * Base VPN Protocol Interface

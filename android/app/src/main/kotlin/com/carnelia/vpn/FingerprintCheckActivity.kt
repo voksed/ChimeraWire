@@ -76,12 +76,24 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
             result = null
             withContext(Dispatchers.IO) {
                 try {
+                    // When VPN is connected, route through the local Xray HTTP proxy
+                    // so the check reflects the VPN IP, not the real IP.
+                    val proxy = if (vpnConnected) {
+                        java.net.Proxy(
+                            java.net.Proxy.Type.HTTP,
+                            java.net.InetSocketAddress("127.0.0.1", com.carnelia.vpn.core.XrayCoreManager.LOCAL_HTTP_PORT)
+                        )
+                    } else {
+                        java.net.Proxy.NO_PROXY
+                    }
                     val client = OkHttpClient.Builder()
                         .connectTimeout(10, TimeUnit.SECONDS)
                         .readTimeout(10, TimeUnit.SECONDS)
+                        .proxy(proxy)
                         .build()
+                    // ip-api.com free tier only supports HTTP (not HTTPS)
                     val req = Request.Builder()
-                        .url("https://ip-api.com/json/?fields=status,query,country,regionName,city,isp,org,as,timezone,proxy,hosting,mobile")
+                        .url("http://ip-api.com/json/?fields=status,query,country,regionName,city,isp,org,as,timezone,proxy,hosting,mobile")
                         .build()
                     val resp = client.newCall(req).execute()
                     val body = resp.body?.string() ?: ""

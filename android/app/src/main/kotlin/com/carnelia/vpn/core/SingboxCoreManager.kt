@@ -33,6 +33,8 @@ object SingboxCoreManager {
         pb.redirectErrorStream(true)
         process = pb.start()
 
+        // Capture output lines so we can report them on immediate crash
+        val outputLines = mutableListOf<String>()
         streamJob?.cancel()
         streamJob = scope.launch {
             try {
@@ -40,14 +42,17 @@ object SingboxCoreManager {
                     for (line in r.lineSequence()) {
                         if (!isActive) break
                         AppLogger.log("Sing-box: $line")
+                        synchronized(outputLines) { if (outputLines.size < 20) outputLines.add(line) }
                     }
                 }
             } catch (_: Exception) {}
         }
 
-        delay(400)
+        delay(600)
         if (process?.isAlive == false) {
-            throw Exception("Sing-box died immediately (exit ${process?.exitValue()})")
+            val exitCode = process?.exitValue() ?: -1
+            val lastLines = synchronized(outputLines) { outputLines.takeLast(5).joinToString(" | ") }
+            throw Exception("Sing-box died immediately (exit $exitCode): $lastLines")
         }
         AppLogger.log("SingboxCoreManager: Started SOCKS5 on port $SOCKS5_PORT")
     }
@@ -88,17 +93,26 @@ object SingboxCoreManager {
 
     private fun buildDns(context: Context): JSONObject {
         val servers = JSONArray()
+        // sing-box 1.12+ new DNS server format: type + server (not legacy tag + address)
         if (PrefsManager.isNetShieldEnabled(context)) {
             servers.put(JSONObject().apply {
-                put("tag", "adguard"); put("address", "94.140.14.14")
+                put("id", "adguard"); put("type", "udp")
+                put("server", "94.140.14.14"); put("detour", "direct")
             })
         } else {
             val userDns = PrefsManager.getDnsServer(context)
             if (userDns.isNotBlank()) servers.put(JSONObject().apply {
-                put("tag", "user"); put("address", userDns)
+                put("id", "user"); put("type", "udp")
+                put("server", userDns); put("detour", "direct")
             })
-            servers.put(JSONObject().apply { put("tag", "cf"); put("address", "1.1.1.1") })
-            servers.put(JSONObject().apply { put("tag", "google"); put("address", "8.8.8.8") })
+            servers.put(JSONObject().apply {
+                put("id", "cf"); put("type", "udp")
+                put("server", "1.1.1.1"); put("detour", "direct")
+            })
+            servers.put(JSONObject().apply {
+                put("id", "google"); put("type", "udp")
+                put("server", "8.8.8.8"); put("detour", "direct")
+            })
         }
         return JSONObject().apply {
             put("servers", servers)
