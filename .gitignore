@@ -21,3 +21,4 @@ signing.keystore
 releases/android/*.apk
 releases/windows/*.exe
 build-desktop-*/
+installer/output/
