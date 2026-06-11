@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -122,13 +123,27 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Несколько ключей построчно (список из Телеграм / подписка plain-text).
+        // Обязательно ДО одиночного парсинга: URI-парсеры режут строку по '#'
+        // и съедают весь остаток текста как имя сервера.
+        val lines = trimmed.lines().map { it.trim() }.filter { it.contains("://") }
+        if (lines.size > 1) {
+            val imported = lines.mapNotNull { com.carnelia.vpn.utils.ConfigParser.parse(it) }
+            if (imported.isNotEmpty()) {
+                imported.forEach { repository.addServer(it) }
+                Toast.makeText(this, "Импортировано серверов: ${imported.size}", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
         val config = com.carnelia.vpn.utils.ConfigParser.parse(trimmed)
         if (config != null) {
             repository.addServer(config)
             Toast.makeText(this, "Server imported: ${config.name}", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Invalid config format", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        Toast.makeText(this, "Invalid config format", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -178,6 +193,50 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
+        }
+
+        // Обработка входящего интента (JSON из Телеграм, файловых менеджеров и т.д.)
+        handleIncomingIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: Intent) {
+        when (intent.action) {
+            Intent.ACTION_VIEW -> {
+                val uri = intent.data ?: return
+                // tc:// и ton-connect:// — deep links TON Connect, не файлы конфигов
+                if (uri.scheme != "content" && uri.scheme != "file") return
+                val text = readTextFromUri(uri) ?: return
+                importConfig(text)
+            }
+            Intent.ACTION_SEND -> {
+                // Текст передан напрямую (поделиться текстом)
+                val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+                if (!text.isNullOrBlank()) {
+                    importConfig(text)
+                    return
+                }
+                // Файл передан как поток (JSON файл из Телеграм)
+                @Suppress("DEPRECATION")
+                val uri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM) ?: return
+                val fileText = readTextFromUri(uri) ?: return
+                importConfig(fileText)
+            }
+        }
+    }
+
+    private fun readTextFromUri(uri: android.net.Uri): String? {
+        return try {
+            contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() }
+        } catch (e: Exception) {
+            com.carnelia.vpn.utils.AppLogger.error("MainActivity: readTextFromUri failed", e)
+            Toast.makeText(this, "Не удалось прочитать файл", Toast.LENGTH_SHORT).show()
+            null
         }
     }
 
@@ -678,6 +737,7 @@ fun ConnectionStatusText(connectionState: ConnectionState) {
     )
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ConnectButton(
     connectionState: ConnectionState,
@@ -686,6 +746,7 @@ fun ConnectButton(
     onConnect: () -> Unit,
     onDisconnect: () -> Unit
 ) {
+    val context = LocalContext.current
     val primary = MaterialTheme.colorScheme.primary
     val primaryContainer = MaterialTheme.colorScheme.primaryContainer
     val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
@@ -725,7 +786,13 @@ fun ConnectButton(
                     color = if (isConnected) Color.Transparent else primary.copy(alpha = 0.6f),
                     shape = CircleShape
                 )
-                .clickable { if (isConnected) onDisconnect() else onConnect() },
+                .combinedClickable(
+                    onClick = { if (isConnected) onDisconnect() else onConnect() },
+                    // Долгое нажатие — Debug Panel с логами
+                    onLongClick = {
+                        context.startActivity(Intent(context, DebugActivity::class.java))
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -1039,6 +1106,7 @@ fun ServerSelectionDialog(
     var serverToRename by remember { mutableStateOf<VpnServerConfig?>(null) }
     var renameText by remember { mutableStateOf("") }
     var serverToScan by remember { mutableStateOf<VpnServerConfig?>(null) }
+    var serverToConfig by remember { mutableStateOf<VpnServerConfig?>(null) }
 
     serverToScan?.let { scanServer ->
         RealityScannerDialog(
@@ -1049,6 +1117,19 @@ fun ServerSelectionDialog(
                 servers = repository.getServers()
                 if (activeInfo?.id == updated.id) onServerSelected(updated)
                 serverToScan = null
+            }
+        )
+    }
+
+    serverToConfig?.let { cfgServer ->
+        com.carnelia.vpn.ui.AwgSettingsDialog(
+            server = cfgServer,
+            accentColor = accentColor,
+            onDismiss = { serverToConfig = null },
+            onSave = { updated ->
+                repository.updateServer(updated)
+                servers = repository.getServers()
+                serverToConfig = null
             }
         )
     }
@@ -1332,6 +1413,21 @@ fun ServerSelectionDialog(
                                                 contentDescription = "Reality Scanner",
                                                 tint = Color(0xFF00AAFF).copy(alpha = 0.8f),
                                                 modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+
+                                    // WireGuard / AmneziaWG settings (MTU, Jc, I1-I5, порт)
+                                    if (server.protocol == VpnProtocol.WIREGUARD || server.protocol == VpnProtocol.AMNEZIA_WG) {
+                                        IconButton(
+                                            onClick = { serverToConfig = server },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Tune,
+                                                contentDescription = "Protocol Settings",
+                                                tint = Color.Gray.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }

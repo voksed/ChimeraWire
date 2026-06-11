@@ -58,16 +58,6 @@ fun SpaceDodgerGame() {
     // Reusable objects to avoid GC pressure
     val shipPath = remember { androidx.compose.ui.graphics.Path() }
 
-    // Permanent signature — cached paint to avoid alloc on every frame
-    val voksPaint = remember {
-        android.graphics.Paint().apply {
-            color = android.graphics.Color.argb(70, 100, 140, 255)
-            textSize = 13f * density
-            typeface = android.graphics.Typeface.MONOSPACE
-            isAntiAlias = true
-        }
-    }
-
     // Game Loop - Optimized using withFrameNanos (smoother, synced to display)
     LaunchedEffect(Unit) {
         var lastTime = 0L
@@ -182,15 +172,19 @@ fun SpaceDodgerGame() {
                 )
             }
 
-            // Permanent author signature — bottom-right corner
-            drawContext.canvas.nativeCanvas.drawText(
-                "// voks",
-                size.width - voksPaint.measureText("// voks") - 16f,
-                size.height - 20f,
-                voksPaint
-            )
         }
         
+        // Permanent author signature — bottom-right
+        Text(
+            "// voks",
+            color = Color(0x55FFFFFF),
+            fontSize = 13.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(androidx.compose.ui.Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 20.dp)
+        )
+
         // Score UI
         Text(
             "Score: $score",
@@ -220,7 +214,7 @@ fun SpaceDodgerGame() {
                 if (isSecretThemeUnlocked) {
                     Text(
                         "[ voks VPN unlocked ]",
-                        color = Color(0xFF4D7FFF),
+                        color = Color(0xFFFFFFFF),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,

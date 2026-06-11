@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import com.carnelia.vpn.service.GeoSpoofService
+import kotlinx.coroutines.launch
 import com.carnelia.vpn.ui.theme.CarheliaTheme
 import com.carnelia.vpn.ui.rememberWindowSize
 import com.carnelia.vpn.utils.AppLogger
@@ -68,8 +69,15 @@ class GeoSpoofActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Configuration.getInstance().load(this, getSharedPreferences("osmdroid", MODE_PRIVATE))
-        Configuration.getInstance().userAgentValue = packageName
+        val osmConf = Configuration.getInstance()
+        osmConf.load(this, getSharedPreferences("osmdroid", MODE_PRIVATE))
+        // OSM tile servers отдают 403 без идентифицирующего User-Agent
+        osmConf.userAgentValue = "CarneliaVPN/$packageName"
+        // На Android 10+ дефолтный /sdcard/osmdroid недоступен (scoped storage) —
+        // тайлы скачиваются, но не кэшируются и карта остаётся пустой.
+        // Переносим базу и кэш во внутреннюю папку приложения (всегда доступна для записи).
+        osmConf.osmdroidBasePath = cacheDir
+        osmConf.osmdroidTileCache = java.io.File(cacheDir, "osmdroid-tiles").apply { mkdirs() }
 
         setContent {
             CarheliaTheme {
@@ -124,6 +132,42 @@ private enum class MapLayer(val title: String) {
     TOPO("Рельеф")
 }
 
+// ============ Geocoding (поиск места по названию) ============
+data class GeoSearchResult(val displayName: String, val lat: Double, val lon: Double)
+
+/**
+ * Геокодинг через Nominatim (OpenStreetMap). Тот же приватный стек, что и тайлы —
+ * без Google. Требует идентифицирующий User-Agent по политике использования.
+ */
+private suspend fun geocodePlace(query: String): List<GeoSearchResult> =
+    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val q = java.net.URLEncoder.encode(query.trim(), "UTF-8")
+            val url = java.net.URL(
+                "https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ru&q=$q"
+            )
+            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                connectTimeout = 10000
+                readTimeout = 10000
+                setRequestProperty("User-Agent", "CarneliaVPN/2.4.3 (geo spoof)")
+            }
+            val body = conn.inputStream.bufferedReader().use { it.readText() }
+            conn.disconnect()
+            val arr = org.json.JSONArray(body)
+            buildList {
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val lat = o.optString("lat").toDoubleOrNull() ?: continue
+                    val lon = o.optString("lon").toDoubleOrNull() ?: continue
+                    add(GeoSearchResult(o.optString("display_name", query), lat, lon))
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.error("GeoSpoof: geocode failed", e)
+            emptyList()
+        }
+    }
+
 private fun mapLayerToTileSource(layer: MapLayer): ITileSource {
     return when (layer) {
         MapLayer.STANDARD -> TileSourceFactory.MAPNIK
@@ -154,6 +198,20 @@ fun GeoSpoofScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
 
     var isRunning by remember { mutableStateOf(GeoSpoofService.isRunning) }
+
+    // Сервис может остановиться сам (кнопка "Стоп" в уведомлении, убит системой) —
+    // при возврате на экран синхронизируем состояние кнопки с реальным.
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                isRunning = GeoSpoofService.isRunning
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     var latText by remember { mutableStateOf(String.format(java.util.Locale.US, "%.6f", PrefsManager.getGeoLat(context))) }
     var lonText by remember { mutableStateOf(String.format(java.util.Locale.US, "%.6f", PrefsManager.getGeoLon(context))) }
     var moveEnabled by remember { mutableStateOf(PrefsManager.isGeoMovementEnabled(context)) }
@@ -161,6 +219,12 @@ fun GeoSpoofScreen(
     var bearing by remember { mutableStateOf(PrefsManager.getGeoBearing(context)) }
     var mapLayer by remember { mutableStateOf(MapLayer.STANDARD) }
     var showFullMapPicker by remember { mutableStateOf(false) }
+
+    // Поиск места по названию (геокодинг через Nominatim / OpenStreetMap)
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResults by remember { mutableStateOf<List<GeoSearchResult>>(emptyList()) }
+    var isSearching by remember { mutableStateOf(false) }
+    val searchScope = rememberCoroutineScope()
 
     // Validate and send update to running service
     fun applyPoint() {
@@ -282,7 +346,7 @@ fun GeoSpoofScreen(
                     }
                 },
                 followPoint = false,
-                modifier = mapModifier
+                modifier = if (mapModifier == Modifier) Modifier.height(300.dp) else mapModifier
             )
             Spacer(Modifier.height(12.dp))
             Text("Джойстик: удерживайте, чтобы двигать точку",
@@ -308,6 +372,78 @@ fun GeoSpoofScreen(
             if (!isMockLocationEnabled(context)) {
                 Spacer(Modifier.height(16.dp))
                 MockWarningCard()
+            }
+            Spacer(Modifier.height(16.dp))
+            // Поиск места по названию / адресу
+            SpoofCard(title = "🔍 Поиск места") {
+                fun runSearch() {
+                    if (searchQuery.isBlank() || isSearching) return
+                    isSearching = true
+                    searchResults = emptyList()
+                    searchScope.launch {
+                        val res = geocodePlace(searchQuery)
+                        searchResults = res
+                        isSearching = false
+                        if (res.isEmpty()) onShowToast("Ничего не найдено")
+                    }
+                }
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Город, адрес, место") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { runSearch() }),
+                    trailingIcon = {
+                        if (isSearching) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            IconButton(onClick = { runSearch() }) {
+                                Icon(Icons.Default.Search, contentDescription = "Найти",
+                                    tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                searchResults.forEach { result ->
+                    Spacer(Modifier.height(6.dp))
+                    Surface(
+                        onClick = {
+                            latText = String.format(java.util.Locale.US, "%.6f", result.lat)
+                            lonText = String.format(java.util.Locale.US, "%.6f", result.lon)
+                            searchResults = emptyList()
+                            searchQuery = ""
+                            applyPoint()
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                result.displayName,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 2,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             }
             Spacer(Modifier.height(16.dp))
             // Coordinates
@@ -750,16 +886,42 @@ private fun OSMTileMap(
 
     val mapView = remember {
         MapView(context).apply {
-            setTileSource(TileSourceFactory.MAPNIK)
+            setTileSource(mapLayerToTileSource(mapLayer))
             setMultiTouchControls(true)
+            setUseDataConnection(true)
             minZoomLevel = 2.0
             maxZoomLevel = 19.0
             controller.setZoom(12.0)
+            // Карта внутри verticalScroll — при касании отбираем перехват жестов
+            // у скролла, иначе pinch-zoom и панорамирование не работают.
+            setOnTouchListener { v, event ->
+                when (event.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN,
+                    android.view.MotionEvent.ACTION_POINTER_DOWN ->
+                        v.parent?.requestDisallowInterceptTouchEvent(true)
+                    android.view.MotionEvent.ACTION_UP,
+                    android.view.MotionEvent.ACTION_CANCEL ->
+                        v.parent?.requestDisallowInterceptTouchEvent(false)
+                }
+                false // не поглощаем — osmdroid обрабатывает жест сам
+            }
+        }
+    }
+
+    // Тайлы доезжают асинхронно, а в Compose-AndroidView invalidate() из osmdroid
+    // не всегда вызывает onDraw — карта застывает в loading-сетке. Тикаем
+    // postInvalidate() со стороны Compose ~4 секунды после открытия / смены точки.
+    LaunchedEffect(latitude, longitude, mapLayer) {
+        repeat(20) {
+            mapView.postInvalidate()
+            kotlinx.coroutines.delay(200)
         }
     }
 
     var isInitialCenterDone by remember(mapView) { mutableStateOf(false) }
-    val tileSource = remember(mapLayer) { mapLayerToTileSource(mapLayer) }
+    // Запоминаем применённый слой, чтобы setTileSource (он чистит кэш тайлов)
+    // вызывался ТОЛЬКО при реальной смене слоя, а не на каждой рекомпозиции.
+    var appliedLayer by remember(mapView) { mutableStateOf<MapLayer?>(null) }
 
     val marker = remember(mapView) {
         Marker(mapView).apply {
@@ -821,25 +983,43 @@ private fun OSMTileMap(
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 280.dp)
+        // Высоту задаёт вызывающий (embedded — фикс .height, полный экран — weight).
+        // КЛЮЧЕВОЕ: высота должна быть ОГРАНИЧЕННОЙ. Внутри verticalScroll без явной
+        // высоты osmdroid MapView меряется огромным вьюпортом и рисует loading-сетку.
+        modifier = modifier.fillMaxWidth()
     ) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = {
-                mapView
-            },
-            update = { map ->
-                map.setTileSource(tileSource)
-                marker.position = currentPoint
-                if (!isInitialCenterDone || followPoint) {
-                    map.controller.setCenter(currentPoint)
-                    isInitialCenterDone = true
+        Box(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = {
+                    mapView
+                },
+                update = { map ->
+                    // setTileSource чистит кэш тайлов — вызываем только при смене слоя
+                    if (appliedLayer != mapLayer) {
+                        map.setTileSource(mapLayerToTileSource(mapLayer))
+                        appliedLayer = mapLayer
+                    }
+                    marker.position = currentPoint
+                    if (!isInitialCenterDone || followPoint) {
+                        map.controller.setCenter(currentPoint)
+                        isInitialCenterDone = true
+                    }
+                    map.invalidate()
                 }
-                map.invalidate()
+            )
+
+            // Кнопки зума — надёжная альтернатива pinch-зуму
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ZoomButton("+") { mapView.controller.zoomIn() }
+                ZoomButton("−") { mapView.controller.zoomOut() }
             }
-        )
+        }
     }
 
     Text(
@@ -848,6 +1028,22 @@ private fun OSMTileMap(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 8.dp)
     )
+}
+
+@Composable
+private fun ZoomButton(label: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+        shadowElevation = 4.dp,
+        modifier = Modifier.size(44.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(label, fontSize = 24.sp, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
 }
 
 @Composable
