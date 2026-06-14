@@ -1,0 +1,6 @@
+# Ensure shell scripts always have LF endings in the repo and on checkout
+android/gradlew text eol=lf
+android/gradlew.bat text eol=crlf
+
+# Default: auto-detect text files
+* text=auto
