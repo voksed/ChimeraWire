@@ -26,8 +26,7 @@ jobs:
         run: echo "y" | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "ndk;27.0.12077973" >/dev/null
 
       - name: Decode release keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.jks
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
@@ -39,25 +38,54 @@ jobs:
         working-directory: android
         run: ./gradlew assembleCarneliaWalletRelease --stacktrace
 
-      - name: Rename APKs
+      - name: Extract version
+        id: ver
         run: |
           VERSION=$(grep -oP 'versionName = "\K[^"]+' android/app/build.gradle.kts | head -1)
-          cp android/app/build/outputs/apk/carneliaWallet/release/app-carnelia-wallet-arm64-v8a-release.apk \
-             CarneliaVPN-${VERSION}-arm64.apk
-          cp android/app/build/outputs/apk/carneliaWallet/release/app-carnelia-wallet-universal-release.apk \
-             CarneliaVPN-${VERSION}-universal.apk
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version $VERSION"
 
-      - name: Upload arm64 APK
+      - name: Rename APKs
+        run: |
+          V=${{ steps.ver.outputs.version }}
+          cp android/app/build/outputs/apk/carneliaWallet/release/app-carnelia-wallet-arm64-v8a-release.apk \
+             CarneliaVPN-${V}-arm64.apk
+          cp android/app/build/outputs/apk/carneliaWallet/release/app-carnelia-wallet-universal-release.apk \
+             CarneliaVPN-${V}-universal.apk
+
+      - name: Upload arm64 APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: CarneliaVPN-arm64
           path: CarneliaVPN-*-arm64.apk
 
-      - name: Upload universal APK
+      - name: Upload universal APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: CarneliaVPN-universal
           path: CarneliaVPN-*-universal.apk
+
+      - name: Publish to carnelia-update release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          # Create release if it doesn't exist yet
+          gh release view "$TAG" --repo voksed/carnelia-update 2>/dev/null || \
+            gh release create "$TAG" \
+              --repo voksed/carnelia-update \
+              --title "CarneliaVPN $VERSION" \
+              --notes "CarneliaVPN $VERSION" \
+              --latest
+
+          # Upload/replace APKs
+          gh release upload "$TAG" \
+            CarneliaVPN-${VERSION}-arm64.apk \
+            CarneliaVPN-${VERSION}-universal.apk \
+            --repo voksed/carnelia-update \
+            --clobber
 
   desktop:
     runs-on: windows-latest
