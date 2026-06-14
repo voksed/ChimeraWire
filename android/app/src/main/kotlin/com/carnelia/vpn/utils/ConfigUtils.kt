@@ -533,6 +533,9 @@ object ConfigParser {
                     "jmax"         -> cfg["Jmax"] = value
                     "s1"           -> cfg["S1"] = value
                     "s2"           -> cfg["S2"] = value
+                    "s3"           -> cfg["S3"] = value
+                    "s4"           -> cfg["S4"] = value
+                    "s5"           -> cfg["S5"] = value
                     "h1"           -> cfg["H1"] = value
                     "h2"           -> cfg["H2"] = value
                     "h3"           -> cfg["H3"] = value
@@ -696,11 +699,14 @@ object ConfigParser {
                             cfg["Jmax"] = awg.optString("jmax", "")
                             cfg["S1"] = awg.optString("s1", "")
                             cfg["S2"] = awg.optString("s2", "")
+                            cfg["S3"] = awg.optString("s3", "")
+                            cfg["S4"] = awg.optString("s4", "")
+                            cfg["S5"] = awg.optString("s5", "")
                             cfg["H1"] = awg.optString("h1", "")
                             cfg["H2"] = awg.optString("h2", "")
                             cfg["H3"] = awg.optString("h3", "")
                             cfg["H4"] = awg.optString("h4", "")
-                            // AmneziaWG 1.5 special junk packets
+                            // AmneziaWG 1.5 special junk packets (I1 value from AmneziaVPN export may be malformed Qt string)
                             listOf("I1","I2","I3","I4","I5").forEach { k ->
                                 val v = awg.optString(k.lowercase(), "")
                                 if (v.isNotBlank()) cfg[k] = v
@@ -754,7 +760,7 @@ object ConfigParser {
                 cfg["dns"] = root.optString("dns", "1.1.1.1")
                 val endpoint = root.optString("endpoint", "")
                 cfg["endpoint"] = endpoint
-                listOf("Jc","Jmin","Jmax","S1","S2","H1","H2","H3","H4","I1","I2","I3","I4","I5").forEach { k ->
+                listOf("Jc","Jmin","Jmax","S1","S2","S3","S4","S5","H1","H2","H3","H4","I1","I2","I3","I4","I5").forEach { k ->
                     val v = root.optString(k, root.optString(k.lowercase(), ""))
                     if (v.isNotBlank()) cfg[k] = v
                 }

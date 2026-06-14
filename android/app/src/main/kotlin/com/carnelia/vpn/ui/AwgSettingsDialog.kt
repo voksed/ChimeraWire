@@ -15,7 +15,7 @@ import com.carnelia.vpn.core.VpnServerConfig
 
 /**
  * Редактор параметров WireGuard / AmneziaWG сервера:
- * MTU, обфускация Jc/Jmin/Jmax/S1/S2/H1-H4, спец-пакеты I1-I5 (AmneziaWG 1.5), порт.
+ * MTU, обфускация Jc/Jmin/Jmax/S1-S5/H1-H4/I1-I5, порт.
  * Параметры хранятся в config map сервера и уходят в экспорт/бэкап.
  */
 @Composable
@@ -33,15 +33,19 @@ fun AwgSettingsDialog(
     var jmax by remember { mutableStateOf(server.config["Jmax"] ?: "") }
     var s1 by remember { mutableStateOf(server.config["S1"] ?: "") }
     var s2 by remember { mutableStateOf(server.config["S2"] ?: "") }
+    var s3 by remember { mutableStateOf(server.config["S3"] ?: "") }
+    var s4 by remember { mutableStateOf(server.config["S4"] ?: "") }
+    var s5 by remember { mutableStateOf(server.config["S5"] ?: "") }
     var h1 by remember { mutableStateOf(server.config["H1"] ?: "") }
     var h2 by remember { mutableStateOf(server.config["H2"] ?: "") }
     var h3 by remember { mutableStateOf(server.config["H3"] ?: "") }
     var h4 by remember { mutableStateOf(server.config["H4"] ?: "") }
-    var i1 by remember { mutableStateOf(server.config["I1"] ?: "") }
-    var i2 by remember { mutableStateOf(server.config["I2"] ?: "") }
-    var i3 by remember { mutableStateOf(server.config["I3"] ?: "") }
-    var i4 by remember { mutableStateOf(server.config["I4"] ?: "") }
-    var i5 by remember { mutableStateOf(server.config["I5"] ?: "") }
+    // I1-I5: show only if parseable int (AmneziaVPN may export malformed Qt QByteArray string)
+    var i1 by remember { mutableStateOf(server.config["I1"]?.toIntOrNull()?.toString() ?: "") }
+    var i2 by remember { mutableStateOf(server.config["I2"]?.toIntOrNull()?.toString() ?: "") }
+    var i3 by remember { mutableStateOf(server.config["I3"]?.toIntOrNull()?.toString() ?: "") }
+    var i4 by remember { mutableStateOf(server.config["I4"]?.toIntOrNull()?.toString() ?: "") }
+    var i5 by remember { mutableStateOf(server.config["I5"]?.toIntOrNull()?.toString() ?: "") }
     var port by remember { mutableStateOf(server.port.toString()) }
 
     val fieldColors = OutlinedTextFieldDefaults.colors(
@@ -89,6 +93,9 @@ fun AwgSettingsDialog(
                     Field(jmax, { jmax = it }, "Jmax – Junk packet maximum size", numeric = true)
                     Field(s1, { s1 = it }, "S1 – Init packet junk size", numeric = true)
                     Field(s2, { s2 = it }, "S2 – Response packet junk size", numeric = true)
+                    Field(s3, { s3 = it }, "S3 – Cookie reply junk size", numeric = true)
+                    Field(s4, { s4 = it }, "S4 – Transport junk size", numeric = true)
+                    Field(s5, { s5 = it }, "S5 – Additional junk size", numeric = true)
                     Field(h1, { h1 = it }, "H1 – Init packet magic header")
                     Field(h2, { h2 = it }, "H2 – Response packet magic header")
                     Field(h3, { h3 = it }, "H3 – Underload packet magic header")
@@ -122,7 +129,7 @@ fun AwgSettingsDialog(
                 put("mtu", mtu)
                 if (isAmnezia) {
                     put("Jc", jc); put("Jmin", jmin); put("Jmax", jmax)
-                    put("S1", s1); put("S2", s2)
+                    put("S1", s1); put("S2", s2); put("S3", s3); put("S4", s4); put("S5", s5)
                     put("H1", h1); put("H2", h2); put("H3", h3); put("H4", h4)
                     put("I1", i1); put("I2", i2); put("I3", i3); put("I4", i4); put("I5", i5)
                 }

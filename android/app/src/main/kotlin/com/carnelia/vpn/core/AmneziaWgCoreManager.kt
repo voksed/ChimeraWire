@@ -46,6 +46,9 @@ object AmneziaWgCoreManager {
             c["Jmax"]?.toIntOrNull()?.let { appendLine("jmax=$it") }
             c["S1"]?.toIntOrNull()?.let   { appendLine("s1=$it") }
             c["S2"]?.toIntOrNull()?.let   { appendLine("s2=$it") }
+            c["S3"]?.toIntOrNull()?.let   { appendLine("s3=$it") }
+            c["S4"]?.toIntOrNull()?.let   { appendLine("s4=$it") }
+            c["S5"]?.toIntOrNull()?.let   { appendLine("s5=$it") }
             c["H1"]?.toLongOrNull()?.let  { appendLine("h1=$it") }
             c["H2"]?.toLongOrNull()?.let  { appendLine("h2=$it") }
             c["H3"]?.toLongOrNull()?.let  { appendLine("h3=$it") }
