@@ -333,35 +333,51 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
     override suspend fun start(config: com.carnelia.vpn.core.VpnServerConfig): VpnErrorCode {
         updateConnectionState(ConnectionState.CONNECTING)
         isRunning = true
-        try {
-            AppLogger.log("SingboxVpnProtocol: Starting sing-box (${config.protocol})...")
-            com.carnelia.vpn.core.SingboxCoreManager.startCore(context, config)
 
-            // Wait for sing-box SOCKS5
-            var waited = 0
-            while (waited < 6000) {
-                try {
-                    withContext(Dispatchers.IO) {
-                        java.net.Socket("127.0.0.1", com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT).use {}
-                    }
-                    break
-                } catch (_: Exception) { delay(200); waited += 200 }
+        // sing-box (и AmneziaWG/WG поверх него) часто не поднимается с первой попытки:
+        // процесс может умереть на гонке DNS/биндинга порта, а UDP-протоколам нужно
+        // несколько попыток рукопожатия. Раньше пользователь жал Connect по 3 раза вручную —
+        // теперь повторяем автоматически.
+        val maxAttempts = 3
+        var lastError: Exception? = null
+        for (attempt in 1..maxAttempts) {
+            if (!isRunning) return VpnErrorCode.CONNECTION_FAILED
+            try {
+                AppLogger.log("SingboxVpnProtocol: Starting sing-box (${config.protocol}), attempt $attempt/$maxAttempts...")
+                com.carnelia.vpn.core.SingboxCoreManager.startCore(context, config)
+
+                // Wait for sing-box SOCKS5
+                var waited = 0
+                var portReady = false
+                while (waited < 6000) {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            java.net.Socket("127.0.0.1", com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT).use {}
+                        }
+                        portReady = true
+                        break
+                    } catch (_: Exception) { delay(200); waited += 200 }
+                }
+                if (!portReady) throw Exception("Sing-box SOCKS5 port ${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT} not ready")
+
+                // Start Xray as SS:10808 → SOCKS5:10812 bridge (tun2socks → Xray → sing-box)
+                AppLogger.log("SingboxVpnProtocol: Starting Xray SS bridge → sing-box :${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}...")
+                com.carnelia.vpn.core.XrayCoreManager.startCoreAsSocks5Bridge(context)
+
+                AppLogger.log("SingboxVpnProtocol: Ready after ${waited}ms (attempt $attempt)")
+                updateConnectionState(ConnectionState.CONNECTED)
+                return VpnErrorCode.NO_ERROR
+            } catch (e: Exception) {
+                lastError = e
+                AppLogger.error("SingboxVpnProtocol: Start failed (attempt $attempt/$maxAttempts)", e)
+                com.carnelia.vpn.core.SingboxCoreManager.stopCore()
+                com.carnelia.vpn.core.XrayCoreManager.stopCore()
+                if (attempt < maxAttempts && isRunning) delay(700)
             }
-            if (waited >= 6000) throw Exception("Sing-box SOCKS5 port ${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT} not ready")
-
-            // Start Xray as SS:10808 → SOCKS5:10812 bridge (tun2socks → Xray → sing-box)
-            AppLogger.log("SingboxVpnProtocol: Starting Xray SS bridge → sing-box :${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}...")
-            com.carnelia.vpn.core.XrayCoreManager.startCoreAsSocks5Bridge(context)
-
-            AppLogger.log("SingboxVpnProtocol: Ready after ${waited}ms")
-            updateConnectionState(ConnectionState.CONNECTED)
-            return VpnErrorCode.NO_ERROR
-        } catch (e: Exception) {
-            AppLogger.error("SingboxVpnProtocol: Start failed", e)
-            com.carnelia.vpn.core.SingboxCoreManager.stopCore()
-            updateConnectionState(ConnectionState.ERROR)
-            return VpnErrorCode.CONNECTION_FAILED
         }
+        AppLogger.error("SingboxVpnProtocol: Start failed after $maxAttempts attempts", lastError)
+        updateConnectionState(ConnectionState.ERROR)
+        return VpnErrorCode.CONNECTION_FAILED
     }
 
     override suspend fun stop() {

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.carnelia.vpn.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -13,7 +14,9 @@ import java.util.concurrent.TimeUnit
 object UpdateManager {
 
     private const val UPDATE_URL = "https://voksed.github.io/carnelia-update/latest.json"
-    private const val CURRENT_VERSION = "2.4.2"
+    // Берём установленную версию из BuildConfig, иначе после обновления приложение
+    // продолжает считать себя старым и бесконечно предлагает обновиться.
+    private val CURRENT_VERSION = BuildConfig.VERSION_NAME
 
     data class UpdateInfo(
         val version: String,
