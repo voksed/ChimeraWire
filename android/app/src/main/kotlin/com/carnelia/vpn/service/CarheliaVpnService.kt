@@ -327,16 +327,33 @@ class CarheliaVpnService : VpnService() {
         try {
             AppLogger.log("Service: Establishing VPN interface...")
             val builder = Builder()
-            // Optimize MTU for performance/latency (1280 is safe, 1400 might be faster but riskier)
-            builder.setMtu(1280)
-            
-            builder.addAddress("10.111.222.1", 32)
+
+            val isAwg = currentConfig?.protocol == com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG
+            if (isAwg) {
+                // AWG: use peer address from WireGuard config so server-side AllowedIPs check passes.
+                // Config field "address" is like "10.66.66.13/32" or "10.66.66.13/24".
+                val rawAddr = currentConfig?.config?.get("address") ?: "10.111.222.1/32"
+                val parts = rawAddr.trim().split("/")
+                val ip = parts[0].trim()
+                val prefix = parts.getOrNull(1)?.trim()?.toIntOrNull() ?: 32
+                val mtu = currentConfig?.config?.get("mtu")?.toIntOrNull() ?: 1280
+                builder.setMtu(mtu)
+                builder.addAddress(ip, prefix)
+            } else {
+                builder.setMtu(1280)
+                builder.addAddress("10.111.222.1", 32)
+            }
+
             builder.addRoute("0.0.0.0", 0)
 
             // IPv4-only DNS — IPv6 DNS causes requests to IPv6 destinations that IPv4-only
             // VLESS servers can't proxy, leading to high TX / near-zero RX (requests sent but
             // no responses). Force IPv4 DNS so all resolution stays in IPv4 space.
-            val currentDns = PrefsManager.getDnsServer(this)
+            val currentDns = if (isAwg) {
+                currentConfig?.config?.get("dns")?.split(",")?.firstOrNull()?.trim() ?: "1.1.1.1"
+            } else {
+                PrefsManager.getDnsServer(this)
+            }
             if (currentDns.isNotEmpty()) {
                 try { builder.addDnsServer(currentDns) } catch (_: Exception) {}
             }

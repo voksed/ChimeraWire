@@ -12,9 +12,12 @@ object AmneziaWgCoreManager {
         val settings = buildSettings(config)
         AppLogger.log("AmneziaWgCoreManager: awgVersion=${GoBackend.awgVersion()}")
         AppLogger.log("AmneziaWgCoreManager: starting tunnel (fd=$tunFd)")
+        AppLogger.log("AmneziaWgCoreManager: settings=\n$settings")
         tunnelHandle = GoBackend.awgTurnOn("awg0", tunFd, settings)
         return if (tunnelHandle >= 0) {
             AppLogger.log("AmneziaWgCoreManager: tunnel up, handle=$tunnelHandle")
+            val appliedConfig = GoBackend.awgGetConfig(tunnelHandle)
+            AppLogger.log("AmneziaWgCoreManager: applied_config=\n$appliedConfig")
             true
         } else {
             AppLogger.error("AmneziaWgCoreManager: awgTurnOn failed (rc=$tunnelHandle)")
