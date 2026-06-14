@@ -115,24 +115,26 @@ object SingboxCoreManager {
     private fun buildDns(context: Context): JSONObject {
         val servers = JSONArray()
         // sing-box 1.12+ DNS server format: tag + type + server (поле идентификатора — "tag", НЕ "id").
+        // detour="direct" НЕ ставим: sing-box 1.12+ падает с "detour to an empty direct outbound
+        // makes no sense" — DNS и так резолвится напрямую по умолчанию.
         if (PrefsManager.isNetShieldEnabled(context)) {
             servers.put(JSONObject().apply {
                 put("tag", "adguard"); put("type", "udp")
-                put("server", "94.140.14.14"); put("detour", "direct")
+                put("server", "94.140.14.14")
             })
         } else {
             val userDns = PrefsManager.getDnsServer(context)
             servers.put(JSONObject().apply {
                 put("tag", "cf"); put("type", "udp")
-                put("server", "1.1.1.1"); put("detour", "direct")
+                put("server", "1.1.1.1")
             })
             if (userDns.isNotBlank()) servers.put(JSONObject().apply {
                 put("tag", "user"); put("type", "udp")
-                put("server", userDns); put("detour", "direct")
+                put("server", userDns)
             })
             servers.put(JSONObject().apply {
                 put("tag", "google"); put("type", "udp")
-                put("server", "8.8.8.8"); put("detour", "direct")
+                put("server", "8.8.8.8")
             })
         }
         return JSONObject().apply {
