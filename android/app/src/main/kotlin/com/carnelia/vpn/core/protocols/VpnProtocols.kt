@@ -411,6 +411,27 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
                 val client = shadowsocks.Shadowsocks.newClientFromJSON(json.toString())
                 activeTunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
                 AppLogger.log("SingboxVpnProtocol: Tunnel established!")
+
+                // Hysteria2 (and TUIC/QUIC protocols) drop idle sessions after ~5-6 min.
+                // Send a TCP connect via sing-box SOCKS5 every 2 min to keep QUIC stream alive.
+                scope.launch {
+                    while (isActive && isRunning) {
+                        delay(120_000L)
+                        try {
+                            withContext(Dispatchers.IO) {
+                                val proxy = java.net.Proxy(
+                                    java.net.Proxy.Type.SOCKS,
+                                    java.net.InetSocketAddress("127.0.0.1", com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT)
+                                )
+                                java.net.Socket(proxy).use { s ->
+                                    s.soTimeout = 3000
+                                    s.connect(java.net.InetSocketAddress("1.1.1.1", 53), 3000)
+                                }
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
+
                 val uid = android.os.Process.myUid()
                 while (isRunning) {
                     val rx = android.net.TrafficStats.getUidRxBytes(uid)
