@@ -560,8 +560,84 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
 }
 
 /**
+ * AmneziaWG protocol — native userspace tunnel via libamneziawg.so.
+ * Supports AWG obfuscation extensions (Jc/Jmin/Jmax/S1/S2/H1-H4/I1-I5).
+ * No sing-box involved — amneziawg-go reads/writes the TUN fd directly.
+ *
+ * Socket loop protection: CarheliaVpnService always adds addDisallowedApplication(packageName),
+ * so our process traffic bypasses the VPN tunnel — AWG UDP reaches the server directly.
+ */
+class AmneziaWgVpnProtocol(private val context: Context) : IVpnProtocol {
+
+    private var connectionState = ConnectionState.DISCONNECTED
+    private var bytesSent = 0L
+    private var bytesReceived = 0L
+    private val scope = CoroutineScope(Dispatchers.IO + Job())
+    private var isRunning = false
+    private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
+    private val bytesListeners = mutableListOf<(Long, Long) -> Unit>()
+    private var activeConfig: com.carnelia.vpn.core.VpnServerConfig? = null
+
+    override suspend fun prepare() = VpnErrorCode.NO_ERROR
+
+    override suspend fun start(config: com.carnelia.vpn.core.VpnServerConfig): VpnErrorCode {
+        activeConfig = config
+        isRunning = true
+        AppLogger.log("AmneziaWgVpnProtocol: start() — reporting CONNECTED (tunnel starts on TUN fd)")
+        updateConnectionState(ConnectionState.CONNECTED)
+        return VpnErrorCode.NO_ERROR
+    }
+
+    override suspend fun stop() {
+        isRunning = false
+        updateConnectionState(ConnectionState.DISCONNECTING)
+        try {
+            com.carnelia.vpn.core.AmneziaWgCoreManager.stopTunnel()
+        } catch (_: Exception) {}
+        scope.cancel()
+        updateConnectionState(ConnectionState.DISCONNECTED)
+    }
+
+    override fun getConnectionState() = connectionState
+    override fun getBytesTransferred() = Pair(bytesSent, bytesReceived)
+    override fun onConnectionStateChanged(l: (ConnectionState) -> Unit) { stateListeners.add(l) }
+    override fun onBytesChanged(l: (Long, Long) -> Unit) { bytesListeners.add(l) }
+
+    override fun onNetworkInterfaceCreated(fileDescriptor: android.os.ParcelFileDescriptor) {
+        if (!isRunning) return
+        val config = activeConfig ?: run {
+            AppLogger.error("AmneziaWgVpnProtocol: no active config in onNetworkInterfaceCreated")
+            return
+        }
+        scope.launch {
+            val ok = com.carnelia.vpn.core.AmneziaWgCoreManager.startTunnel(fileDescriptor.fd, config)
+            if (!ok) {
+                AppLogger.error("AmneziaWgVpnProtocol: tunnel failed to start")
+                updateConnectionState(ConnectionState.ERROR)
+                return@launch
+            }
+            val uid = android.os.Process.myUid()
+            while (isRunning) {
+                val rx = android.net.TrafficStats.getUidRxBytes(uid)
+                val tx = android.net.TrafficStats.getUidTxBytes(uid)
+                if (rx != bytesReceived || tx != bytesSent) {
+                    bytesReceived = rx; bytesSent = tx
+                    bytesListeners.forEach { it(bytesSent, bytesReceived) }
+                }
+                delay(2000)
+            }
+        }
+    }
+
+    private fun updateConnectionState(s: ConnectionState) {
+        if (connectionState != s) { connectionState = s; stateListeners.forEach { it(s) } }
+    }
+}
+
+/**
  * Auto-selects the best core engine per protocol:
- *   Sing-box  → Hysteria2, TUIC, WARP, WireGuard, AmneziaWG (native obfuscation omitted)
+ *   AmneziaWG → AmneziaWgVpnProtocol (native libamneziawg.so, AWG obfuscation)
+ *   Sing-box  → Hysteria2, TUIC, WARP, WireGuard
  *   Xray      → VLESS+REALITY/XTLS, VMess, Trojan, Shadowsocks, SOCKS, HTTP
  *   OpenVPN   → OpenVPN
  *   Outline   → Sing-box (same as Shadowsocks)
@@ -572,12 +648,12 @@ object ProtocolFactory {
         com.carnelia.vpn.core.VpnProtocol.HYSTERIA2,
         com.carnelia.vpn.core.VpnProtocol.TUIC,
         com.carnelia.vpn.core.VpnProtocol.WARP,
-        com.carnelia.vpn.core.VpnProtocol.WIREGUARD,
-        com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG
+        com.carnelia.vpn.core.VpnProtocol.WIREGUARD
     )
 
     fun createProtocol(context: Context, protocol: com.carnelia.vpn.core.VpnProtocol): IVpnProtocol {
         return when {
+            protocol == com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG -> AmneziaWgVpnProtocol(context)
             protocol == com.carnelia.vpn.core.VpnProtocol.OUTLINE -> SingboxVpnProtocol(context)
             protocol == com.carnelia.vpn.core.VpnProtocol.OPENVPN -> OpenVpnProtocol()
             protocol in SINGBOX_PROTOCOLS -> SingboxVpnProtocol(context)
