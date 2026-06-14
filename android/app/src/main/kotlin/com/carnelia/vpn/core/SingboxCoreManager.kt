@@ -82,8 +82,16 @@ object SingboxCoreManager {
             put("listen_port", SOCKS5_PORT)
         }))
 
-        // Outbounds
-        root.put("outbounds", buildOutbounds(context, vpnConfig))
+        // sing-box 1.12+ убрал wireguard из outbounds — теперь это endpoint.
+        // WireGuard/AmneziaWG/WARP кладём в "endpoints" (тег "proxy"), остальное — в "outbounds".
+        if (isWireguardFamily(vpnConfig.protocol)) {
+            root.put("endpoints", JSONArray().put(
+                buildWireGuardEndpoint(vpnConfig).apply { put("tag", "proxy") }
+            ))
+            root.put("outbounds", buildBaseOutbounds())
+        } else {
+            root.put("outbounds", buildOutbounds(context, vpnConfig))
+        }
 
         // Route
         root.put("route", buildRoute(context))
@@ -91,26 +99,39 @@ object SingboxCoreManager {
         return root.toString(2)
     }
 
+    private fun isWireguardFamily(p: VpnProtocol): Boolean =
+        p == VpnProtocol.WIREGUARD || p == VpnProtocol.AMNEZIA_WG || p == VpnProtocol.WARP
+
+    // direct + block — общие для обоих случаев
+    private fun buildBaseOutbounds(): JSONArray = JSONArray().apply {
+        put(JSONObject().apply { put("type", "direct"); put("tag", "direct") })
+        put(JSONObject().apply { put("type", "block"); put("tag", "block") })
+    }
+
+    // Тег первого DNS-сервера — на него ссылается route.default_domain_resolver
+    private fun primaryDnsTag(context: Context): String =
+        if (PrefsManager.isNetShieldEnabled(context)) "adguard" else "cf"
+
     private fun buildDns(context: Context): JSONObject {
         val servers = JSONArray()
-        // sing-box 1.12+ new DNS server format: type + server (not legacy tag + address)
+        // sing-box 1.12+ DNS server format: tag + type + server (поле идентификатора — "tag", НЕ "id").
         if (PrefsManager.isNetShieldEnabled(context)) {
             servers.put(JSONObject().apply {
-                put("id", "adguard"); put("type", "udp")
+                put("tag", "adguard"); put("type", "udp")
                 put("server", "94.140.14.14"); put("detour", "direct")
             })
         } else {
             val userDns = PrefsManager.getDnsServer(context)
+            servers.put(JSONObject().apply {
+                put("tag", "cf"); put("type", "udp")
+                put("server", "1.1.1.1"); put("detour", "direct")
+            })
             if (userDns.isNotBlank()) servers.put(JSONObject().apply {
-                put("id", "user"); put("type", "udp")
+                put("tag", "user"); put("type", "udp")
                 put("server", userDns); put("detour", "direct")
             })
             servers.put(JSONObject().apply {
-                put("id", "cf"); put("type", "udp")
-                put("server", "1.1.1.1"); put("detour", "direct")
-            })
-            servers.put(JSONObject().apply {
-                put("id", "google"); put("type", "udp")
+                put("tag", "google"); put("type", "udp")
                 put("server", "8.8.8.8"); put("detour", "direct")
             })
         }
@@ -150,9 +171,7 @@ object SingboxCoreManager {
         return when (config.protocol) {
             VpnProtocol.HYSTERIA2 -> buildHysteria2(config)
             VpnProtocol.TUIC      -> buildTuic(config)
-            VpnProtocol.WIREGUARD -> buildWireGuard(config)
-            VpnProtocol.AMNEZIA_WG -> buildWireGuard(config) // AmneziaWG fields ignored in sing-box WG
-            VpnProtocol.WARP      -> buildWarp(config)
+            // WIREGUARD/AMNEZIA_WG/WARP идут через "endpoints" (sing-box 1.12+), не сюда
             VpnProtocol.VLESS     -> buildVless(config)
             VpnProtocol.VMESS     -> buildVmess(config)
             VpnProtocol.TROJAN    -> buildTrojan(config)
@@ -207,49 +226,63 @@ object SingboxCoreManager {
         ))
     }
 
-    private fun buildWireGuard(config: VpnServerConfig): JSONObject = JSONObject().apply {
+    /**
+     * WireGuard / AmneziaWG / WARP в формате endpoint (sing-box 1.12+).
+     * Внимание: sing-box не поддерживает обфускацию AmneziaWG (Jc/Jmin/Jmax/S1/S2/H1-H4/I1-I5) —
+     * AMNEZIA_WG идёт как обычный WireGuard. К серверу с включённой обфускацией хендшейк не пройдёт;
+     * для этого нужен amneziawg-go. Обычные WG-серверы работают.
+     */
+    private fun buildWireGuardEndpoint(config: VpnServerConfig): JSONObject = JSONObject().apply {
         put("type", "wireguard")
-        put("server", config.host)
-        put("server_port", config.port)
+        put("system", false)
         put("private_key", config.config["private_key"] ?: "")
-        put("peer_public_key", config.config["public_key"] ?: "")
 
-        val psk = config.config["preshared_key"] ?: ""
-        if (psk.isNotBlank()) put("pre_shared_key", psk)
+        val isWarp = config.protocol == VpnProtocol.WARP
 
-        val address = config.config["address"] ?: "10.0.0.2/32"
-        put("local_address", JSONArray().apply {
-            address.split(",").map { it.trim() }.filter { it.isNotBlank() }.forEach { put(it) }
-        })
+        // Локальные адреса интерфейса
+        val addresses = if (isWarp) {
+            val ipv4 = config.config["ipv4"] ?: ""
+            val ipv6 = config.config["ipv6"] ?: ""
+            listOf(ipv4, ipv6).filter { it.isNotBlank() }.ifEmpty { listOf("172.16.0.2/32") }
+        } else {
+            (config.config["address"] ?: "10.0.0.2/32")
+                .split(",").map { it.trim() }.filter { it.isNotBlank() }
+        }
+        put("address", JSONArray().apply { addresses.forEach { put(it) } })
 
-        val mtu = config.config["mtu"]?.toIntOrNull()
+        val mtu = config.config["mtu"]?.toIntOrNull() ?: if (isWarp) 1280 else null
         if (mtu != null) put("mtu", mtu)
-    }
 
-    private fun buildWarp(config: VpnServerConfig): JSONObject = JSONObject().apply {
-        put("type", "wireguard")
-        put("server", config.config["endpoint_host"] ?: "162.159.192.1")
-        put("server_port", config.config["endpoint_port"]?.toIntOrNull() ?: 2408)
-        put("private_key", config.config["private_key"] ?: "")
-        put("peer_public_key", config.config["public_key"] ?: "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=")
+        // Peer
+        val peer = JSONObject().apply {
+            if (isWarp) {
+                put("address", config.config["endpoint_host"] ?: "162.159.192.1")
+                put("port", config.config["endpoint_port"]?.toIntOrNull() ?: 2408)
+                put("public_key", config.config["public_key"] ?: "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=")
+            } else {
+                put("address", config.host)
+                put("port", config.port)
+                put("public_key", config.config["public_key"] ?: "")
+            }
 
-        val ipv4 = config.config["ipv4"] ?: ""
-        val ipv6 = config.config["ipv6"] ?: ""
-        put("local_address", JSONArray().apply {
-            if (ipv4.isNotBlank()) put(ipv4)
-            if (ipv6.isNotBlank()) put(ipv6)
-            if (ipv4.isBlank() && ipv6.isBlank()) put("172.16.0.2/32")
-        })
+            val psk = config.config["preshared_key"] ?: config.config["pre_shared_key"] ?: ""
+            if (psk.isNotBlank()) put("pre_shared_key", psk)
 
-        // WARP reserved bytes
-        val reserved = config.config["reserved"] ?: ""
-        if (reserved.isNotBlank()) {
-            val parts = reserved.split(",").mapNotNull { it.trim().toIntOrNull() }
-            if (parts.size >= 3) {
-                put("reserved", JSONArray().apply { parts.forEach { put(it) } })
+            // allowed_ips — что заворачивать в туннель (по умолчанию весь трафик)
+            val allowed = (config.config["allowed_ips"] ?: "0.0.0.0/0, ::/0")
+                .split(",").map { it.trim() }.filter { it.isNotBlank() }
+            put("allowed_ips", JSONArray().apply { allowed.forEach { put(it) } })
+
+            val keepalive = config.config["keepalive"]?.toIntOrNull()
+            if (keepalive != null && keepalive > 0) put("persistent_keepalive_interval", keepalive)
+
+            val reserved = config.config["reserved"] ?: ""
+            if (reserved.isNotBlank()) {
+                val parts = reserved.split(",").mapNotNull { it.trim().toIntOrNull() }
+                if (parts.size >= 3) put("reserved", JSONArray().apply { parts.forEach { put(it) } })
             }
         }
-        put("mtu", 1280)
+        put("peers", JSONArray().put(peer))
     }
 
     private fun buildVless(config: VpnServerConfig): JSONObject = JSONObject().apply {
@@ -380,6 +413,9 @@ object SingboxCoreManager {
     }
 
     private fun buildRoute(context: Context): JSONObject = JSONObject().apply {
+        // sing-box 1.12+ требует указать, какой DNS резолвит домены серверов (иначе FATAL).
+        put("default_domain_resolver", JSONObject().apply { put("server", primaryDnsTag(context)) })
+
         val rules = JSONArray()
 
         // Block private IPs (bypass to direct)
