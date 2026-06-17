@@ -168,14 +168,19 @@ class CarheliaVpnService : VpnService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        runBlocking {
-            withContext(NonCancellable) {
-                vpnManager.disconnect()
+        try {
+            runBlocking {
+                withContext(NonCancellable) {
+                    vpnManager.disconnect()
+                }
             }
+        } catch (e: Exception) {
+            AppLogger.error("Service: onDestroy disconnect failed", e)
         }
-        vpnManager.destroy()
-        scope.cancel()
-        currentInterface?.close()
+        try { vpnManager.destroy() } catch (e: Exception) { AppLogger.error("Service: destroy failed", e) }
+        try { scope.cancel() } catch (e: Exception) {}
+        try { currentInterface?.close() } catch (e: Exception) {}
+        currentInterface = null
     }
 
     private fun setupVpnListeners() {

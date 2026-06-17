@@ -118,6 +118,9 @@ class VpnManager(
      * Disconnect from VPN
      */
     suspend fun disconnect() {
+        if (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.DISCONNECTING) {
+            return
+        }
         try {
             updateConnectionState(ConnectionState.DISCONNECTING)
             currentProtocol?.stop()
