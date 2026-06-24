@@ -477,6 +477,7 @@ Android: %2$s
     <string name="fingerprint_title">Проверка отпечатка</string>
     <string name="fingerprint_via_vpn">Маршрут через VPN — показан IP-адрес VPN</string>
     <string name="fingerprint_no_vpn">VPN выключен — показан реальный IP</string>
+    <string name="fingerprint_other_vpn">Активен другой VPN — показана его личность</string>
     <string name="fingerprint_ip">IP-адрес</string>
     <string name="fingerprint_location">Местоположение</string>
     <string name="fingerprint_isp">Провайдер</string>
@@ -546,4 +547,14 @@ Android: %2$s
     <string name="tool_tls_inspector_desc">Сертификаты, шифр, SNI</string>
     <string name="tool_packet_inspector_name">Инспектор пакетов</string>
     <string name="tool_packet_inspector_desc">Живой поток прокси-трафика</string>
+    <string name="tool_local_share_name">Локальный обмен</string>
+    <string name="tool_local_share_desc">Серверы и приложение по Wi-Fi — без облака</string>
+    <string name="tool_lan_scan_name">Кто в сети</string>
+    <string name="tool_lan_scan_desc">Устройства на Wi-Fi, MAC, новые хосты</string>
+    <string name="tool_port_scan_name">Порт-сканер</string>
+    <string name="tool_port_scan_desc">Скан популярных портов на любом хосте</string>
+    <string name="tool_speedtest_name">Speedtest</string>
+    <string name="tool_speedtest_desc">Скорость скачивания и задержка</string>
+    <string name="tool_blackwall_name">Black Wall (обход блокировок)</string>
+    <string name="tool_blackwall_desc">Anti-DPI маскировка: Ghost / Phantom / Wraith</string>
 </resources>

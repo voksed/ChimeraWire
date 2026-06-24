@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -208,6 +209,11 @@ fun DebugScreen(onBack: () -> Unit) {
                     }
                     IconButton(onClick = { AppLogger.clear() }) {
                         Icon(Icons.Default.Delete, null, tint = Color(0xFFFF4444))
+                    }
+                    IconButton(onClick = {
+                        context.startActivity(Intent(context, TerminalActivity::class.java))
+                    }) {
+                        Icon(Icons.Default.Terminal, null, tint = Color(0xFF44DD66))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF050505))

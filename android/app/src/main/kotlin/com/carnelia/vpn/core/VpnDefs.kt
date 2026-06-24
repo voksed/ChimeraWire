@@ -36,7 +36,8 @@ enum class ConnectionState {
     CONNECTED,
     DISCONNECTING,
     RECONNECTING,
-    ERROR
+    ERROR,
+    LOCKDOWN
 }
 
 /**

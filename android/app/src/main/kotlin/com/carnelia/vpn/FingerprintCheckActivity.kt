@@ -1,5 +1,8 @@
 package com.carnelia.vpn
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,9 +65,14 @@ private data class FingerprintResult(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FingerprintCheckScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val vpnState by VpnGlobalState.connectionState.collectAsState()
     val vpnConnected = vpnState == ConnectionState.CONNECTED
+    // VpnGlobalState видит только саму Carnelia — если активен ДРУГОЙ VPN-клиент,
+    // система всё равно маршрутизирует трафик через него, но баннер этого не показывал.
+    val systemVpnActive = remember(vpnState) { isAnyVpnActive(context) }
+    val protectedByAny = vpnConnected || systemVpnActive
 
     var result by remember { mutableStateOf<FingerprintResult?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -124,10 +133,10 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.fingerprint_title), fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.fingerprint_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
@@ -135,10 +144,10 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
                         Icon(Icons.Default.Refresh, null, tint = if (isLoading) Color.Gray else Color(0xFF00AAFF))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -151,14 +160,17 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
             Card(
                 shape = RoundedCornerShape(10.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (vpnConnected) Color(0xFF0A2E0A) else Color(0xFF1A0A0A)
+                    containerColor = if (protectedByAny) Color(0xFF0A2E0A) else Color(0xFF1A0A0A)
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    if (vpnConnected) stringResource(R.string.fingerprint_via_vpn)
-                    else stringResource(R.string.fingerprint_no_vpn),
-                    color = if (vpnConnected) Color(0xFF44DD66) else Color(0xFFFF5555),
+                    when {
+                        vpnConnected -> stringResource(R.string.fingerprint_via_vpn)
+                        systemVpnActive -> stringResource(R.string.fingerprint_other_vpn)
+                        else -> stringResource(R.string.fingerprint_no_vpn)
+                    },
+                    color = if (protectedByAny) Color(0xFF44DD66) else Color(0xFFFF5555),
                     fontSize = 12.sp,
                     modifier = Modifier.padding(12.dp)
                 )
@@ -190,10 +202,10 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
                     listOf(r.city, r.regionName, r.country).filter { it.isNotBlank() }.joinToString(", "),
                     Color(0xFF44DD66)
                 )
-                FpInfoCard(stringResource(R.string.fingerprint_isp), r.isp, Color.White)
-                FpInfoCard(stringResource(R.string.fingerprint_org), r.org, Color.White)
-                FpInfoCard(stringResource(R.string.fingerprint_asn), r.asn, Color.White)
-                FpInfoCard(stringResource(R.string.fingerprint_timezone), r.timezone, Color.White)
+                FpInfoCard(stringResource(R.string.fingerprint_isp), r.isp, MaterialTheme.colorScheme.onBackground)
+                FpInfoCard(stringResource(R.string.fingerprint_org), r.org, MaterialTheme.colorScheme.onBackground)
+                FpInfoCard(stringResource(R.string.fingerprint_asn), r.asn, MaterialTheme.colorScheme.onBackground)
+                FpInfoCard(stringResource(R.string.fingerprint_timezone), r.timezone, MaterialTheme.colorScheme.onBackground)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FpFlagChip(stringResource(R.string.fingerprint_flag_proxy),   r.proxy,   if (r.proxy)   Color(0xFFFF4444) else Color(0xFF44DD66))
@@ -205,11 +217,16 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
     }
 }
 
+private fun isAnyVpnActive(context: Context): Boolean = try {
+    val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    cm.getNetworkCapabilities(cm.activeNetwork)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+} catch (_: Exception) { false }
+
 @Composable
 private fun FpInfoCard(label: String, value: String, valueColor: Color) {
     Card(
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF161616)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(14.dp)) {

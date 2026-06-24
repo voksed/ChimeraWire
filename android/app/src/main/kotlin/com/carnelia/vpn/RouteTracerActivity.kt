@@ -99,16 +99,16 @@ fun RouteTracerScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.route_tracer_title), fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.route_tracer_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(16.dp),
@@ -126,8 +126,8 @@ fun RouteTracerScreen(onBack: () -> Unit) {
                     enabled = !isRunning,
                     modifier = Modifier.weight(1f),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         focusedBorderColor = Color(0xFFFFAA00),
                         unfocusedBorderColor = Color(0xFF444444)
                     )
@@ -182,7 +182,7 @@ private fun HopRow(hop: TraceHop) {
         )
         Text(
             text = hop.ip ?: "* * *",
-            color = if (hop.ip != null) Color.White else Color(0xFF3A3A3A),
+            color = if (hop.ip != null) MaterialTheme.colorScheme.onBackground else Color(0xFF3A3A3A),
             fontSize = 13.sp,
             fontFamily = FontFamily.Monospace,
             modifier = Modifier.weight(1f)

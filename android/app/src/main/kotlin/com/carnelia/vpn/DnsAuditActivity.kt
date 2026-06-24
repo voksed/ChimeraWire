@@ -107,10 +107,10 @@ fun DnsAuditScreen(context: Context, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.dns_audit_title), fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.dns_audit_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
@@ -128,10 +128,10 @@ fun DnsAuditScreen(context: Context, onBack: () -> Unit) {
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).padding(16.dp),
@@ -140,7 +140,7 @@ fun DnsAuditScreen(context: Context, onBack: () -> Unit) {
             if (dnsServers.isNotEmpty()) {
                 Card(
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF161616)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(14.dp)) {
@@ -171,7 +171,7 @@ fun DnsAuditScreen(context: Context, onBack: () -> Unit) {
 private fun DnsEntryCard(entry: DnsEntry) {
     Card(
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF161616)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -179,7 +179,7 @@ private fun DnsEntryCard(entry: DnsEntry) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text(entry.domain, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(entry.domain, color = MaterialTheme.colorScheme.onBackground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 when {
                     !entry.done  -> Text(stringResource(R.string.dns_audit_resolving), color = Color(0xFF555555), fontSize = 11.sp)
                     entry.failed -> Text(stringResource(R.string.dns_audit_failed), color = Color(0xFFFF4444), fontSize = 11.sp)

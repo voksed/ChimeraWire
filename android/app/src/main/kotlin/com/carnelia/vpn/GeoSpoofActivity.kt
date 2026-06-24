@@ -149,7 +149,7 @@ private suspend fun geocodePlace(query: String): List<GeoSearchResult> =
             val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
                 connectTimeout = 10000
                 readTimeout = 10000
-                setRequestProperty("User-Agent", "CarneliaVPN/2.4.3 (geo spoof)")
+                setRequestProperty("User-Agent", "CarneliaVPN/${BuildConfig.VERSION_NAME} (geo spoof)")
             }
             val body = conn.inputStream.bufferedReader().use { it.readText() }
             conn.disconnect()

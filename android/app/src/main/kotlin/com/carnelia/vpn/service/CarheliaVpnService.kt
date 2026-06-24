@@ -31,7 +31,9 @@ class CarheliaVpnService : VpnService() {
         const val ACTION_DISCONNECT = "com.carnelia.vpn.DISCONNECT"
         const val ACTION_RECONNECT = "com.carnelia.vpn.RECONNECT"
         const val ACTION_REBUILD_INTERFACE = "com.carnelia.vpn.REBUILD_INTERFACE"
+        const val ACTION_LOCKDOWN = "com.carnelia.vpn.LOCKDOWN"
         const val EXTRA_CONFIG = "vpn_config"
+        const val EXTRA_LOCKDOWN_REASON = "lockdown_reason"
         
         var currentState: ConnectionState = ConnectionState.DISCONNECTED
             private set
@@ -58,6 +60,7 @@ class CarheliaVpnService : VpnService() {
     private val maxFallbackAttempts = 3
     private lateinit var serverRepository: com.carnelia.vpn.data.ServerRepository
     private lateinit var dualNetworkManager: DualNetworkManager
+    private var isLockdown = false
 
     inner class LocalBinder : Binder() {
         fun getService(): CarheliaVpnService = this@CarheliaVpnService
@@ -76,7 +79,8 @@ class CarheliaVpnService : VpnService() {
             }
         }
         setupVpnListeners()
-        
+        startSelfHealingLoop()
+
         // Start foreground immediately to prevent crash on Android 8+
         if (android.os.Build.VERSION.SDK_INT >= 34) {
              try {
@@ -126,8 +130,28 @@ class CarheliaVpnService : VpnService() {
                 }
                 ACTION_DISCONNECT -> {
                     scope.launch {
-                        vpnManager.disconnect()
+                        if (isLockdown) {
+                            isLockdown = false
+                            closeVpnInterface()
+                            currentState = ConnectionState.DISCONNECTED
+                            VpnGlobalState.updateState(ConnectionState.DISCONNECTED)
+                            AppLogger.log("Service: LOCKDOWN снят пользователем")
+                        } else {
+                            vpnManager.disconnect()
+                        }
                         stopSelf()
+                    }
+                }
+                ACTION_LOCKDOWN -> {
+                    val reason = it.getStringExtra(EXTRA_LOCKDOWN_REASON) ?: "обнаружена угроза"
+                    scope.launch {
+                        vpnManager.disconnect() // на случай если был активен обычный туннель
+                        isLockdown = true
+                        currentState = ConnectionState.LOCKDOWN
+                        VpnGlobalState.updateState(ConnectionState.LOCKDOWN)
+                        startForeground(1, createNotification("Режим защиты: сеть заблокирована ($reason)"))
+                        establishLockdownInterface()
+                        AppLogger.log("Service: LOCKDOWN активирован — $reason")
                     }
                 }
                 ACTION_RECONNECT -> {
@@ -181,6 +205,53 @@ class CarheliaVpnService : VpnService() {
         try { scope.cancel() } catch (e: Exception) {}
         try { currentInterface?.close() } catch (e: Exception) {}
         currentInterface = null
+    }
+
+    /**
+     * Самоисцеление: пока VPN подключён, тихо проверяет раз в несколько минут, что
+     * трафик реально ходит (не просто факт CONNECTED — DPI может задушить данные
+     * позже хендшейка). Два провала подряд — повод перекалиброваться без участия
+     * пользователя, а не молча сидеть в "подключено", но без интернета.
+     */
+    private fun startSelfHealingLoop() {
+        scope.launch {
+            var consecutiveFailures = 0
+            while (isActive) {
+                delay(4 * 60_000L)
+                val config = currentConfig
+                if (currentState != ConnectionState.CONNECTED || config == null) {
+                    consecutiveFailures = 0
+                    continue
+                }
+                try {
+                    com.carnelia.vpn.core.SniffingGuard.checkAll(this@CarheliaVpnService)
+                } catch (e: Exception) {
+                    AppLogger.error("Service: SniffingGuard check failed", e)
+                }
+
+                val healthy = try {
+                    com.carnelia.vpn.core.CalibrationManager.quickHealthCheck(this@CarheliaVpnService, config)
+                } catch (e: Exception) {
+                    AppLogger.error("Service: self-heal check failed", e)
+                    true // не уверены — не дёргаем соединение на пустом месте
+                }
+                if (healthy) {
+                    consecutiveFailures = 0
+                } else {
+                    consecutiveFailures++
+                    AppLogger.log("Service: self-heal — трафик не подтверждён ($consecutiveFailures/2)")
+                    if (consecutiveFailures >= 2) {
+                        AppLogger.log("Service: self-heal — запускаю перекалибровку")
+                        consecutiveFailures = 0
+                        try {
+                            com.carnelia.vpn.core.CalibrationManager.calibrate(this@CarheliaVpnService) { }
+                        } catch (e: Exception) {
+                            AppLogger.error("Service: self-heal calibration failed", e)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun setupVpnListeners() {
@@ -459,6 +530,29 @@ class CarheliaVpnService : VpnService() {
             }
         } catch (e: Exception) {
             AppLogger.error("Service: Failed to establish interface", e)
+        }
+    }
+
+    /**
+     * Полная блокировка сети устройства: TUN-интерфейс забирает себе весь трафик
+     * (0.0.0.0/0 + ::/0), но ничего из него не читает — пакеты уходят в никуда.
+     * Это останавливает ЛЮБОЕ приложение от выхода в сеть, включая потенциальный
+     * RAT/шпион, до того как пользователь разберётся и снимет блокировку вручную.
+     */
+    private fun establishLockdownInterface() {
+        try {
+            AppLogger.log("Service: Устанавливаю lockdown-интерфейс")
+            val builder = Builder()
+            builder.setMtu(1280)
+            builder.addAddress("10.255.255.1", 32)
+            try { builder.addRoute("0.0.0.0", 0) } catch (e: Exception) { AppLogger.error("Service: lockdown addRoute v4 failed", e) }
+            try { builder.addRoute("::", 0) } catch (e: Exception) { AppLogger.error("Service: lockdown addRoute v6 failed", e) }
+            builder.setSession("Carnelia Protection Mode")
+            builder.setBlocking(true)
+            currentInterface = builder.establish()
+            AppLogger.log("Service: Lockdown-интерфейс поднят — трафик устройства заблокирован")
+        } catch (e: Exception) {
+            AppLogger.error("Service: Не удалось поднять lockdown-интерфейс", e)
         }
     }
 

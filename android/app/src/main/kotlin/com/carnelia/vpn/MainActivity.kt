@@ -97,6 +97,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // POST_NOTIFICATIONS — на Android 13+ объявления в манифесте недостаточно,
+    // без runtime-запроса ВСЕ уведомления (включая алерты Анти-шпиона) тихо блокируются системой.
+    private val notificationPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { /* пользователь решил — больше не спрашиваем повторно в этой сессии */ }
+
     private val vpnPrepareLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val config = pendingVpnConfig
@@ -149,6 +155,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         vpnManager = VpnManager(this)
+
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         setContent {
             val context = LocalContext.current
@@ -344,6 +356,15 @@ fun CarheliaApp(
         }
     }
     
+    // Калибровка — флагманская фича: одна кнопка сама подбирает лучший сервер + обфускацию
+    var showCalibration by remember { mutableStateOf(false) }
+    if (showCalibration) {
+        CalibrationDialog(onDismiss = {
+            showCalibration = false
+            activeConfig = repository.getLastUsedServer() ?: repository.getServers().firstOrNull()
+        })
+    }
+
     // QR Share State
     var showShareDialog by remember { mutableStateOf(false) }
     var shareContent by remember { mutableStateOf("") }
@@ -439,24 +460,6 @@ fun CarheliaApp(
                     )
                 )
 
-                // Black Wall
-                val blackWallActive = remember { com.carnelia.vpn.core.BlackWallEngine.isEnabled(context) }
-                NavigationDrawerItem(
-                    label = { Text("Black Wall") },
-                    selected = false,
-                    onClick = {
-                        context.startActivity(Intent(context, BlackWallActivity::class.java))
-                        scope.launch { drawerState.close() }
-                    },
-                    icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (blackWallActive) Color(0xFF00AAFF) else onSurface) },
-                    badge = if (blackWallActive) {{ Text(com.carnelia.vpn.core.BlackWallEngine.getLevel(context).label, fontSize = 10.sp, color = Color(0xFF00AAFF)) }} else null,
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
-                )
-
                 // Subscriptions
                 NavigationDrawerItem(
                     label = { Text("Подписки") },
@@ -466,6 +469,22 @@ fun CarheliaApp(
                         scope.launch { drawerState.close() }
                     },
                     icon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = onSurface) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = onSurface
+                    )
+                )
+
+                // Black Wall
+                NavigationDrawerItem(
+                    label = { Text("Black Wall") },
+                    selected = false,
+                    onClick = {
+                        context.startActivity(Intent(context, BlackWallActivity::class.java))
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Security, contentDescription = null, tint = onSurface) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
@@ -610,6 +629,8 @@ fun CarheliaApp(
                                 activeConfig = activeConfig,
                                 onClick = { showServerList = true }
                             )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            CalibrateButton(onClick = { showCalibration = true })
                         }
                     }
                 } else {
@@ -661,6 +682,8 @@ fun CarheliaApp(
                             activeConfig = activeConfig,
                             onClick = { showServerList = true }
                         )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        CalibrateButton(onClick = { showCalibration = true })
                     }
                     } // end Box (tablet portrait centering)
                 }
@@ -677,7 +700,7 @@ fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.update_available_title, info.version), color = Color.White) },
         text = {
             Column {
-                Text(stringResource(R.string.update_current_version, "2.4.3"), color = Color.Gray, fontSize = 12.sp)
+                Text(stringResource(R.string.update_current_version, BuildConfig.VERSION_NAME), color = Color.Gray, fontSize = 12.sp)
                 if (info.changelog.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(info.changelog, color = Color(0xFFCCCCCC), fontSize = 12.sp, maxLines = 8)
@@ -819,6 +842,113 @@ fun StatsRow(stats: com.carnelia.vpn.core.VpnStats) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.ArrowUpward, null, tint = onBg.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
             Text(formatBytes(stats.bytesSent), color = onBg, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+fun CalibrateButton(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, Brush.linearGradient(listOf(Color(0xFF00CC66), Color(0xFF00AAFF)))),
+        modifier = Modifier.height(44.dp).fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Icon(Icons.Default.Build, null, tint = Color(0xFF00CC66), modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Калибровать", color = Color(0xFF00CC66), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        }
+    }
+}
+
+@Composable
+fun CalibrationDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val log = remember { mutableStateListOf<String>() }
+    var result by remember { mutableStateOf<CalibrationResult?>(null) }
+    var running by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        result = CalibrationManager.calibrate(context) { line ->
+            log.add(line)
+        }
+        running = false
+    }
+
+    Dialog(onDismissRequest = { if (!running) onDismiss() }) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF111111)),
+            modifier = Modifier.fillMaxWidth().padding(8.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "КАЛИБРОВКА",
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    "Подбираю лучший сервер и обфускацию под твою сеть",
+                    color = Color(0xFF888888),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
+                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    LaunchedEffect(log.size) {
+                        if (log.isNotEmpty()) listState.animateScrollToItem(log.size - 1)
+                    }
+                    LazyColumn(state = listState) {
+                        items(log) { line ->
+                            Text(
+                                line,
+                                color = when {
+                                    line.startsWith("✓") -> Color(0xFF44DD66)
+                                    line.startsWith("✗") -> Color(0xFFFF6666)
+                                    else -> Color(0xFFAAAAAA)
+                                },
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (running) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp, color = Color(0xFF00CC66))
+                } else {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    result?.let { r ->
+                        if (r.success) {
+                            Text("Готово: ${r.serverName} · ${r.profileLabel}", color = Color(0xFF44DD66), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            val speedText = r.mbps?.let { " · %.1f Мбит/с".format(it) } ?: ""
+                            val pingText = r.tcpPingMs?.let { "Пинг: ${it}мс" } ?: ""
+                            Text("$pingText$speedText", color = Color(0xFF888888), fontSize = 12.sp)
+                            Text("HTTPS через туннель: ${r.latencyMs} мс", color = Color(0xFF555555), fontSize = 10.sp)
+                        } else {
+                            Text("Не удалось подобрать рабочую комбинацию", color = Color(0xFFFF6666), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00CC66))
+                    ) {
+                        Text("Готово", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
         }
     }
 }

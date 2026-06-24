@@ -1,6 +1,8 @@
 package com.carnelia.vpn
 
 import android.app.Application
+import com.carnelia.vpn.core.NetworkChangeWatcher
+import com.carnelia.vpn.core.SniffingGuard
 import com.carnelia.vpn.security.SecurityChecker
 import com.carnelia.vpn.service.NetworkMonitor
 import com.carnelia.vpn.utils.AppLogger
@@ -35,5 +37,18 @@ class CarheliaApplication : Application() {
         }
         
         networkMonitor.startMonitoring()
+
+        // Анти-шпион временно выключен целиком (UI убран из Black Wall) — не запускаем
+        // live-наблюдение за Accessibility, чтобы не слать уведомления/блокировки сети
+        // без видимого в интерфейсе способа это объяснить или отключить.
+        // AccessibilityWatcher.register(this)
+
+        // Авто-калибровка при смене сети (домашний Wi-Fi → мобильная и т.п.)
+        NetworkChangeWatcher.register(this)
+
+        // Защита от снифинга: подозрительные CA-сертификаты, ARP-спуфинг, системный proxy
+        CoroutineScope(Dispatchers.Default).launch {
+            SniffingGuard.checkAll(this@CarheliaApplication)
+        }
     }
 }

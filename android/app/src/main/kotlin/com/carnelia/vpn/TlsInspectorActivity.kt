@@ -118,16 +118,16 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.tls_inspector_title), fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.tls_inspector_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             Modifier
@@ -145,8 +145,8 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
                     singleLine = true,
                     modifier = Modifier.weight(3f),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         focusedBorderColor = Color(0xFF00DDCC),
                         unfocusedBorderColor = Color(0xFF444444)
                     )
@@ -158,8 +158,8 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         focusedBorderColor = Color(0xFF00DDCC),
                         unfocusedBorderColor = Color(0xFF444444)
                     )
@@ -199,11 +199,11 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
 
             result?.let { r ->
                 TlsRow(stringResource(R.string.tls_version),    r.tlsVersion,            Color(0xFF00DDCC))
-                TlsRow(stringResource(R.string.tls_cipher),     r.cipherSuite,           Color.White)
+                TlsRow(stringResource(R.string.tls_cipher),     r.cipherSuite,           MaterialTheme.colorScheme.onBackground)
                 TlsRow(stringResource(R.string.tls_chain_depth), stringResource(R.string.tls_certs_suffix, r.chainDepth), Color(0xFF888888))
-                TlsRow(stringResource(R.string.tls_subject),    r.subject,               Color.White)
+                TlsRow(stringResource(R.string.tls_subject),    r.subject,               MaterialTheme.colorScheme.onBackground)
                 TlsRow(stringResource(R.string.tls_issuer),     r.issuer,                Color(0xFF888888))
-                TlsRow(stringResource(R.string.tls_valid_from), r.validFrom,             Color.White)
+                TlsRow(stringResource(R.string.tls_valid_from), r.validFrom,             MaterialTheme.colorScheme.onBackground)
                 TlsRow(stringResource(R.string.tls_valid_until), r.validTo,              Color(0xFF44DD66))
                 if (r.san.isNotBlank()) TlsRow(stringResource(R.string.tls_sans), r.san, Color(0xFF888888))
                 TlsRow(stringResource(R.string.tls_sha256_fp),  r.sha256, Color(0xFF444444), mono = true)
@@ -216,7 +216,7 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
 private fun TlsRow(label: String, value: String, valueColor: Color, mono: Boolean = false) {
     Card(
         shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF161616)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(12.dp)) {

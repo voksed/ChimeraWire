@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
@@ -25,6 +26,7 @@
     <uses-permission android:name="android.permission.ACCESS_MOCK_LOCATION" tools:ignore="MockLocation" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <!-- v2.4.0: VPN Schedule (daily alarm) -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
@@ -219,6 +221,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- Анти-шпион: проверка каждого нового приложения сразу после установки -->
+        <receiver
+            android:name=".service.PackageInstallReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
@@ -305,6 +319,37 @@
 
         <activity
             android:name=".PacketInspectorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".TerminalActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+
+        <activity
+            android:name=".LocalShareActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".NetworkScannerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".PortScannerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CarheliaVPN"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
+
+        <activity
+            android:name=".SpeedTestActivity"
             android:exported="false"
             android:theme="@style/Theme.CarheliaVPN"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />

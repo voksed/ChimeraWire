@@ -475,6 +475,7 @@ Last Error: %5$s
     <string name="fingerprint_title">Fingerprint Check</string>
     <string name="fingerprint_via_vpn">Routing through VPN — showing VPN identity</string>
     <string name="fingerprint_no_vpn">VPN is OFF — showing real IP identity</string>
+    <string name="fingerprint_other_vpn">Another VPN app is active — showing its identity</string>
     <string name="fingerprint_ip">IP Address</string>
     <string name="fingerprint_location">Location</string>
     <string name="fingerprint_isp">ISP</string>
@@ -544,4 +545,14 @@ Last Error: %5$s
     <string name="tool_tls_inspector_desc">Certificate chain, cipher, SNI</string>
     <string name="tool_packet_inspector_name">Packet Inspector</string>
     <string name="tool_packet_inspector_desc">Live proxy traffic stream</string>
+    <string name="tool_local_share_name">Local Share</string>
+    <string name="tool_local_share_desc">Send servers/app over LAN — no cloud</string>
+    <string name="tool_lan_scan_name">LAN Scanner</string>
+    <string name="tool_lan_scan_desc">Who\'s on your Wi-Fi — devices, MAC, new hosts</string>
+    <string name="tool_port_scan_name">Port Scanner</string>
+    <string name="tool_port_scan_desc">Scan common ports on any host</string>
+    <string name="tool_speedtest_name">Speedtest</string>
+    <string name="tool_speedtest_desc">Download speed and latency</string>
+    <string name="tool_blackwall_name">Black Wall (bypass)</string>
+    <string name="tool_blackwall_desc">Anti-DPI stealth: Ghost / Phantom / Wraith</string>
 </resources>

@@ -69,12 +69,12 @@ fun PacketInspectorScreen(onBack: () -> Unit) {
                     Text(
                         stringResource(R.string.packet_inspector_title),
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
@@ -89,10 +89,10 @@ fun PacketInspectorScreen(onBack: () -> Unit) {
                         Icon(Icons.Default.Delete, null, tint = Color(0xFF444444))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF080808))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color(0xFF080808)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (filtered.isEmpty()) {
             Box(

@@ -67,10 +67,10 @@ fun LeakTestScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.leak_test_title), fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.leak_test_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
@@ -78,10 +78,10 @@ fun LeakTestScreen(onBack: () -> Unit) {
                         Icon(Icons.Default.Refresh, null, tint = if (isLoading) Color.Gray else Color(0xFFFF1744))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0A0A0A))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -126,14 +126,14 @@ fun LeakTestScreen(onBack: () -> Unit) {
                                 Icon(
                                     if (vpnConnected) Icons.Default.Check else Icons.Default.Close,
                                     null,
-                                    tint = Color.White,
+                                    tint = MaterialTheme.colorScheme.onBackground,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
                             Column {
                                 Text(
                                     if (vpnConnected) stringResource(R.string.leak_test_protected) else stringResource(R.string.leak_test_not_connected),
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp
                                 )
@@ -209,7 +209,7 @@ private fun LeakInfoCard(title: String, value: String, subtitle: String, isOk: B
                 )
                 Text(title, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
-            Text(value, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(value, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             if (subtitle.isNotBlank()) {
                 Text(subtitle, color = Color(0xFF888888), fontSize = 11.sp)
             }
