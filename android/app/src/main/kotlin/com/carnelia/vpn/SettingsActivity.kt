@@ -1565,37 +1565,38 @@ fun AutoConnectSettings(context: Context) {
 
 @Composable
 fun LanguageSettings(context: Context, onLanguageSelected: () -> Unit) {
+    // Native name -> BCP-47 language tag. Must match the values-<code> resource folders.
+    val languages = listOf(
+        "English" to "en",
+        "Русский" to "ru",
+        "Español" to "es",
+        "中文" to "zh",
+        "العربية" to "ar",
+        "Français" to "fr"
+    )
     Column(modifier = Modifier.padding(16.dp)) {
         Card(
              colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
              modifier = Modifier.fillMaxWidth()
         ) {
             Column {
-                Text(
-                    "English", 
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            changeLanguage(context, "en")
-                            onLanguageSelected()
-                        }
-                        .padding(16.dp),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                Text(
-                    "Русский", 
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            changeLanguage(context, "ru")
-                            onLanguageSelected()
-                        }
-                        .padding(16.dp),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                languages.forEachIndexed { index, (label, code) ->
+                    Text(
+                        label,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                changeLanguage(context, code)
+                                onLanguageSelected()
+                            }
+                            .padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    if (index < languages.lastIndex) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                    }
+                }
             }
         }
     }
