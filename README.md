@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="CarneliaVPN_.svg" width="120" alt="Carnelia VPN Logo"/>
+<img src="logo.svg" width="120" alt="Carnelia VPN Logo"/>
 
 # Carnelia VPN
 
