@@ -732,8 +732,12 @@ fun CarheliaApp(
 @Composable
 fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var downloading by remember { mutableStateOf(false) }
+    var progress by remember { mutableStateOf(0f) }
+
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!downloading) onDismiss() },
         title = { Text(stringResource(R.string.update_available_title, info.version), color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column {
@@ -742,16 +746,30 @@ fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
                     Spacer(Modifier.height(8.dp))
                     Text(info.changelog, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, maxLines = 8)
                 }
+                if (downloading) {
+                    Spacer(Modifier.height(12.dp))
+                    if (progress >= 0f) {
+                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+                        Text("${(progress * 100).toInt()}%", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                    } else {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                UpdateManager.openDownload(context, info.downloadUrl)
-                onDismiss()
+            TextButton(enabled = !downloading, onClick = {
+                downloading = true
+                progress = 0f
+                scope.launch {
+                    val ok = UpdateManager.downloadAndInstall(context, info.downloadUrl) { p -> progress = p }
+                    downloading = false
+                    if (ok) onDismiss() else UpdateManager.openDownload(context, info.downloadUrl)
+                }
             }) { Text(stringResource(R.string.update_action), color = MaterialTheme.colorScheme.primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_later), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            TextButton(enabled = !downloading, onClick = onDismiss) { Text(stringResource(R.string.update_later), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         },
         containerColor = MaterialTheme.colorScheme.surface
     )
