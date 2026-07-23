@@ -383,36 +383,18 @@ fun MainSettingsMenu(
 
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Socials
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                onClick = {
-                     try {
-                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/mistervoksed"))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {}
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088CC)),
-                modifier = Modifier.weight(1f)
-            ) {
-                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
-                 Spacer(modifier = Modifier.width(4.dp))
-                 Text(stringResource(R.string.telegram_channel), fontSize = 12.sp)
-            }
-             Button(
-                onClick = {
-                     try {
-                        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://t.me/CarneliaVPN"))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {}
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088CC)),
-                modifier = Modifier.weight(1f)
-            ) {
-                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
-                 Spacer(modifier = Modifier.width(4.dp))
-                 Text(stringResource(R.string.telegram_news_channel), fontSize = 12.sp)
-            }
+        // Source code on GitHub
+        Button(
+            onClick = {
+                 try {
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/voksed/carnelia-vpn"))
+                    context.startActivity(intent)
+                } catch (e: Exception) {}
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24292E)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+             Text(stringResource(R.string.github_source), fontSize = 12.sp, color = Color.White)
         }
         
         Spacer(modifier = Modifier.height(24.dp))

@@ -552,4 +552,5 @@ Android: %2$s
     <string name="tool_torrent_desc">تنزيلات Magnet / .torrent</string>
     <string name="disguise_calculator_label">آلة حاسبة</string>
     <string name="disguise_notes_label">ملاحظات</string>
+    <string name="github_source">الكود المصدري · GitHub</string>
 </resources>

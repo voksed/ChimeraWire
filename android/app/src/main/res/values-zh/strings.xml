@@ -552,4 +552,5 @@ Android：%2$s
     <string name="tool_torrent_desc">Magnet / .torrent 下载</string>
     <string name="disguise_calculator_label">计算器</string>
     <string name="disguise_notes_label">备忘录</string>
+    <string name="github_source">源代码 · GitHub</string>
 </resources>

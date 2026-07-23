@@ -552,4 +552,5 @@ Last Error: %5$s
     <string name="tool_torrent_desc">Magnet / .torrent downloads</string>
     <string name="disguise_calculator_label">Calculator</string>
     <string name="disguise_notes_label">Notes</string>
+    <string name="github_source">Source code · GitHub</string>
 </resources>

@@ -552,4 +552,5 @@ Región: %4$s
     <string name="tool_torrent_desc">Descargas magnet / .torrent</string>
     <string name="disguise_calculator_label">Calculadora</string>
     <string name="disguise_notes_label">Notas</string>
+    <string name="github_source">Código fuente · GitHub</string>
 </resources>

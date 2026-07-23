@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-1.0.0-success?style=flat-square)](https://github.com/voksed/carnelia-vpn/releases)
 
-**English** · [Русский](README.ru.md) · [Español](README.es.md) · [中文](README.zh.md) · [العربية](README.ar.md)
+**English** · [Русский](README.ru.md) · [Español](README.es.md) · [中文](README.zh.md) · [العربية](README.ar.md) · [Français](README.fr.md)
 
 </div>
 

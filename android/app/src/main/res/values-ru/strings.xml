@@ -554,4 +554,5 @@ Android: %2$s
     <string name="tool_torrent_desc">Загрузка по magnet-ссылке / .torrent</string>
     <string name="disguise_calculator_label">Калькулятор</string>
     <string name="disguise_notes_label">Заметки</string>
+    <string name="github_source">Исходный код · GitHub</string>
 </resources>
