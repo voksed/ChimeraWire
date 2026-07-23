@@ -77,19 +77,7 @@
                  приложения, см. IconDisguiseManager). Ровно один alias enabled в любой момент. -->
 
 
-            <!-- OpenVPN File Support -->
-            <!-- 1. Specific MIME types (High priority, no extension needed) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:mimeType="application/x-openvpn-profile" />
-                <data android:mimeType="application/ovpn" />
-            </intent-filter>
-            
-            <!-- 2. Path Pattern for Content URIs (Telegram, Downloads) with generic MIME -->
+            <!-- Path Pattern for Content URIs (Telegram, Downloads) with generic MIME -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -217,20 +205,6 @@
             <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON" android:value="true" />
         </service>
 
-        <!-- OpenVPN Service (Required for Android 14+ specific foreground type) -->
-        <!--
-        <service
-            android:name="de.blinkt.openvpn.core.OpenVPNService"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:exported="true"
-            android:foregroundServiceType="specialUse">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="vpn_connection" />
-        </service>
-        -->
-        
         <service
             android:name=".service.VpnTileService"
             android:icon="@drawable/ic_launcher_foreground"

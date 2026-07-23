@@ -276,10 +276,6 @@ class MainActivity : ComponentActivity() {
                 vpnPrepareLauncher.launch(intent)
                 return
             }
-            if (config.protocol == VpnProtocol.OPENVPN) {
-                com.carnelia.vpn.utils.OpenVpnHelper.startVpn(this, config)
-                return
-            }
             val serviceIntent = Intent(this, CarheliaVpnService::class.java).apply {
                 action = CarheliaVpnService.ACTION_CONNECT
                 putExtra(CarheliaVpnService.EXTRA_CONFIG, config)

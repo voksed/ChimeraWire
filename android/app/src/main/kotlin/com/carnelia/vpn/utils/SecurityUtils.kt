@@ -65,10 +65,6 @@ object SecurityUtils {
                 safetyPoints += 2
                 report.append(context.getString(R.string.sec_proto_outline))
             }
-             VpnProtocol.OPENVPN -> {
-                safetyPoints += 3
-                report.append(context.getString(R.string.sec_proto_openvpn))
-            }
             else -> {
                 report.append(context.getString(R.string.sec_proto_other, config.protocol.name))
             }

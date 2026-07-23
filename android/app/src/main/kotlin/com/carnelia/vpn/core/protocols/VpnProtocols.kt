@@ -8,8 +8,6 @@ import com.carnelia.vpn.core.XrayCoreManager
 import com.carnelia.vpn.utils.AppLogger
 import kotlinx.coroutines.*
 import org.json.JSONObject
-import de.blinkt.openvpn.core.VpnStatus
-import de.blinkt.openvpn.VpnProfile
 import tun2socks.Tun2socks
 import shadowsocks.Shadowsocks
 
@@ -35,101 +33,6 @@ interface IVpnProtocol {
     fun onNetworkInterfaceCreated(fileDescriptor: android.os.ParcelFileDescriptor)
 }
 
-class OpenVpnProtocol : IVpnProtocol {
-    
-    private var connectionState = ConnectionState.DISCONNECTED
-    private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
-    private val bytesListeners = mutableListOf<(Long, Long) -> Unit>()
-    
-    private var bytesSent = 0L
-    private var bytesReceived = 0L
-
-    // Listener for library events
-    private val vpnStatusListener = object : de.blinkt.openvpn.core.VpnStatus.StateListener {
-        override fun updateState(state: String?, logmessage: String?, localizedResId: Int, level: de.blinkt.openvpn.core.ConnectionStatus?, intent: android.content.Intent?) {
-            val newState = when (level) {
-                de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTED -> ConnectionState.CONNECTED
-                de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTING_NO_SERVER_REPLY_YET,
-                de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTING_SERVER_REPLIED -> ConnectionState.CONNECTING
-                de.blinkt.openvpn.core.ConnectionStatus.LEVEL_AUTH_FAILED,
-                de.blinkt.openvpn.core.ConnectionStatus.LEVEL_NONETWORK -> ConnectionState.ERROR
-                else -> ConnectionState.DISCONNECTED
-            }
-            updateConnectionState(newState)
-        }
-
-        override fun setConnectedVPN(uuid: String?) {}
-    }
-
-    private val vpnByteListener = object : de.blinkt.openvpn.core.VpnStatus.ByteCountListener {
-        override fun updateByteCount(inBytes: Long, outBytes: Long, diffIn: Long, diffOut: Long) {
-             bytesReceived = inBytes
-             bytesSent = outBytes
-             bytesListeners.forEach { it(bytesSent, bytesReceived) }
-        }
-    }
-
-    override suspend fun prepare(): VpnErrorCode = VpnErrorCode.NO_ERROR
-    
-    override suspend fun start(config: VpnServerConfig): VpnErrorCode {
-        updateConnectionState(ConnectionState.CONNECTING)
-        try {
-            AppLogger.log("OpenVpnProtocol: Starting OpenVPN UI...")
-            
-            // Register listeners
-            de.blinkt.openvpn.core.VpnStatus.addStateListener(vpnStatusListener)
-            de.blinkt.openvpn.core.VpnStatus.addByteCountListener(vpnByteListener)
-
-            // Launch the helper which starts the activity
-            com.carnelia.vpn.utils.OpenVpnHelper.startVpn(com.carnelia.vpn.CarheliaApplication.instance, config)
-            
-            return VpnErrorCode.NO_ERROR
-            
-        } catch (e: Exception) {
-            AppLogger.error("OpenVpnProtocol", e)
-            updateConnectionState(ConnectionState.ERROR)
-            return VpnErrorCode.CONNECTION_FAILED
-        }
-    }
-    
-    override suspend fun stop() {
-        updateConnectionState(ConnectionState.DISCONNECTING)
-        de.blinkt.openvpn.core.VpnStatus.removeStateListener(vpnStatusListener)
-        de.blinkt.openvpn.core.VpnStatus.removeByteCountListener(vpnByteListener)
-        
-        // Try to stop service
-        try {
-            val intent = android.content.Intent(com.carnelia.vpn.CarheliaApplication.instance, de.blinkt.openvpn.core.OpenVPNService::class.java)
-            intent.action = de.blinkt.openvpn.core.OpenVPNService.DISCONNECT_VPN
-            com.carnelia.vpn.CarheliaApplication.instance.startService(intent)
-        } catch (e: Exception) {
-            AppLogger.error("OpenVpnProtocol: Stop failed", e)
-        }
-        
-        updateConnectionState(ConnectionState.DISCONNECTED)
-    }
-    
-    override fun getConnectionState(): ConnectionState = connectionState
-    
-    override fun getBytesTransferred(): Pair<Long, Long> = Pair(bytesSent, bytesReceived)
-    
-    override fun onConnectionStateChanged(listener: (ConnectionState) -> Unit) {
-        stateListeners.add(listener)
-    }
-    
-    override fun onBytesChanged(listener: (Long, Long) -> Unit) {
-        bytesListeners.add(listener)
-    }
-    
-    override fun onNetworkInterfaceCreated(fileDescriptor: android.os.ParcelFileDescriptor) {}
-    
-    private fun updateConnectionState(newState: ConnectionState) {
-        if (connectionState != newState) {
-            connectionState = newState
-            stateListeners.forEach { it(newState) }
-        }
-    }
-}
 
 /**
  * Xray Protocol (Process-based)
@@ -655,7 +558,6 @@ object ProtocolFactory {
         return when {
             protocol == com.carnelia.vpn.core.VpnProtocol.AMNEZIA_WG -> AmneziaWgVpnProtocol(context)
             protocol == com.carnelia.vpn.core.VpnProtocol.OUTLINE -> SingboxVpnProtocol(context)
-            protocol == com.carnelia.vpn.core.VpnProtocol.OPENVPN -> OpenVpnProtocol()
             protocol in SINGBOX_PROTOCOLS -> SingboxVpnProtocol(context)
             else -> XrayVpnProtocol(context) // VLESS, VMess, Trojan, SS, SOCKS, HTTP
         }

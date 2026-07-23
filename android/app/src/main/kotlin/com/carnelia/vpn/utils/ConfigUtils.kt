@@ -50,17 +50,11 @@ object ConfigParser {
             lower.contains("\r\n[interface]") -> parseWireguardIni(trimmed)
             // Amnezia JSON export
             lower.trimStart().startsWith("{") -> parseAmneziaJson(trimmed)
-            // Simple heuristic for OpenVPN text content
-            lower.contains("client") && lower.contains("remote ") -> parseOpenVpnContent(trimmed)
-            lower.contains("dev tun") -> parseOpenVpnContent(trimmed)
-            lower.startsWith("client\r\n") || lower.startsWith("client\n") -> parseOpenVpnContent(trimmed)
-            // Attempt generic OpenVPN fallback if looks like config
-            lower.contains("remote ") && lower.contains("port ") -> parseOpenVpnContent(trimmed)
             // Attempt to decode base64 if no prefix
             isBase64(trimmed) -> parse(decodeBase64(trimmed)) ?: error("Failed to parse decoded config")
             else -> error(
-                "Unknown protocol or invalid format. Supported: vless://, vmess://, ss://, trojan://, hysteria2://, wireguard://, OpenVPN, Amnezia JSON",
-                "Неизвестный формат ключа. Поддерживается: vless, vmess, ss, trojan, hysteria2, wireguard, openvpn, Amnezia JSON"
+                "Unknown protocol or invalid format. Supported: vless://, vmess://, ss://, trojan://, hysteria2://, wireguard://, Amnezia JSON",
+                "Неизвестный формат ключа. Поддерживается: vless, vmess, ss, trojan, hysteria2, wireguard, Amnezia JSON"
             )
         }
     }
@@ -133,28 +127,6 @@ object ConfigParser {
         }
     }
     
-    fun parseOpenVpnContent(content: String): VpnServerConfig {
-        var name = "OpenVPN Server"
-        try {
-            val remoteLine = content.lines().find { it.trim().startsWith("remote ") }
-            if (remoteLine != null) {
-                val parts = remoteLine.trim().split("\\s+".toRegex())
-                if (parts.size >= 2) {
-                    name = parts[1]
-                }
-            }
-        } catch (e: Exception) {}
-
-        return VpnServerConfig(
-            id = UUID.randomUUID().toString(),
-            name = name,
-            protocol = VpnProtocol.OPENVPN,
-            host = name, 
-            port = 1194, 
-            config = mapOf("ovpn_data" to content)
-        )
-    }
-
     private fun parseShadowsocks(url: String): VpnServerConfig {
         try {
             var cleanUrl = url.substring(5)

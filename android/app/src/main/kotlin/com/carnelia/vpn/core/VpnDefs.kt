@@ -9,7 +9,6 @@ import androidx.annotation.Keep
 @Keep
 enum class VpnProtocol {
     OUTLINE,
-    OPENVPN,
     WIREGUARD,
     AMNEZIA_WG,
     VLESS,

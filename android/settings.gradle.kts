@@ -23,5 +23,3 @@ dependencyResolutionManagement {
 rootProject.name = "carnelia-vpn"
 
 include(":app")
-include(":vpnLib")
-project(":vpnLib").projectDir = file("vpnLib/main")

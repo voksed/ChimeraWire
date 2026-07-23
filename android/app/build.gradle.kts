@@ -168,13 +168,6 @@ dependencies {
     // JSON serialization
     implementation("com.google.code.gson:gson:2.10.1")
 
-    // LibXray (Local AAR)
-    // implementation(files("libs/libv2ray.aar"))
-
-    // OpenVPN (ics-openvpn)
-    // implementation("com.github.schwabe:ics-openvpn:v0.6.73-production")
-    implementation(project(":vpnLib"))
-
     // Tun2Socks bridge (used by XrayVpnProtocol and SingboxVpnProtocol)
     implementation(files("libs/tun2socks.aar"))
 
