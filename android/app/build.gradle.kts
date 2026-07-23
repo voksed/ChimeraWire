@@ -8,63 +8,20 @@ android {
     namespace = "com.carnelia.vpn"
 
     defaultConfig {
+        applicationId = "com.carnelia.vpn"
         minSdk = 26
         targetSdk = 34
-        // applicationId, versionCode, versionName задаются в каждом flavor отдельно
+        versionCode = 34
+        versionName = "3.0.0"
+        // app_name берётся из strings.xml ("Carnelia VPN")
     }
 
     signingConfigs {
-        // Ключи оригинального Carnelia VPN
         create("carnelia") {
             storeFile = file("release.jks")
             storePassword = "***REMOVED***"
             keyAlias = "carnelia"
             keyPassword = "***REMOVED***"
-        }
-        // Ключи null vpn
-        create("nullvpn") {
-            storeFile = file("nullvpn.jks")
-            storePassword = "***REMOVED***"
-            keyAlias = "nullvpn"
-            keyPassword = "***REMOVED***"
-        }
-    }
-
-    // Два измерения: brand (carnelia / null) + edition (vanilla / wallet)
-    flavorDimensions += listOf("brand", "edition")
-
-    productFlavors {
-
-        // ---- Бренд: Carnelia VPN ----
-        create("carnelia") {
-            dimension = "brand"
-            applicationId = "com.carnelia.vpn"
-            versionCode = 34
-            versionName = "3.0.0"
-            signingConfig = signingConfigs.getByName("carnelia")
-            // app_name берётся из strings.xml ("Carnelia VPN")
-        }
-
-        // ---- Бренд: null vpn ----
-        create("null") {
-            dimension = "brand"
-            applicationId = "com.null.vpn"
-            versionCode = 1
-            versionName = "1.0.0"
-            signingConfig = signingConfigs.getByName("nullvpn")
-            resValue("string", "app_name", "null vpn")
-        }
-
-        // ---- Редакция: без кошелька ----
-        create("vanilla") {
-            dimension = "edition"
-            buildConfigField("boolean", "WALLET_ENABLED", "false")
-        }
-
-        // ---- Редакция: с крипто-кошельком ----
-        create("wallet") {
-            dimension = "edition"
-            buildConfigField("boolean", "WALLET_ENABLED", "true")
         }
     }
 
@@ -72,11 +29,14 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // signingConfig не задаём здесь — берётся из flavor
+            signingConfig = signingConfigs.getByName("carnelia")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("carnelia")
         }
     }
 
