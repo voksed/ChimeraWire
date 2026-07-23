@@ -6,7 +6,7 @@
     android:background="@drawable/widget_background"
     android:orientation="vertical"
     android:padding="8dp"
-    android:theme="@style/Theme.MaterialComponents.DayNight">
+    android:theme="@android:style/Theme.DeviceDefault.DayNight">
 
     <LinearLayout
         android:layout_width="match_parent"
