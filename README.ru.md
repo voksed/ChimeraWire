@@ -77,7 +77,7 @@ cd android
 
 ## Лицензия
 
-GPLv3. Смотри [LICENSE](LICENSE).
+GPLv3 — смотри [LICENSE](LICENSE). Встроенные ядра и их лицензии: [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Конфиденциальность
 

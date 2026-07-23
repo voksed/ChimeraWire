@@ -77,7 +77,7 @@ Signing secrets are read from `keystore.properties` (git-ignored) or environment
 
 ## License
 
-GPLv3. See [LICENSE](LICENSE).
+GPLv3 — see [LICENSE](LICENSE). Bundled cores and their licenses: [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Privacy
 
