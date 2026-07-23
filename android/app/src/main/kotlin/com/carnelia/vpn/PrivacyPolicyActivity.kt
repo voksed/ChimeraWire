@@ -41,14 +41,15 @@ class PrivacyPolicyActivity : AppCompatActivity() {
 fun PrivacyPolicyScreen(onBack: () -> Unit) {
     val context = LocalContext.current
 
-    // Read UTF-8 asset — safe even on all API levels
+    // Read the UTF-8 asset for the current system language, falling back to English.
     val policyText = remember {
+        val lang = java.util.Locale.getDefault().language  // en, ru, es, zh, ar, fr
+        fun load(name: String) =
+            context.assets.open(name).bufferedReader(Charsets.UTF_8).use { it.readText() }
         try {
-            context.assets.open("privacy_policy.md")
-                .bufferedReader(Charsets.UTF_8)
-                .use { it.readText() }
+            try { load("privacy_policy-$lang.md") } catch (e: Exception) { load("privacy_policy-en.md") }
         } catch (e: Exception) {
-            "Политика конфиденциальности недоступна.\n\nОшибка: ${e.message}"
+            "Privacy policy unavailable.\n\nError: ${e.message}"
         }
     }
 

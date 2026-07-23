@@ -1,7 +1,5 @@
 # Privacy Policy — Carnelia VPN
 
-**English** · [Русский](PRIVACY.ru.md) · [Español](PRIVACY.es.md) · [中文](PRIVACY.zh.md) · [العربية](PRIVACY.ar.md) · [Français](PRIVACY.fr.md)
-
 **Last updated:** July 2026
 
 ---
