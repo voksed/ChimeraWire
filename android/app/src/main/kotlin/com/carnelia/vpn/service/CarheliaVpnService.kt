@@ -30,6 +30,7 @@ class CarheliaVpnService : VpnService() {
         const val ACTION_CONNECT = "com.carnelia.vpn.CONNECT"
         const val ACTION_DISCONNECT = "com.carnelia.vpn.DISCONNECT"
         const val ACTION_RECONNECT = "com.carnelia.vpn.RECONNECT"
+        const val ACTION_NETWORK_RECONNECT = "com.carnelia.vpn.NETWORK_RECONNECT"
         const val ACTION_REBUILD_INTERFACE = "com.carnelia.vpn.REBUILD_INTERFACE"
         const val ACTION_LOCKDOWN = "com.carnelia.vpn.LOCKDOWN"
         const val EXTRA_CONFIG = "vpn_config"
@@ -168,6 +169,30 @@ class CarheliaVpnService : VpnService() {
                         } else {
                             vpnManager.switchServer(config)
                             startForeground(1, createNotification("Switching to ${config.name}..."))
+                        }
+                    }
+                }
+                ACTION_NETWORK_RECONNECT -> {
+                    // Сменилась дефолтная сеть (Wi-Fi <-> моб). Не рвём VPN насовсем, а
+                    // ПЕРЕподключаемся на новой сети, НЕ опуская TUN — то есть без окна утечки:
+                    // пока ядро пере-дозванивается, весь трафик заперт в поднятом туннеле.
+                    val cfg = currentConfig
+                    if (currentState == ConnectionState.CONNECTED && cfg != null) {
+                        AppLogger.log("Service: ACTION_NETWORK_RECONNECT — смена сети, бесшовный reconnect")
+                        VpnGlobalState.updateState(ConnectionState.RECONNECTING)
+                        startForeground(1, createNotification("Смена сети — переподключение…"))
+                        scope.launch {
+                            try {
+                                // перепривязка underlying-сетей к новой дефолтной
+                                dualNetworkManager.stop(); dualNetworkManager.start()
+                                if (dualNetworkManager.isDualActive()) {
+                                    setUnderlyingNetworks(dualNetworkManager.getUnderlyingNetworks())
+                                }
+                                // TUN остаётся поднятым — switchServer пере-дозванивается ядром
+                                vpnManager.switchServer(cfg)
+                            } catch (e: Exception) {
+                                AppLogger.error("Service: network reconnect failed", e)
+                            }
                         }
                     }
                 }

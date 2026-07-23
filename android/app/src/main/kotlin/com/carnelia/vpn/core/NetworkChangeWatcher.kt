@@ -15,8 +15,10 @@ import com.carnelia.vpn.utils.NetworkUtils
 
 /**
  * Если сеть сменилась (домашний Wi-Fi → мобильная, другой Wi-Fi и т.п.) пока VPN
- * подключён — соединение принудительно рвётся (fail closed), вместо того чтобы
- * тихо продолжать работать на новой сети без ведома пользователя.
+ * подключён — инициируем бесшовный reconnect на новой сети, НЕ опуская TUN.
+ * Раньше здесь был полный разрыв (fail closed): безопасно, но пользователь
+ * оставался без связи до ручного переподключения. Теперь ядро пере-дозванивается
+ * само, а трафик на время паузы заперт в поднятом туннеле — окна утечки нет.
  */
 object NetworkChangeWatcher {
     private const val CHANNEL_ID = "network_change"
@@ -54,16 +56,16 @@ object NetworkChangeWatcher {
 
         if (VpnGlobalState.connectionState.value != ConnectionState.CONNECTED) return
 
-        AppLogger.log("NetworkChangeWatcher: сеть изменилась ($previous → $key) — рву соединение")
+        AppLogger.log("NetworkChangeWatcher: сеть изменилась ($previous → $key) — бесшовный reconnect")
         val intent = Intent(context, CarheliaVpnService::class.java).apply {
-            action = CarheliaVpnService.ACTION_DISCONNECT
+            action = CarheliaVpnService.ACTION_NETWORK_RECONNECT
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
         } else {
             context.startService(intent)
         }
-        notify(context, "Сеть изменилась — VPN отключён")
+        notify(context, "Сеть изменилась — переподключение")
     }
 
     private fun notify(context: Context, text: String) {
