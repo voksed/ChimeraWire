@@ -28,6 +28,10 @@ object XrayCoreManager {
     private const val TAG_DIRECT = "direct"
     private const val TAG_BLOCKED = "blocked"
 
+    /** uTLS ClientHello-профиль по умолчанию (chrome/firefox/...), настраивается в Settings. */
+    private fun defaultFingerprint(): String =
+        PrefsManager.getTlsFingerprint(com.carnelia.vpn.CarheliaApplication.instance)
+
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
         stopCore() // Ensure clean state
 
@@ -306,6 +310,65 @@ object XrayCoreManager {
         return inbounds
     }
 
+    private const val TAG_HOP_ENTRY = "hop_entry"
+
+    /** Мульти-хоп: протоколы, которые Xray может тоннелировать через proxySettings.tag. */
+    private fun isChainableProtocol(p: VpnProtocol): Boolean = p in setOf(
+        VpnProtocol.VLESS, VpnProtocol.VMESS, VpnProtocol.TROJAN,
+        VpnProtocol.SHADOWSOCKS, VpnProtocol.OUTLINE, VpnProtocol.SOCKS, VpnProtocol.HTTP
+    )
+
+    /**
+     * Если включён мульти-хоп и выбран корректный "входной" сервер — добавляет для него
+     * отдельный outbound и связывает основной outbound через proxySettings.tag, так что
+     * реальный TCP-коннект идёт local -> entry -> exit -> интернет. Ни entry, ни exit сервер
+     * по отдельности не видят одновременно настоящий IP клиента и конечный адрес назначения.
+     */
+    private fun buildMultiHopEntryOutbound(context: Context, exitConfig: VpnServerConfig): JSONObject? {
+        if (!PrefsManager.isMultiHopEnabled(context)) return null
+        val entryId = PrefsManager.getMultiHopEntryServerId(context) ?: return null
+        if (entryId == exitConfig.id) return null
+        val entryConfig = try {
+            com.carnelia.vpn.data.ServerRepository(context).getServers().find { it.id == entryId }
+        } catch (_: Exception) { null } ?: return null
+        if (!isChainableProtocol(entryConfig.protocol) || !isChainableProtocol(exitConfig.protocol)) {
+            AppLogger.log("MultiHop: протокол entry/exit не поддерживает цепочку в Xray — пропускаю")
+            return null
+        }
+
+        val entryOutbound = JSONObject()
+        entryOutbound.put("tag", TAG_HOP_ENTRY)
+        configureProtocol(entryOutbound, entryConfig)
+        applySockOpt(context, entryOutbound)
+        if (BlackWallEngine.isEnabled(context)) {
+            BlackWallEngine.applyToXrayOutbound(context, entryOutbound, entryConfig)
+        }
+        AppLogger.log("MultiHop: entry=${entryConfig.name} (${entryConfig.host}) -> exit=${exitConfig.name} (${exitConfig.host})")
+        return entryOutbound
+    }
+
+    /**
+     * XTLS Vision (flow=xtls-rprx-vision) требует прямого владения TCP-соединением для своих
+     * трюков с паддингом/сплайсингом — не переживает проксирование через другой outbound
+     * (proxySettings.tag). При мульти-хопе снимаем flow с exit-outbound, иначе туннель
+     * "поднимается", но реальные данные тихо не идут (не ошибка, а тихий зависон Vision).
+     */
+    private fun stripVisionFlowForChaining(outbound: JSONObject) {
+        try {
+            val users = outbound.optJSONObject("settings")?.optJSONArray("vnext")
+                ?.optJSONObject(0)?.optJSONArray("users") ?: return
+            for (i in 0 until users.length()) {
+                val user = users.optJSONObject(i) ?: continue
+                if (user.optString("flow").isNotBlank()) {
+                    AppLogger.log("MultiHop: снимаю flow=${user.optString("flow")} с exit-outbound (несовместимо с цепочкой)")
+                    user.remove("flow")
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.error("MultiHop: stripVisionFlowForChaining failed", e)
+        }
+    }
+
     private fun buildOutbounds(context: Context, vpnConfig: VpnServerConfig): JSONArray {
         val outbounds = JSONArray()
 
@@ -323,6 +386,14 @@ object XrayCoreManager {
         // Black Wall: apply after protocol config so streamSettings exists
         if (BlackWallEngine.isEnabled(context)) {
             BlackWallEngine.applyToXrayOutbound(context, realOutbound, vpnConfig)
+        }
+
+        // Мульти-хоп: если настроен, exit-outbound дозванивается ЧЕРЕЗ entry-outbound
+        val entryOutbound = buildMultiHopEntryOutbound(context, vpnConfig)
+        if (entryOutbound != null) {
+            stripVisionFlowForChaining(realOutbound)
+            realOutbound.put("proxySettings", JSONObject().put("tag", TAG_HOP_ENTRY))
+            outbounds.put(entryOutbound)
         }
         outbounds.put(realOutbound)
 
@@ -480,7 +551,7 @@ object XrayCoreManager {
              val sid = (config.config["sid"] ?: config.config["shortId"] ?: "").trim()
              val fp  = (config.config["fp"]  ?: config.config["fingerprint"] ?: "").trim()
              val reality = JSONObject()
-             reality.put("fingerprint", if (fp.isNotBlank()) fp else "chrome")
+             reality.put("fingerprint", if (fp.isNotBlank()) fp else defaultFingerprint())
              reality.put("serverName", sni)
              reality.put("publicKey", pbk)
              reality.put("shortId", sid)
@@ -491,7 +562,7 @@ object XrayCoreManager {
              val tls = JSONObject()
              tls.put("serverName", config.config["sni"] ?: "")
              val fp = config.config["fp"] ?: ""
-             if (fp.isNotBlank()) tls.put("fingerprint", fp)
+             tls.put("fingerprint", fp.ifBlank { defaultFingerprint() })
              // allowInsecure removed in Xray 25+; skip cert check by omitting pinnedPeerCertSha256
              val alpn = config.config["alpn"] ?: ""
              if (alpn.isNotBlank()) {
@@ -592,6 +663,7 @@ object XrayCoreManager {
         if (config.config["tls"] == "tls") {
              val tls = JSONObject()
              tls.put("serverName", config.config["sni"] ?: config.config["host"] ?: "")
+             tls.put("fingerprint", (config.config["fp"] ?: "").ifBlank { defaultFingerprint() })
              streamSettings.put("tlsSettings", tls)
         }
         
@@ -627,9 +699,9 @@ object XrayCoreManager {
         val tls = JSONObject()
         tls.put("serverName", config.config["sni"] ?: "")
         val fp = config.config["fp"] ?: ""
-        if (fp.isNotBlank()) tls.put("fingerprint", fp)
+        tls.put("fingerprint", fp.ifBlank { defaultFingerprint() })
         streamSettings.put("tlsSettings", tls)
-        
+
         if (trojanNetwork == "ws") {
             val ws = JSONObject()
             ws.put("path", config.config["path"] ?: "/")

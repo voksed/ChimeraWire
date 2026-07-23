@@ -235,7 +235,10 @@ object PrefsManager {
     }
 
     fun getThemeIndex(context: Context): Int {
-        return getPrefs(context).getInt(KEY_THEME_INDEX, 0) // Default to CLASSIC_RED (index 0)
+        // Default/fallback = DARK (index 2). Old builds had 13 themes at indices 0-12;
+        // any stale value outside the current 4-theme range (0-3) falls back to DARK too.
+        val stored = getPrefs(context).getInt(KEY_THEME_INDEX, 2)
+        return if (stored in 0..3) stored else 2
     }
 
     fun setThemeIndex(context: Context, index: Int) {
@@ -306,7 +309,7 @@ object PrefsManager {
     fun resetSettings(context: Context) {
         val editor = getPrefs(context).edit()
         editor.clear()
-        getPrefs(context).edit().putInt(KEY_THEME_INDEX, 0).apply() // Reset to CLASSIC_RED
+        getPrefs(context).edit().putInt(KEY_THEME_INDEX, 2).apply() // Reset to DARK
         editor.apply()
     }
 
@@ -352,6 +355,28 @@ object PrefsManager {
 
     fun setBlackWallLevel(context: Context, level: String) =
         getPrefs(context).edit().putString("black_wall_level", level).apply()
+
+    // TLS ClientHello (uTLS) fingerprint — какой браузер имитировать по умолчанию,
+    // если сервер сам не задал fp= в ссылке. Обходит DPI по белым спискам TLS-отпечатков.
+    fun getTlsFingerprint(context: Context): String =
+        getPrefs(context).getString("tls_fingerprint_profile", "chrome") ?: "chrome"
+
+    fun setTlsFingerprint(context: Context, fingerprint: String) =
+        getPrefs(context).edit().putString("tls_fingerprint_profile", fingerprint).apply()
+
+    // Мульти-хоп: трафик идёт через "входной" сервер, который туннелирует до основного
+    // (выходного) — ни один узел не видит одновременно настоящий IP клиента и конечный сайт.
+    fun isMultiHopEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean("multihop_enabled", false)
+
+    fun setMultiHopEnabled(context: Context, enabled: Boolean) =
+        getPrefs(context).edit().putBoolean("multihop_enabled", enabled).apply()
+
+    fun getMultiHopEntryServerId(context: Context): String? =
+        getPrefs(context).getString("multihop_entry_server_id", null)
+
+    fun setMultiHopEntryServerId(context: Context, serverId: String?) =
+        getPrefs(context).edit().putString("multihop_entry_server_id", serverId).apply()
 
     // ── Dual Network (WiFi + Cellular bonding) ────────────────────────────
     fun isDualNetworkEnabled(context: Context): Boolean =

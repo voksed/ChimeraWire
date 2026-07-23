@@ -118,7 +118,7 @@ object SniffingGuard {
             return null
         }
 
-        val networkKey = CalibrationManager.currentNetworkKey(context)
+        val networkKey = com.carnelia.vpn.utils.NetworkUtils.currentNetworkKey(context)
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val key = "gateway_mac_$networkKey"
         val knownMac = prefs.getString(key, null)

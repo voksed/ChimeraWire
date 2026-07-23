@@ -17,6 +17,10 @@ object SingboxCoreManager {
     // sing-box exposes SOCKS5 on this port for Xray to forward into
     const val SOCKS5_PORT = 10812
 
+    /** uTLS ClientHello-профиль по умолчанию (chrome/firefox/...), настраивается в Settings. */
+    private fun defaultFingerprint(): String =
+        PrefsManager.getTlsFingerprint(com.carnelia.vpn.CarheliaApplication.instance)
+
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
         appContext = context
         stopCore()
@@ -143,11 +147,60 @@ object SingboxCoreManager {
         }
     }
 
+    private const val TAG_HOP_ENTRY = "hop_entry"
+
+    /** Мульти-хоп: протоколы, которые sing-box может тоннелировать через detour. */
+    private fun isChainableProtocol(p: VpnProtocol): Boolean = p in setOf(
+        VpnProtocol.VLESS, VpnProtocol.VMESS, VpnProtocol.TROJAN,
+        VpnProtocol.SHADOWSOCKS, VpnProtocol.OUTLINE, VpnProtocol.HYSTERIA2, VpnProtocol.TUIC
+    )
+
+    /**
+     * Если включён мульти-хоп и выбран корректный "входной" сервер — добавляет для него
+     * отдельный outbound (tag=hop_entry) и связывает основной outbound через "detour",
+     * так что реальный коннект идёт local -> entry -> exit -> интернет.
+     */
+    private fun buildMultiHopEntryOutbound(context: Context, exitConfig: VpnServerConfig): JSONObject? {
+        if (!PrefsManager.isMultiHopEnabled(context)) return null
+        val entryId = PrefsManager.getMultiHopEntryServerId(context) ?: return null
+        if (entryId == exitConfig.id) return null
+        val entryConfig = try {
+            com.carnelia.vpn.data.ServerRepository(context).getServers().find { it.id == entryId }
+        } catch (_: Exception) { null } ?: return null
+        if (!isChainableProtocol(entryConfig.protocol) || !isChainableProtocol(exitConfig.protocol)) {
+            AppLogger.log("MultiHop: протокол entry/exit не поддерживает цепочку в sing-box — пропускаю")
+            return null
+        }
+        AppLogger.log("MultiHop: entry=${entryConfig.name} (${entryConfig.host}) -> exit=${exitConfig.name} (${exitConfig.host})")
+        return buildProxyOutboundInternal(entryConfig).apply { put("tag", TAG_HOP_ENTRY) }
+    }
+
+    /**
+     * XTLS Vision (flow=xtls-rprx-vision) требует прямого владения TCP-соединением для своих
+     * трюков с паддингом/сплайсингом — не переживает проксирование через detour. При мульти-хопе
+     * снимаем flow с exit-outbound, иначе туннель "поднимается", но данные тихо не идут.
+     */
+    private fun stripVisionFlowForChaining(outbound: JSONObject) {
+        val flow = outbound.optString("flow")
+        if (flow.isNotBlank()) {
+            AppLogger.log("MultiHop: снимаю flow=$flow с exit-outbound (несовместимо с цепочкой)")
+            outbound.remove("flow")
+        }
+    }
+
     private fun buildOutbounds(context: Context, vpnConfig: VpnServerConfig): JSONArray {
         val arr = JSONArray()
 
         // Main proxy outbound
         val proxy = buildProxyOutbound(vpnConfig)
+
+        // Мульти-хоп: если настроен, exit-outbound дозванивается ЧЕРЕЗ entry-outbound
+        val entryOutbound = buildMultiHopEntryOutbound(context, vpnConfig)
+        if (entryOutbound != null) {
+            stripVisionFlowForChaining(proxy)
+            proxy.put("detour", TAG_HOP_ENTRY)
+            arr.put(entryOutbound)
+        }
         arr.put(proxy)
 
         // Direct
@@ -206,7 +259,8 @@ object SingboxCoreManager {
 
         put("tls", buildTls(
             sni = config.config["sni"] ?: config.host,
-            insecure = config.config["insecure"] == "1"
+            insecure = config.config["insecure"] == "1",
+            fingerprint = config.config["fp"]
         ))
     }
 
@@ -224,6 +278,7 @@ object SingboxCoreManager {
         put("tls", buildTls(
             sni = config.config["sni"] ?: config.host,
             insecure = config.config["insecure"] == "1",
+            fingerprint = config.config["fp"],
             alpn = config.config["alpn"]
         ))
     }
@@ -311,7 +366,7 @@ object SingboxCoreManager {
                 put("server_name", config.config["sni"] ?: "")
                 put("utls", JSONObject().apply {
                     put("enabled", true)
-                    put("fingerprint", config.config["fp"]?.ifBlank { "chrome" } ?: "chrome")
+                    put("fingerprint", config.config["fp"]?.ifBlank { defaultFingerprint() } ?: defaultFingerprint())
                 })
                 put("reality", JSONObject().apply {
                     put("enabled", true)
@@ -334,7 +389,7 @@ object SingboxCoreManager {
         if (transport != null) put("transport", transport)
 
         if (config.config["tls"] == "tls") {
-            put("tls", buildTls(sni = config.config["sni"] ?: config.config["host"] ?: ""))
+            put("tls", buildTls(sni = config.config["sni"] ?: config.config["host"] ?: "", fingerprint = config.config["fp"]))
         }
     }
 
@@ -400,13 +455,11 @@ object SingboxCoreManager {
         put("enabled", true)
         if (sni.isNotBlank()) put("server_name", sni)
         if (insecure) put("insecure", true)
-        val fp = fingerprint?.ifBlank { null }
-        if (fp != null) {
-            put("utls", JSONObject().apply {
-                put("enabled", true)
-                put("fingerprint", fp)
-            })
-        }
+        val fp = fingerprint?.ifBlank { null } ?: defaultFingerprint()
+        put("utls", JSONObject().apply {
+            put("enabled", true)
+            put("fingerprint", fp)
+        })
         if (!alpn.isNullOrBlank()) {
             put("alpn", JSONArray().apply {
                 alpn.split(",").map { it.trim() }.filter { it.isNotBlank() }.forEach { put(it) }

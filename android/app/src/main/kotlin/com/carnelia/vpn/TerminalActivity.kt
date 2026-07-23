@@ -14,12 +14,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -28,6 +35,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carnelia.vpn.core.ConnectionState
+import com.carnelia.vpn.core.VpnGlobalState
+import com.carnelia.vpn.data.ServerRepository
 import com.carnelia.vpn.ui.theme.CarheliaTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +47,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.InetAddress
 
 class TerminalActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +82,11 @@ private class ShellSession(private val onLine: (String, Color) -> Unit) {
     fun start(scope: CoroutineScope, nativeLibDir: String, filesDir: String) {
         stop()
         try {
-            val proc = ProcessBuilder("/system/bin/sh", "-i").start()
+            // Без "-i": нет реального PTY (обычный pipe через ProcessBuilder), а интерактивный
+            // режим sh пытается захватить tty для job control и сыплет двумя лишними ошибками
+            // ("can't find tty fd", "won't have full job control"). Обычный (не -i) шелл читает
+            // команды построчно из stdin точно так же и не требует tty вообще.
+            val proc = ProcessBuilder("/system/bin/sh").start()
             process = proc
             stdin = proc.outputStream
 
@@ -82,7 +97,7 @@ private class ShellSession(private val onLine: (String, Color) -> Unit) {
             send("alias xray='$nativeLibDir/libxray_core.so'")
             send("alias singbox='$nativeLibDir/libsingbox.so'")
             send("cd '$filesDir'")
-            onLine("shell: /system/bin/sh -i (pid известен через ps)", COL_SYS)
+            onLine("shell: /system/bin/sh (pid известен через ps)", COL_SYS)
             onLine("alias: xray, singbox · рабочая папка: $filesDir · 'core' — встроенные команды по ядрам", COL_DIM)
         } catch (e: Exception) {
             onLine("не удалось запустить shell: ${e.message}", COL_ERR)
@@ -155,6 +170,9 @@ fun TerminalScreen(onBack: () -> Unit) {
                 """
                 core paths     — пути к конфигам и нативным библиотекам ядер
                 core awg       — статус и версия AmneziaWG (JNI, не отдельный процесс — не виден в ps)
+                core status    — состояние VPN-соединения, последний использованный сервер, трафик
+                core conn      — локальные порты SOCKS5/HTTP-прокси ядер (Xray/sing-box)
+                core dns HOST  — быстрый DNS-запрос (A/AAAA) через java.net, без VPN-туннеля
                 core kill      — экстренно остановить все ядра (Xray/sing-box/AmneziaWG)
                 core restart   — перезапустить shell-сессию (если процесс завис без -c таймаута)
                 """.trimIndent(), COL_SYS
@@ -174,6 +192,40 @@ fun TerminalScreen(onBack: () -> Unit) {
                     addLine("awg version: n/a (${e.message})", COL_ERR)
                 }
             }
+            "status" -> {
+                val state = VpnGlobalState.connectionState.value
+                val stats = VpnGlobalState.stats.value
+                val lastServer = try { ServerRepository(context).getLastUsedServer() } catch (_: Exception) { null }
+                addLine("state:  $state", if (state == ConnectionState.CONNECTED) COL_SYS else COL_DIM)
+                addLine("server: ${lastServer?.name ?: "—"} (${lastServer?.protocol ?: "—"}) ${lastServer?.host ?: ""}")
+                addLine("rx: ${stats.bytesReceived} B  ·  tx: ${stats.bytesSent} B")
+            }
+            "conn" -> {
+                addLine("xray:    SOCKS/HTTP на 127.0.0.1:${com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT} / :${com.carnelia.vpn.core.XrayCoreManager.LOCAL_HTTP_PORT}")
+                addLine("singbox: SOCKS5 на 127.0.0.1:${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}")
+                addLine("state:   ${VpnGlobalState.connectionState.value}")
+            }
+            "dns" -> {
+                val host = args.getOrNull(1)
+                if (host.isNullOrBlank()) {
+                    addLine("использование: core dns <host>", COL_ERR)
+                } else {
+                    scope.launch {
+                        val (addrs, error) = withContext(Dispatchers.IO) {
+                            try {
+                                InetAddress.getAllByName(host).mapNotNull { it.hostAddress } to null
+                            } catch (e: Exception) {
+                                emptyList<String>() to e
+                            }
+                        }
+                        if (error != null || addrs.isEmpty()) {
+                            addLine("не удалось разрешить $host: ${error?.message ?: "нет адресов"}", COL_ERR)
+                        } else {
+                            addrs.forEach { addLine(it, COL_SYS) }
+                        }
+                    }
+                }
+            }
             "kill" -> {
                 try { com.carnelia.vpn.core.XrayCoreManager.stopCore() } catch (_: Exception) {}
                 try { com.carnelia.vpn.core.SingboxCoreManager.stopCore() } catch (_: Exception) {}
@@ -185,11 +237,15 @@ fun TerminalScreen(onBack: () -> Unit) {
         }
     }
 
+    // Индекс при навигации по истории (null = не листаем, иначе позиция от конца).
+    var historyIndex by remember { mutableStateOf<Int?>(null) }
+
     fun submit(raw: String) {
         val line = raw.trim()
         if (line.isEmpty()) return
         addLine("$ $line", COL_DIM)
         history.add(line)
+        historyIndex = null
 
         val parts = line.split(Regex("\\s+"))
         when {
@@ -197,6 +253,18 @@ fun TerminalScreen(onBack: () -> Unit) {
             line == "clear" -> output.clear()
             else -> session.send(line)
         }
+    }
+
+    fun navigateHistory(delta: Int) {
+        if (history.isEmpty()) return
+        val current = historyIndex
+        val next = when {
+            current == null && delta < 0 -> history.size - 1
+            current == null -> return
+            else -> (current + delta).coerceIn(0, history.size - 1)
+        }
+        historyIndex = next
+        input = history[next]
     }
 
     LaunchedEffect(output.size) {
@@ -252,8 +320,17 @@ fun TerminalScreen(onBack: () -> Unit) {
                 Text("$", color = COL_SYS, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
                 TextField(
                     value = input,
-                    onValueChange = { input = it },
-                    modifier = Modifier.weight(1f),
+                    onValueChange = { input = it; historyIndex = null },
+                    modifier = Modifier
+                        .weight(1f)
+                        .onPreviewKeyEvent { event ->
+                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                            when (event.key) {
+                                Key.DirectionUp -> { navigateHistory(-1); true }
+                                Key.DirectionDown -> { navigateHistory(1); true }
+                                else -> false
+                            }
+                        },
                     singleLine = true,
                     textStyle = TextStyle(color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 13.sp),
                     keyboardOptions = KeyboardOptions(
@@ -271,6 +348,14 @@ fun TerminalScreen(onBack: () -> Unit) {
                         cursorColor = COL_SYS
                     )
                 )
+                Column {
+                    IconButton(onClick = { navigateHistory(-1) }, modifier = Modifier.size(20.dp)) {
+                        Icon(Icons.Default.KeyboardArrowUp, null, tint = Color(0xFF666666), modifier = Modifier.size(16.dp))
+                    }
+                    IconButton(onClick = { navigateHistory(1) }, modifier = Modifier.size(20.dp)) {
+                        Icon(Icons.Default.KeyboardArrowDown, null, tint = Color(0xFF666666), modifier = Modifier.size(16.dp))
+                    }
+                }
                 IconButton(onClick = { if (input.isNotBlank()) { submit(input); input = "" } }) {
                     Icon(Icons.AutoMirrored.Filled.Send, null, tint = COL_SYS)
                 }

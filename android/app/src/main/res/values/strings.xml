@@ -38,6 +38,8 @@
     <string name="status_connecting">CONNECTING...</string>
     <string name="status_switching">SWITCHING...</string>
     <string name="status_not_protected">NOT PROTECTED</string>
+    <string name="status_hint_disconnected">Tap to connect</string>
+    <string name="status_hint_connected">Tap to disconnect</string>
     <string name="select_server_btn">Select Server</string>
     <string name="received_label">RECEIVED</string>
     <string name="sent_label">SENT</string>
@@ -266,19 +268,10 @@ Last Error: %5$s
     <string name="sec_port_443">• Port: 443 (Component masquerades as HTTPS).\n</string>
     <string name="sec_port_80">⚠ Port: 80 (Plain HTTP. Suspicious for VPN).\n</string>
     <string name="sec_port_other">• Port: %1$d (Non-standard port).\n</string>
-    <string name="theme_carnelia">Carnelia VPN</string>
-    <string name="theme_cyberpunk">Cyberpunk</string>
-    <string name="theme_matrix">Matrix</string>
-    <string name="theme_purple">Purple</string>
-    <string name="theme_light_blue">Light Blue</string>
-    <string name="theme_light_green">Light Green</string>
-    <string name="theme_light_pink">Light Pink</string>
-    <string name="theme_light_purple">Light Purple</string>
     <string name="theme_light">Light</string>
+    <string name="theme_light_hc">Light — High Contrast</string>
     <string name="theme_dark">Dark</string>
-    <string name="theme_ton">Ocean Blue</string>
-    <string name="theme_system">System</string>
-    <string name="theme_secret">Voks</string>
+    <string name="theme_dark_amoled">Dark — AMOLED</string>
     
     <!-- Games -->
     <string name="game_miner_title">Carnelia Miner</string>
@@ -555,4 +548,8 @@ Last Error: %5$s
     <string name="tool_speedtest_desc">Download speed and latency</string>
     <string name="tool_blackwall_name">Black Wall (bypass)</string>
     <string name="tool_blackwall_desc">Anti-DPI stealth: Ghost / Phantom / Wraith</string>
+    <string name="tool_torrent_name">Torrent</string>
+    <string name="tool_torrent_desc">Magnet / .torrent downloads</string>
+    <string name="disguise_calculator_label">Calculator</string>
+    <string name="disguise_notes_label">Notes</string>
 </resources>

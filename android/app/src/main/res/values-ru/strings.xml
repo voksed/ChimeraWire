@@ -38,6 +38,8 @@
     <string name="status_connecting">ПОДКЛЮЧЕНИЕ...</string>
     <string name="status_switching">СМЕНА СЕРВЕРА...</string>
     <string name="status_not_protected">НЕ ЗАЩИЩЕНО</string>
+    <string name="status_hint_disconnected">Нажмите, чтобы включить</string>
+    <string name="status_hint_connected">Нажмите, чтобы отключить</string>
     <string name="select_server_btn">Выбрать сервер</string>
     <string name="received_label">ПОЛУЧЕНО</string>
     <string name="sent_label">ОТПРАВЛЕНО</string>
@@ -254,19 +256,10 @@ Android: %2$s
     <string name="sec_port_other">• Порт: %1$d (Нестандартный порт).\n</string>
     
     <!-- Themes -->
-    <string name="theme_carnelia">Carnelia VPN</string>
-    <string name="theme_cyberpunk">Киберпанк</string>
-    <string name="theme_matrix">Матрица</string>
-    <string name="theme_purple">Фиолетовая</string>
-    <string name="theme_light_blue">Голубая</string>
-    <string name="theme_light_green">Салатовая</string>
-    <string name="theme_light_pink">Розовая</string>
-    <string name="theme_light_purple">Светло-фиолетовая</string>
     <string name="theme_light">Светлая</string>
+    <string name="theme_light_hc">Светлая — высокий контраст</string>
     <string name="theme_dark">Темная</string>
-    <string name="theme_ton">Ocean Blue</string>
-    <string name="theme_system">Системная</string>
-    <string name="theme_secret">Voks</string>
+    <string name="theme_dark_amoled">Темная — AMOLED</string>
     
     <!-- Games -->
     <string name="game_miner_title">Carnelia Miner</string>
@@ -557,4 +550,8 @@ Android: %2$s
     <string name="tool_speedtest_desc">Скорость скачивания и задержка</string>
     <string name="tool_blackwall_name">Black Wall (обход блокировок)</string>
     <string name="tool_blackwall_desc">Anti-DPI маскировка: Ghost / Phantom / Wraith</string>
+    <string name="tool_torrent_name">Торренты</string>
+    <string name="tool_torrent_desc">Загрузка по magnet-ссылке / .torrent</string>
+    <string name="disguise_calculator_label">Калькулятор</string>
+    <string name="disguise_notes_label">Заметки</string>
 </resources>

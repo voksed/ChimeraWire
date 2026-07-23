@@ -5,10 +5,23 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,6 +30,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Edit
@@ -27,9 +41,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.carnelia.vpn.utils.PrefsManager
@@ -178,7 +194,7 @@ class MainActivity : ComponentActivity() {
             }
 
             CarheliaTheme(themeIndex = themeIndex) {
-                val currentTheme = AppTheme.values().getOrElse(themeIndex) { AppTheme.CARNELIA }
+                val currentTheme = AppTheme.entries.getOrElse(themeIndex) { AppTheme.DARK }
                 
                 CarheliaApp(
                     vpnManager, 
@@ -356,15 +372,6 @@ fun CarheliaApp(
         }
     }
     
-    // Калибровка — флагманская фича: одна кнопка сама подбирает лучший сервер + обфускацию
-    var showCalibration by remember { mutableStateOf(false) }
-    if (showCalibration) {
-        CalibrationDialog(onDismiss = {
-            showCalibration = false
-            activeConfig = repository.getLastUsedServer() ?: repository.getServers().firstOrNull()
-        })
-    }
-
     // QR Share State
     var showShareDialog by remember { mutableStateOf(false) }
     var shareContent by remember { mutableStateOf("") }
@@ -524,6 +531,23 @@ fun CarheliaApp(
                     )
                 )
 
+                // P2P Chat — временно скрыт из меню (код и вся фича остаются в проекте,
+                // просто нет входа в UI). Чтобы вернуть: раскомментировать этот блок.
+                // NavigationDrawerItem(
+                //     label = { Text("Чат") },
+                //     selected = false,
+                //     onClick = {
+                //         context.startActivity(Intent(context, ChatActivity::class.java))
+                //         scope.launch { drawerState.close() }
+                //     },
+                //     icon = { Icon(Icons.Default.Forum, contentDescription = null, tint = onSurface) },
+                //     modifier = Modifier.padding(horizontal = 12.dp),
+                //     colors = NavigationDrawerItemDefaults.colors(
+                //         unselectedContainerColor = Color.Transparent,
+                //         unselectedTextColor = onSurface
+                //     )
+                // )
+
             }
         }
     ) {
@@ -533,25 +557,46 @@ fun CarheliaApp(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = stringResource(R.string.carnelia_vpn_title),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 2.sp,
-                            color = primary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clip(RoundedCornerShape(9.dp))
+                                    .background(surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.ic_launcher_foreground),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = stringResource(R.string.carnelia_vpn_title),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.3.sp,
+                                color = onBackground
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = primary)
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = onBackground)
                         }
                     },
                     actions = {
                         val canShare = activeConfig != null
                         if (canShare) {
                             IconButton(onClick = {
-                                shareContent = "${activeConfig?.protocol?.name?.lowercase()}://${activeConfig?.host}:${activeConfig?.port}"
-                                showShareDialog = true
+                                // Полный JSON (uuid, REALITY pbk/sid/fp/sni — всё из config-карты), а не голый
+                                // host:port, который всё равно не распарсить обратно. subscriptionId обнуляем —
+                                // он ссылается на подписку этого устройства, на чужом телефоне бессмыслен.
+                                activeConfig?.let { cfg ->
+                                    shareContent = com.carnelia.vpn.utils.ConfigImportExport.exportToJson(listOf(cfg.copy(subscriptionId = null)))
+                                    showShareDialog = true
+                                }
                             }) {
                                 Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share_tooltip), tint = onBackground)
                             }
@@ -629,8 +674,6 @@ fun CarheliaApp(
                                 activeConfig = activeConfig,
                                 onClick = { showServerList = true }
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            CalibrateButton(onClick = { showCalibration = true })
                         }
                     }
                 } else {
@@ -682,8 +725,6 @@ fun CarheliaApp(
                             activeConfig = activeConfig,
                             onClick = { showServerList = true }
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        CalibrateButton(onClick = { showCalibration = true })
                     }
                     } // end Box (tablet portrait centering)
                 }
@@ -697,13 +738,13 @@ fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.update_available_title, info.version), color = Color.White) },
+        title = { Text(stringResource(R.string.update_available_title, info.version), color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column {
-                Text(stringResource(R.string.update_current_version, BuildConfig.VERSION_NAME), color = Color.Gray, fontSize = 12.sp)
+                Text(stringResource(R.string.update_current_version, BuildConfig.VERSION_NAME), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 if (info.changelog.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(info.changelog, color = Color(0xFFCCCCCC), fontSize = 12.sp, maxLines = 8)
+                    Text(info.changelog, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, maxLines = 8)
                 }
             }
         },
@@ -711,12 +752,12 @@ fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
             TextButton(onClick = {
                 UpdateManager.openDownload(context, info.downloadUrl)
                 onDismiss()
-            }) { Text(stringResource(R.string.update_action), color = Color(0xFFFF1744)) }
+            }) { Text(stringResource(R.string.update_action), color = MaterialTheme.colorScheme.primary) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_later), color = Color.Gray) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_later), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         },
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 
@@ -741,23 +782,44 @@ fun formatBytes(bytes: Long): String {
 
 @Composable
 fun ConnectionStatusText(connectionState: ConnectionState) {
-    Text(
-        text = when (connectionState) {
-            ConnectionState.CONNECTED    -> stringResource(R.string.status_secured)
-            ConnectionState.CONNECTING   -> stringResource(R.string.status_connecting)
-            ConnectionState.RECONNECTING -> stringResource(R.string.status_switching)
-            else -> stringResource(R.string.status_not_protected)
-        },
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        color = when (connectionState) {
-            ConnectionState.CONNECTED    -> Color(0xFF00CC66)
-            ConnectionState.RECONNECTING -> Color(0xFFFFAA00)
-            ConnectionState.ERROR        -> MaterialTheme.colorScheme.error
-            else -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
-        },
-        letterSpacing = 1.sp
-    )
+    val hint = when (connectionState) {
+        ConnectionState.CONNECTED -> stringResource(R.string.status_hint_connected)
+        ConnectionState.DISCONNECTED, ConnectionState.ERROR -> stringResource(R.string.status_hint_disconnected)
+        else -> null
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        AnimatedContent(
+            targetState = connectionState,
+            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) },
+            label = "status-word"
+        ) { state ->
+            Text(
+                text = when (state) {
+                    ConnectionState.CONNECTED    -> stringResource(R.string.status_secured)
+                    ConnectionState.CONNECTING   -> stringResource(R.string.status_connecting)
+                    ConnectionState.RECONNECTING -> stringResource(R.string.status_switching)
+                    else -> stringResource(R.string.status_not_protected)
+                },
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+                color = when (state) {
+                    ConnectionState.CONNECTED    -> Color(0xFF16A34A)
+                    ConnectionState.RECONNECTING -> Color(0xFFD97706)
+                    ConnectionState.ERROR        -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                letterSpacing = 1.5.sp
+            )
+        }
+        if (hint != null) {
+            Text(
+                text = hint,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -771,45 +833,61 @@ fun ConnectButton(
 ) {
     val context = LocalContext.current
     val primary = MaterialTheme.colorScheme.primary
-    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-    val surface = MaterialTheme.colorScheme.surface
     val onPrimary = MaterialTheme.colorScheme.onPrimary
-    val iconSize = (buttonSize.value * 0.4f).dp
+    val iconSize = (buttonSize.value * 0.34f).dp
     val isConnected = connectionState == ConnectionState.CONNECTED
-    val isDarkTheme = currentTheme.isDark
+    val isBusy = connectionState == ConnectionState.CONNECTING || connectionState == ConnectionState.RECONNECTING
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(if (isPressed) 0.94f else 1f, label = "press-scale")
+
+    // Мягкое "дыхание" свечения — быстрее во время подключения/переключения, спокойнее когда просто активен
+    val infiniteTransition = rememberInfiniteTransition(label = "connect-glow")
+    val breathe by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(if (isBusy) 650 else 1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "breathe"
+    )
+    val glowAlpha = if (isBusy) 0.14f + 0.18f * breathe else 0.08f + 0.09f * breathe
+    val glowScale = 1f + (if (isBusy) 0.09f else 0.04f) * breathe
 
     Box(
         modifier = Modifier.size(buttonSize),
         contentAlignment = Alignment.Center
     ) {
-        // Outer ring for glow effect on dark themes
-        if (isDarkTheme) {
-            Box(
-                modifier = Modifier
-                    .size(buttonSize)
-                    .clip(CircleShape)
-                    .background(primary.copy(alpha = if (isConnected) 0.15f else 0.07f))
-            )
-        }
-        // Main button
+        // Мягкое свечение акцентом позади кнопки
         Box(
             modifier = Modifier
-                .size(buttonSize - 8.dp)
+                .size(buttonSize)
+                .scale(glowScale)
                 .clip(CircleShape)
-                .background(
-                    when {
-                        isConnected -> primary
-                        isDarkTheme -> surfaceVariant
-                        else -> primary.copy(alpha = 0.1f)
-                    }
-                )
-                .border(
-                    width = if (isConnected) 0.dp else 2.dp,
-                    color = if (isConnected) Color.Transparent else primary.copy(alpha = 0.6f),
-                    shape = CircleShape
-                )
+                .background(primary.copy(alpha = glowAlpha))
+        )
+
+        if (isBusy) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(buttonSize - 6.dp),
+                color = primary,
+                strokeWidth = 3.dp,
+                trackColor = Color.Transparent
+            )
+        }
+
+        // Основная кнопка — всегда залита акцентом, состояние читается по иконке
+        Box(
+            modifier = Modifier
+                .size(buttonSize - 18.dp)
+                .scale(pressScale)
+                .clip(CircleShape)
+                .background(primary)
                 .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
                     onClick = { if (isConnected) onDisconnect() else onConnect() },
                     // Долгое нажатие — Debug Panel с логами
                     onLongClick = {
@@ -818,136 +896,66 @@ fun ConnectButton(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.PowerSettingsNew,
-                contentDescription = "Connect",
-                modifier = Modifier.size(iconSize),
-                tint = if (isConnected) onPrimary else primary.copy(alpha = 0.85f)
-            )
+            AnimatedContent(
+                targetState = isConnected,
+                transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(120)) },
+                label = "connect-icon"
+            ) { connected ->
+                Icon(
+                    imageVector = if (connected) Icons.Default.Check else Icons.Default.PowerSettingsNew,
+                    contentDescription = "Connect",
+                    modifier = Modifier.size(iconSize),
+                    tint = onPrimary
+                )
+            }
         }
     }
 }
 
 @Composable
 fun StatsRow(stats: com.carnelia.vpn.core.VpnStats) {
-    val onBg = MaterialTheme.colorScheme.onBackground
     Row(
-        modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.ArrowDownward, null, tint = onBg.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
-            Text(formatBytes(stats.bytesReceived), color = onBg, fontSize = 12.sp)
-        }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.ArrowUpward, null, tint = onBg.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
-            Text(formatBytes(stats.bytesSent), color = onBg, fontSize = 12.sp)
-        }
+        StatChip(
+            icon = Icons.Default.ArrowDownward,
+            value = formatBytes(stats.bytesReceived),
+            label = stringResource(R.string.received_label),
+            modifier = Modifier.weight(1f)
+        )
+        StatChip(
+            icon = Icons.Default.ArrowUpward,
+            value = formatBytes(stats.bytesSent),
+            label = stringResource(R.string.sent_label),
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
 @Composable
-fun CalibrateButton(onClick: () -> Unit) {
+private fun StatChip(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
     Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(50),
-        color = Color.Transparent,
-        border = BorderStroke(1.dp, Brush.linearGradient(listOf(Color(0xFF00CC66), Color(0xFF00AAFF)))),
-        modifier = Modifier.height(44.dp).fillMaxWidth()
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = modifier
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Build, null, tint = Color(0xFF00CC66), modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Калибровать", color = Color(0xFF00CC66), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        }
-    }
-}
-
-@Composable
-fun CalibrationDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    val log = remember { mutableStateListOf<String>() }
-    var result by remember { mutableStateOf<CalibrationResult?>(null) }
-    var running by remember { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        result = CalibrationManager.calibrate(context) { line ->
-            log.add(line)
-        }
-        running = false
-    }
-
-    Dialog(onDismissRequest = { if (!running) onDismiss() }) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF111111)),
-            modifier = Modifier.fillMaxWidth().padding(8.dp)
-        ) {
-            Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "КАЛИБРОВКА",
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-                Text(
-                    "Подбираю лучший сервер и обфускацию под твою сеть",
-                    color = Color(0xFF888888),
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
-                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-                    LaunchedEffect(log.size) {
-                        if (log.isNotEmpty()) listState.animateScrollToItem(log.size - 1)
-                    }
-                    LazyColumn(state = listState) {
-                        items(log) { line ->
-                            Text(
-                                line,
-                                color = when {
-                                    line.startsWith("✓") -> Color(0xFF44DD66)
-                                    line.startsWith("✗") -> Color(0xFFFF6666)
-                                    else -> Color(0xFFAAAAAA)
-                                },
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
-                        }
-                    }
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                AnimatedContent(
+                    targetState = value,
+                    transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) },
+                    label = "stat-value"
+                ) { v ->
+                    Text(v, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
-
-                if (running) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp, color = Color(0xFF00CC66))
-                } else {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    result?.let { r ->
-                        if (r.success) {
-                            Text("Готово: ${r.serverName} · ${r.profileLabel}", color = Color(0xFF44DD66), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            val speedText = r.mbps?.let { " · %.1f Мбит/с".format(it) } ?: ""
-                            val pingText = r.tcpPingMs?.let { "Пинг: ${it}мс" } ?: ""
-                            Text("$pingText$speedText", color = Color(0xFF888888), fontSize = 12.sp)
-                            Text("HTTPS через туннель: ${r.latencyMs} мс", color = Color(0xFF555555), fontSize = 10.sp)
-                        } else {
-                            Text("Не удалось подобрать рабочую комбинацию", color = Color(0xFFFF6666), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00CC66))
-                    ) {
-                        Text("Готово", color = Color.Black, fontWeight = FontWeight.Bold)
-                    }
-                }
+                Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, letterSpacing = 0.5.sp)
             }
         }
     }
@@ -955,22 +963,21 @@ fun CalibrationDialog(onDismiss: () -> Unit) {
 
 @Composable
 fun ServerPickerPill(activeConfig: com.carnelia.vpn.core.VpnServerConfig?, onClick: () -> Unit) {
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     val outline = MaterialTheme.colorScheme.outline
     val onSurface = MaterialTheme.colorScheme.onSurface
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(50),
-        color = surfaceVariant,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, outline),
-        modifier = Modifier.height(56.dp).fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Box(modifier = Modifier.size(8.dp).background(
-                color = if (activeConfig != null) Color(0xFF00CC66) else MaterialTheme.colorScheme.error,
+                color = if (activeConfig != null) Color(0xFF16A34A) else MaterialTheme.colorScheme.error,
                 shape = CircleShape
             ))
             Spacer(modifier = Modifier.width(12.dp))
@@ -1033,7 +1040,7 @@ fun SubscriptionsDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val subManager = remember { SubscriptionManager(context) }
-    val accentColor = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFFF1744)
+    val accentColor = MaterialTheme.colorScheme.primary
     val sdf = remember { SimpleDateFormat("dd.MM.yy HH:mm", java.util.Locale.getDefault()) }
 
     var subscriptions by remember { mutableStateOf(subManager.getSubscriptions()) }
@@ -1046,28 +1053,28 @@ fun SubscriptionsDialog(
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false; addError = null },
-            title = { Text("Добавить подписку", color = Color.White) },
+            title = { Text("Добавить подписку", color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = newSubName,
                         onValueChange = { newSubName = it; addError = null },
-                        label = { Text("Название", color = Color.Gray) },
+                        label = { Text("Название", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                            focusedBorderColor = accentColor, unfocusedBorderColor = Color(0xFF555555)
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = accentColor, unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = newSubUrl,
                         onValueChange = { newSubUrl = it; addError = null },
-                        label = { Text("URL подписки", color = Color.Gray) },
+                        label = { Text("URL подписки", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                            focusedBorderColor = accentColor, unfocusedBorderColor = Color(0xFF555555)
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = accentColor, unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1101,10 +1108,10 @@ fun SubscriptionsDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showAddDialog = false; addError = null }) {
-                    Text("Отмена", color = Color.Gray)
+                    Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Color(0xFF1A1A1A)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -1112,7 +1119,7 @@ fun SubscriptionsDialog(
         Card(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 Row(
@@ -1120,25 +1127,25 @@ fun SubscriptionsDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Подписки", style = MaterialTheme.typography.titleLarge, color = Color.White)
+                    Text("Подписки", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { showAddDialog = true }, modifier = Modifier.size(36.dp)) {
                             Icon(Icons.Default.Add, null, tint = accentColor)
                         }
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, null, tint = Color.Gray)
+                            Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
 
                 Spacer(Modifier.height(8.dp))
-                HorizontalDivider(color = Color(0xFF333333))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 Spacer(Modifier.height(12.dp))
 
                 if (subscriptions.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Нет подписок", color = Color.Gray)
+                            Text("Нет подписок", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(8.dp))
                             Button(
                                 onClick = { showAddDialog = true },
@@ -1150,17 +1157,17 @@ fun SubscriptionsDialog(
                     LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(subscriptions, key = { it.id }) { sub ->
                             Card(
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF1F1F1F)),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(sub.name, color = Color.White, fontWeight = FontWeight.Bold)
-                                        Text(sub.url, color = Color.Gray, fontSize = 11.sp, maxLines = 1)
+                                        Text(sub.name, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                                        Text(sub.url, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1)
                                         if (sub.lastUpdated > 0) {
                                             Text(
                                                 "${sdf.format(Date(sub.lastUpdated))} · ${sub.serverCount} серв.",
-                                                color = Color(0xFF888888), fontSize = 11.sp
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp
                                             )
                                         }
                                     }
@@ -1182,7 +1189,7 @@ fun SubscriptionsDialog(
                                         subManager.removeSubscription(sub.id)
                                         subscriptions = subManager.getSubscriptions()
                                     }, modifier = Modifier.size(32.dp)) {
-                                        Icon(Icons.Default.Delete, null, tint = Color.Gray.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                                        Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
                                     }
                                 }
                             }
@@ -1228,7 +1235,7 @@ fun ServerSelectionDialog(
     val subManager = remember { SubscriptionManager(context) }
     val subscriptions = remember { subManager.getSubscriptions() }
     val subNameById = remember { subscriptions.associate { it.id to it.name } }
-    val accentColor = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFFF1744)
+    val accentColor = MaterialTheme.colorScheme.primary
 
     var servers by remember { mutableStateOf(repository.getServers()) }
     var selectedFilter by remember { mutableStateOf<String?>(null) } // null = все, "" = ручные, subId = по подписке
@@ -1327,18 +1334,18 @@ fun ServerSelectionDialog(
     serverToRename?.let { server ->
         AlertDialog(
             onDismissRequest = { serverToRename = null },
-            title = { Text(stringResource(R.string.rename_server_title), color = Color.White) },
+            title = { Text(stringResource(R.string.rename_server_title), color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 OutlinedTextField(
                     value = renameText,
                     onValueChange = { renameText = it },
-                    label = { Text(stringResource(R.string.rename_server_hint), color = Color.Gray) },
+                    label = { Text(stringResource(R.string.rename_server_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFFF1744),
-                        unfocusedBorderColor = Color(0xFF555555)
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
             },
@@ -1350,14 +1357,14 @@ fun ServerSelectionDialog(
                         servers = repository.getServers()
                     }
                     serverToRename = null
-                }) { Text(stringResource(R.string.save_action), color = if (currentTheme == AppTheme.TON) Color(0xFF0088CC) else Color(0xFFFF1744)) }
+                }) { Text(stringResource(R.string.save_action), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
                 TextButton(onClick = { serverToRename = null }) {
-                    Text(stringResource(R.string.cancel_action), color = Color.Gray)
+                    Text(stringResource(R.string.cancel_action), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Color(0xFF1A1A1A)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -1388,15 +1395,15 @@ fun ServerSelectionDialog(
                         Text(stringResource(R.string.select_server_btn), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (isPinging) {
-                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.Gray)
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.width(4.dp))
                             } else {
                                 IconButton(onClick = { pingServers(servers) }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Default.Refresh, null, tint = Color.Gray, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                                 }
                             }
                             IconButton(onClick = onDismiss) {
-                                Icon(Icons.Default.Close, null, tint = Color.Gray)
+                                Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -1408,31 +1415,31 @@ fun ServerSelectionDialog(
                         Button(
                             onClick = onImportClipboard,
                             modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                             Icon(Icons.Default.ContentPaste, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                             Icon(Icons.Default.ContentPaste, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         }
                         Button(
                             onClick = onScanQr,
                             modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                             Icon(Icons.Default.QrCodeScanner, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                             Icon(Icons.Default.QrCodeScanner, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         }
                         Button(
                             onClick = { showManualAdd = true },
                             modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222)),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                             Icon(Icons.Default.Edit, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                             Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider(color = Color(0xFF333333))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // Фильтр-табы
@@ -1450,7 +1457,7 @@ fun ServerSelectionDialog(
                                     label = { Text("Все (${servers.size})", fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = accentColor,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                                     )
                                 )
                             }
@@ -1462,7 +1469,7 @@ fun ServerSelectionDialog(
                                         label = { Text("Ручные (${servers.count { it.subscriptionId.isNullOrBlank() }})", fontSize = 12.sp) },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = accentColor,
-                                            selectedLabelColor = Color.White
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                                         )
                                     )
                                 }
@@ -1476,7 +1483,7 @@ fun ServerSelectionDialog(
                                     label = { Text("$subName ($cnt)", fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = accentColor,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                                     )
                                 )
                             }
@@ -1522,7 +1529,7 @@ fun ServerSelectionDialog(
                                             else -> "● ${pingMs}ms"
                                         }
                                         val pingColor = when {
-                                            !pingResults.containsKey(server.id) -> Color.Gray
+                                            !pingResults.containsKey(server.id) -> MaterialTheme.colorScheme.onSurfaceVariant
                                             pingMs == null && isUdp -> Color(0xFF8888FF)
                                             pingMs == null -> Color(0xFFFF4444)
                                             pingMs < 100 -> Color(0xFF00CC66)
@@ -1556,7 +1563,7 @@ fun ServerSelectionDialog(
                                             Icon(
                                                 Icons.Default.Tune,
                                                 contentDescription = "Protocol Settings",
-                                                tint = Color.Gray.copy(alpha = 0.7f),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }
@@ -1573,7 +1580,7 @@ fun ServerSelectionDialog(
                                         Icon(
                                             Icons.Default.Edit,
                                             contentDescription = stringResource(R.string.rename_tooltip),
-                                            tint = Color.Gray.copy(alpha = 0.7f),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -1589,14 +1596,14 @@ fun ServerSelectionDialog(
                                         Icon(
                                             Icons.Default.Delete, 
                                             contentDescription = "Delete", 
-                                            tint = Color.Gray.copy(alpha = 0.7f),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
 
                                     if (isSelected) {
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Icon(Icons.Default.Check, null, tint = Color.White)
+                                        Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                                     }
                                 }
                             }

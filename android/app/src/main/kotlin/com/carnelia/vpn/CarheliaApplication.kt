@@ -43,7 +43,7 @@ class CarheliaApplication : Application() {
         // без видимого в интерфейсе способа это объяснить или отключить.
         // AccessibilityWatcher.register(this)
 
-        // Авто-калибровка при смене сети (домашний Wi-Fi → мобильная и т.п.)
+        // Разрыв VPN при смене сети (домашний Wi-Fi → мобильная и т.п.) — fail closed
         NetworkChangeWatcher.register(this)
 
         // Защита от снифинга: подозрительные CA-сертификаты, ARP-спуфинг, системный proxy

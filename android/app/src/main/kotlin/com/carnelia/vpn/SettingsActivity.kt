@@ -343,7 +343,7 @@ fun MainSettingsMenu(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-        HorizontalDivider(color = Color(0xFF2C2C2C))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         Spacer(modifier = Modifier.height(24.dp))
 
         // --- Other Items (Language, Report, Logs) ---
@@ -373,7 +373,7 @@ fun MainSettingsMenu(
         // Report Bug
         Button(
             onClick = { SettingsActivity.reportBug(context) },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCD3C1A)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
         ) {
             Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
@@ -587,7 +587,7 @@ fun TunnelSettings(context: Context) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = Color(0xFF2C2C2C))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
@@ -648,24 +648,8 @@ fun TunnelSettings(context: Context) {
 
 @Composable
 fun AppearanceSettings(themeIndex: Int, onThemeChange: (Int) -> Unit) {
-    val context = LocalContext.current
-    val isSecretUnlocked = PrefsManager.isSecretThemeUnlocked(context)
-    
-    val themes = listOf(
-        com.carnelia.vpn.ui.theme.AppTheme.CARNELIA,
-        com.carnelia.vpn.ui.theme.AppTheme.CYBERPUNK,
-        com.carnelia.vpn.ui.theme.AppTheme.MATRIX,
-        com.carnelia.vpn.ui.theme.AppTheme.PURPLE,
-        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_BLUE,
-        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_GREEN,
-        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_PINK,
-        com.carnelia.vpn.ui.theme.AppTheme.LIGHT_PURPLE,
-        com.carnelia.vpn.ui.theme.AppTheme.LIGHT,
-        com.carnelia.vpn.ui.theme.AppTheme.DARK,
-        com.carnelia.vpn.ui.theme.AppTheme.TON,
-        com.carnelia.vpn.ui.theme.AppTheme.SYSTEM
-    ) + if (isSecretUnlocked) listOf(com.carnelia.vpn.ui.theme.AppTheme.SECRET) else emptyList()
-    
+    val themes = com.carnelia.vpn.ui.theme.AppTheme.entries.toList()
+
     Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -725,6 +709,9 @@ fun SecuritySettings(context: Context) {
     var netShieldEnabled by remember { mutableStateOf(PrefsManager.isNetShieldEnabled(context)) }
     var killSwitch by remember { mutableStateOf(PrefsManager.isKillSwitchEnabled(context)) }
     var fallbackEnabled by remember { mutableStateOf(PrefsManager.isFallbackEnabled(context)) }
+    var disguise by remember { mutableStateOf(com.carnelia.vpn.core.IconDisguiseManager.current(context)) }
+    var showPanicDialog by remember { mutableStateOf(false) }
+    var wipeServersToo by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
         
@@ -785,6 +772,102 @@ fun SecuritySettings(context: Context) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.kill_switch_system), color = MaterialTheme.colorScheme.onSecondaryContainer)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ── Маскировка иконки/названия ────────────────────────────────
+        Text(
+            "Маскировка",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Text(
+            "Как приложение выглядит на рабочем столе — иконка и название меняются сразу, без переустановки",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        val disguiseOptions = listOf(
+            com.carnelia.vpn.core.DisguiseOption.REAL.label to com.carnelia.vpn.core.DisguiseOption.REAL.name,
+            com.carnelia.vpn.core.DisguiseOption.CALCULATOR.label to com.carnelia.vpn.core.DisguiseOption.CALCULATOR.name,
+            com.carnelia.vpn.core.DisguiseOption.NOTES.label to com.carnelia.vpn.core.DisguiseOption.NOTES.name
+        )
+        val selectedDisguiseIdx = disguiseOptions.indexOfFirst { it.second == disguise.name }.coerceAtLeast(0)
+        DropdownSettingItem(
+            title = "Вид на рабочем столе",
+            options = disguiseOptions,
+            selectedOptionIdx = selectedDisguiseIdx,
+            onOptionSelected = { idx ->
+                val newOption = com.carnelia.vpn.core.DisguiseOption.entries[idx]
+                disguise = newOption
+                com.carnelia.vpn.core.IconDisguiseManager.apply(context, newOption)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ── Экстренная очистка ────────────────────────────────
+        Text(
+            "Экстренная очистка",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Text(
+            "Мгновенно рвёт VPN, чистит логи и историю подключений. Сохранённые серверы не трогает, если не включить отдельно.",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        Button(
+            onClick = { showPanicDialog = true },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Экстренная очистка", color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
+        }
+
+        if (showPanicDialog) {
+            AlertDialog(
+                onDismissRequest = { showPanicDialog = false },
+                title = { Text("Экстренная очистка?", color = MaterialTheme.colorScheme.onSurface) },
+                text = {
+                    Column {
+                        Text(
+                            "VPN отключится немедленно, логи и история подключений сотрутся. Отменить нельзя.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = wipeServersToo,
+                                onCheckedChange = { wipeServersToo = it },
+                                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.error)
+                            )
+                            Text("Также стереть сохранённые серверы (навсегда)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        com.carnelia.vpn.core.PanicManager.trigger(context, wipeServersToo)
+                        showPanicDialog = false
+                        wipeServersToo = false
+                    }) { Text("Очистить", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showPanicDialog = false }) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                },
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         }
     }
 }
@@ -1014,7 +1097,7 @@ fun ConnectionSettings(context: Context) {
                             PrefsManager.setDnsServer(context, "8.8.8.8")
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "8.8.8.8") MaterialTheme.colorScheme.primary else Color(0xFF333333))
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "8.8.8.8") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                     ) { Text("Google", fontSize = 10.sp) }
                     
                     Button(
@@ -1023,7 +1106,7 @@ fun ConnectionSettings(context: Context) {
                             PrefsManager.setDnsServer(context, "1.1.1.1")
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "1.1.1.1") MaterialTheme.colorScheme.primary else Color(0xFF333333))
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "1.1.1.1") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                     ) { Text("Cloudflare", fontSize = 10.sp) }
                 }
 
@@ -1037,7 +1120,7 @@ fun ConnectionSettings(context: Context) {
                             PrefsManager.setDnsServer(context, "94.140.14.14")
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "94.140.14.14") MaterialTheme.colorScheme.primary else Color(0xFF333333))
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "94.140.14.14") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                     ) { Text("AdGuard", fontSize = 10.sp) }
                     
                     Button(
@@ -1046,7 +1129,7 @@ fun ConnectionSettings(context: Context) {
                             PrefsManager.setDnsServer(context, "9.9.9.9")
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "9.9.9.9") MaterialTheme.colorScheme.primary else Color(0xFF333333))
+                        colors = ButtonDefaults.buttonColors(containerColor = if (dnsServer == "9.9.9.9") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                     ) { Text("Quad9", fontSize = 10.sp) }
                 }
 
@@ -1074,6 +1157,10 @@ fun CensorshipBypassSettings(context: Context) {
     var fragMode by remember { mutableStateOf(PrefsManager.getFragmentationMode(context)) }
     var blackWallEnabled by remember { mutableStateOf(com.carnelia.vpn.core.BlackWallEngine.isEnabled(context)) }
     var blackWallLevel by remember { mutableStateOf(com.carnelia.vpn.core.BlackWallEngine.getLevel(context)) }
+    var tlsFingerprint by remember { mutableStateOf(PrefsManager.getTlsFingerprint(context)) }
+    var multiHopEnabled by remember { mutableStateOf(PrefsManager.isMultiHopEnabled(context)) }
+    var multiHopEntryId by remember { mutableStateOf(PrefsManager.getMultiHopEntryServerId(context)) }
+    val multiHopServers = remember { com.carnelia.vpn.data.ServerRepository(context).getServers() }
 
     // Custom Frag Values
     var customPackets by remember { mutableStateOf(PrefsManager.getFragmentPackets(context)) }
@@ -1173,6 +1260,111 @@ fun CensorshipBypassSettings(context: Context) {
             }
         }
 
+        // TLS ClientHello (uTLS) fingerprint — какой браузер имитирует хендшейк
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("TLS ClientHello", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    "Под какой браузер маскировать TLS-отпечаток по умолчанию — обходит DPI по белым спискам fingerprint'ов",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                val fpOptions = listOf(
+                    "Chrome" to "chrome",
+                    "Firefox" to "firefox",
+                    "Safari" to "safari",
+                    "iOS" to "ios",
+                    "Edge" to "edge",
+                    "Случайный" to "randomized"
+                )
+                val selectedFpIdx = fpOptions.indexOfFirst { it.second == tlsFingerprint }.coerceAtLeast(0)
+                DropdownSettingItem(
+                    title = "Профиль",
+                    options = fpOptions,
+                    selectedOptionIdx = selectedFpIdx,
+                    onOptionSelected = { idx ->
+                        val newValue = fpOptions[idx].second
+                        tlsFingerprint = newValue
+                        PrefsManager.setTlsFingerprint(context, newValue)
+                    }
+                )
+            }
+        }
+
+        // Мульти-хоп — трафик идёт через "входной" сервер, тот тоннелирует до основного.
+        // Ни один узел не видит одновременно настоящий IP клиента и конечный сайт.
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Мульти-хоп", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                        Text(
+                            "Подключение идёт через входной сервер, который туннелирует до основного — двойное шифрование, ни один узел не знает всю цепочку",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = multiHopEnabled,
+                        onCheckedChange = {
+                            multiHopEnabled = it
+                            PrefsManager.setMultiHopEnabled(context, it)
+                        }
+                    )
+                }
+                if (multiHopEnabled) {
+                    Spacer(Modifier.height(12.dp))
+                    if (multiHopServers.size < 2) {
+                        Text(
+                            "Нужно минимум 2 сохранённых сервера (входной + основной)",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else {
+                        val entryOptions = multiHopServers.map { it.name to it.id }
+                        val selectedEntryIdx = entryOptions.indexOfFirst { it.second == multiHopEntryId }.coerceAtLeast(0)
+                        // Дропдаун и так показывает entryOptions[0] по умолчанию, когда ничего не
+                        // сохранено (indexOfFirst=-1 -> coerceAtLeast(0)) — сохраняем этот дефолт
+                        // сразу, иначе UI показывает сервер, который реально не записан в prefs.
+                        LaunchedEffect(multiHopEnabled, multiHopServers) {
+                            if (multiHopEntryId == null && entryOptions.isNotEmpty()) {
+                                val defaultId = entryOptions[0].second
+                                multiHopEntryId = defaultId
+                                PrefsManager.setMultiHopEntryServerId(context, defaultId)
+                            }
+                        }
+                        DropdownSettingItem(
+                            title = "Входной сервер",
+                            options = entryOptions,
+                            selectedOptionIdx = selectedEntryIdx,
+                            onOptionSelected = { idx ->
+                                val newId = entryOptions[idx].second
+                                multiHopEntryId = newId
+                                PrefsManager.setMultiHopEntryServerId(context, newId)
+                            }
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Основной (выходной) сервер — тот, что выбран как активный на главном экране",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         Text(
             text = stringResource(R.string.advanced_anti_dpi_title),
             style = MaterialTheme.typography.titleMedium,
@@ -1246,7 +1438,7 @@ fun CensorshipBypassSettings(context: Context) {
                                 },
                                 modifier = Modifier.weight(1f),
                                 contentPadding = PaddingValues(0.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = if (fragMode == key) MaterialTheme.colorScheme.primary else Color(0xFF333333))
+                                colors = ButtonDefaults.buttonColors(containerColor = if (fragMode == key) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                             ) { 
                                 Text(label, fontSize = 10.sp, maxLines = 1) 
                             }
@@ -1335,7 +1527,7 @@ fun AutoConnectSettings(context: Context) {
                     )
                 }
                 
-                HorizontalDivider(color = Color(0xFF333333), thickness = 1.dp, modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp, modifier = Modifier.padding(vertical = 12.dp))
                 
                 // On Wi-Fi
                  Row(
@@ -1360,7 +1552,7 @@ fun AutoConnectSettings(context: Context) {
                     )
                 }
                 
-                HorizontalDivider(color = Color(0xFF333333), thickness = 1.dp, modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp, modifier = Modifier.padding(vertical = 12.dp))
 
                 // On Mobile
                  Row(
@@ -1409,7 +1601,7 @@ fun LanguageSettings(context: Context, onLanguageSelected: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                HorizontalDivider(color = Color(0xFF2C2C2C))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 Text(
                     "Русский", 
                     modifier = Modifier
@@ -1480,7 +1672,7 @@ fun DonationSettings(context: Context) {
                  
                  Box(
                      modifier = Modifier
-                         .background(Color(0xFF222222), RoundedCornerShape(8.dp))
+                         .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
                          .padding(12.dp)
                          .clickable {
                              val clip = android.content.ClipData.newPlainText("TON Address", tonAddress)
@@ -1492,7 +1684,7 @@ fun DonationSettings(context: Context) {
                          text = tonAddress,
                          fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                          fontSize = 12.sp,
-                         color = Color.LightGray,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                          textAlign = androidx.compose.ui.text.style.TextAlign.Center
                      )
                  }
@@ -1525,7 +1717,7 @@ fun ToggleCard(
     onCheckedChange: (Boolean) -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -1975,7 +2167,7 @@ fun BackupDialog(context: Context, onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.backup_dialog_title), color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.backup_dialog_desc), color = Color.Gray, fontSize = 12.sp)
+                Text(stringResource(R.string.backup_dialog_desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it; status = null },
@@ -1986,7 +2178,7 @@ fun BackupDialog(context: Context, onDismiss: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = accentColor,
-                        unfocusedBorderColor = Color(0xFF555555),
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                         unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     )
@@ -1995,7 +2187,7 @@ fun BackupDialog(context: Context, onDismiss: () -> Unit) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = accentColor)
                 }
                 status?.let { msg ->
-                    Text(msg, color = if (msg.startsWith("Error") || msg.startsWith("Ошибка")) Color.Red else Color(0xFF00CC66), fontSize = 12.sp)
+                    Text(msg, color = if (msg.startsWith("Error") || msg.startsWith("Ошибка")) MaterialTheme.colorScheme.error else Color(0xFF00CC66), fontSize = 12.sp)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
@@ -2007,7 +2199,7 @@ fun BackupDialog(context: Context, onDismiss: () -> Unit) {
                         },
                         enabled = !isWorking,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A3A1A))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) { Text(stringResource(R.string.backup_export_action), fontSize = 13.sp) }
                     Button(
                         onClick = {
@@ -2017,13 +2209,13 @@ fun BackupDialog(context: Context, onDismiss: () -> Unit) {
                         },
                         enabled = !isWorking,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1A3A))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) { Text(stringResource(R.string.backup_import_action), fontSize = 13.sp) }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close_button), color = Color.Gray) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close_button), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         },
         containerColor = MaterialTheme.colorScheme.surface
     )

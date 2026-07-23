@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +41,6 @@ class ToolsHubActivity : ComponentActivity() {
 
 private data class ToolEntry(
     val icon: ImageVector,
-    val tint: Color,
     val title: String,
     val desc: String,
     val cls: Class<*>
@@ -52,13 +50,14 @@ private data class ToolEntry(
 @Composable
 private fun ToolsHubScreen(onBack: () -> Unit, onTool: (Class<*>) -> Unit) {
     val tools = listOf(
-        ToolEntry(Icons.Default.Security,     Color(0xFFFF1744), stringResource(R.string.tool_leak_test_name),       stringResource(R.string.tool_leak_test_desc),       LeakTestActivity::class.java),
-        ToolEntry(Icons.Default.Fingerprint,  Color(0xFF00AAFF), stringResource(R.string.tool_fingerprint_name),    stringResource(R.string.tool_fingerprint_desc),    FingerprintCheckActivity::class.java),
-        ToolEntry(Icons.Default.Dns,          Color(0xFF44DD66), stringResource(R.string.tool_dns_audit_name),      stringResource(R.string.tool_dns_audit_desc),      DnsAuditActivity::class.java),
-        ToolEntry(Icons.Default.Router,       Color(0xFFFFAA00), stringResource(R.string.tool_route_tracer_name),   stringResource(R.string.tool_route_tracer_desc),   RouteTracerActivity::class.java),
-        ToolEntry(Icons.Default.ShowChart,    Color(0xFFCC44FF), stringResource(R.string.tool_traffic_graph_name),  stringResource(R.string.tool_traffic_graph_desc),  TrafficGraphActivity::class.java),
-        ToolEntry(Icons.Default.Lock,         Color(0xFF00DDCC), stringResource(R.string.tool_tls_inspector_name),  stringResource(R.string.tool_tls_inspector_desc),  TlsInspectorActivity::class.java),
-        ToolEntry(Icons.Default.ManageSearch, Color(0xFFFF8800), stringResource(R.string.tool_packet_inspector_name), stringResource(R.string.tool_packet_inspector_desc), PacketInspectorActivity::class.java),
+        ToolEntry(Icons.Default.Security,     stringResource(R.string.tool_leak_test_name),       stringResource(R.string.tool_leak_test_desc),       LeakTestActivity::class.java),
+        ToolEntry(Icons.Default.Fingerprint,  stringResource(R.string.tool_fingerprint_name),    stringResource(R.string.tool_fingerprint_desc),    FingerprintCheckActivity::class.java),
+        ToolEntry(Icons.Default.Dns,          stringResource(R.string.tool_dns_audit_name),      stringResource(R.string.tool_dns_audit_desc),      DnsAuditActivity::class.java),
+        ToolEntry(Icons.Default.Router,       stringResource(R.string.tool_route_tracer_name),   stringResource(R.string.tool_route_tracer_desc),   RouteTracerActivity::class.java),
+        ToolEntry(Icons.Default.ShowChart,    stringResource(R.string.tool_traffic_graph_name),  stringResource(R.string.tool_traffic_graph_desc),  TrafficGraphActivity::class.java),
+        ToolEntry(Icons.Default.Lock,         stringResource(R.string.tool_tls_inspector_name),  stringResource(R.string.tool_tls_inspector_desc),  TlsInspectorActivity::class.java),
+        ToolEntry(Icons.Default.ManageSearch, stringResource(R.string.tool_packet_inspector_name), stringResource(R.string.tool_packet_inspector_desc), PacketInspectorActivity::class.java),
+        ToolEntry(Icons.Default.SettingsEthernet, stringResource(R.string.tool_port_scan_name), stringResource(R.string.tool_port_scan_desc), PortScannerActivity::class.java),
     )
 
     Scaffold(
@@ -111,19 +110,19 @@ private fun HubCard(tool: ToolEntry, onClick: () -> Unit) {
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = tool.tint.copy(alpha = 0.15f),
+                color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(tool.icon, null, tint = tool.tint, modifier = Modifier.size(26.dp))
+                    Icon(tool.icon, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(26.dp))
                 }
             }
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(tool.title, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                Text(tool.desc, color = Color(0xFF777777), fontSize = 12.sp)
+                Text(tool.desc, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
-            Icon(Icons.Default.KeyboardArrowRight, null, tint = Color(0xFF444444))
+            Icon(Icons.Default.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

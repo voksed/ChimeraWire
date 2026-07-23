@@ -73,12 +73,10 @@
             android:exported="true"
             android:theme="@style/Theme.CarheliaVPN"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <!-- MAIN/LAUNCHER снят отсюда — теперь у activity-alias'ов ниже (маскировка иконки/имени
+                 приложения, см. IconDisguiseManager). Ровно один alias enabled в любой момент. -->
 
-            
+
             <!-- OpenVPN File Support -->
             <!-- 1. Specific MIME types (High priority, no extension needed) -->
             <intent-filter>
@@ -160,6 +158,50 @@
                 <data android:scheme="ton-connect" />
             </intent-filter>
         </activity>
+
+        <!-- Маскировка иконки/названия — ровно один из трёх enabled, переключается
+             IconDisguiseManager через PackageManager.setComponentEnabledSetting(). -->
+        <activity-alias
+            android:name=".LauncherReal"
+            android:targetActivity=".MainActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherCalculator"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_calc"
+            android:roundIcon="@mipmap/ic_launcher_calc"
+            android:label="@string/disguise_calculator_label">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".LauncherNotes"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_notes"
+            android:roundIcon="@mipmap/ic_launcher_notes"
+            android:label="@string/disguise_notes_label">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <service
             android:name=".service.CarheliaVpnService"
@@ -331,25 +373,13 @@
 
 
         <activity
-            android:name=".LocalShareActivity"
-            android:exported="false"
-            android:theme="@style/Theme.CarheliaVPN"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
-
-        <activity
-            android:name=".NetworkScannerActivity"
-            android:exported="false"
-            android:theme="@style/Theme.CarheliaVPN"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
-
-        <activity
             android:name=".PortScannerActivity"
             android:exported="false"
             android:theme="@style/Theme.CarheliaVPN"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
 
         <activity
-            android:name=".SpeedTestActivity"
+            android:name=".ChatActivity"
             android:exported="false"
             android:theme="@style/Theme.CarheliaVPN"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" />
@@ -373,6 +403,12 @@
         <!-- v2.4.0: Network Boost service (WiFi + Mobile standalone) -->
         <service
             android:name=".service.NetworkBoostService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
+        <!-- P2P-чат: DHT-обнаружение пиров + прямой UDP-обмен сообщениями -->
+        <service
+            android:name=".service.ChatService"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
 

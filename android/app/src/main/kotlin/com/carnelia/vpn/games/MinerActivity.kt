@@ -37,18 +37,8 @@ class MinerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Force TON Theme (Index 14 or similar, need to check Theme.kt enum order)
-            // But actually we can just use the specific color scheme directly or define it locally
-            // Let's use CarheliaTheme with a specific index if we know it, or just pass colors.
-            // Since we added TON to Enum, we need its ordinal. It was added just before SYSTEM.
-            // Let's assume ordinal usage is tricky if not dynamically found.
-            // Instead, we can just hardcode the style here or rely on the theme wrapper.
-            
-            // Let's check Theme.kt again. We added TON after DARK.
-            // CARNELIA(0), CYBERPUNK(1), MATRIX(2), PURPLE(3), LIGHT_BLUE(4), LIGHT_GREEN(5), LIGHT_PINK(6), LIGHT_PURPLE(7), LIGHT(8), DARK(9), TON(10), SYSTEM(11), SECRET(12)
-            // So index is 10.
-            
-            CarheliaTheme(themeIndex = 10) {
+            val themeIndex = PrefsManager.getThemeIndex(this)
+            CarheliaTheme(themeIndex = themeIndex) {
                 MinerGameScreen()
             }
         }

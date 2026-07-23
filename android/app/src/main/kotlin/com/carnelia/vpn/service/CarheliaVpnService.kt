@@ -208,47 +208,18 @@ class CarheliaVpnService : VpnService() {
     }
 
     /**
-     * Самоисцеление: пока VPN подключён, тихо проверяет раз в несколько минут, что
-     * трафик реально ходит (не просто факт CONNECTED — DPI может задушить данные
-     * позже хендшейка). Два провала подряд — повод перекалиброваться без участия
-     * пользователя, а не молча сидеть в "подключено", но без интернета.
+     * Пока VPN подключён, периодически проверяет признаки перехвата трафика
+     * (новые CA-сертификаты, ARP-спуфинг шлюза, системный прокси).
      */
     private fun startSelfHealingLoop() {
         scope.launch {
-            var consecutiveFailures = 0
             while (isActive) {
                 delay(4 * 60_000L)
-                val config = currentConfig
-                if (currentState != ConnectionState.CONNECTED || config == null) {
-                    consecutiveFailures = 0
-                    continue
-                }
+                if (currentState != ConnectionState.CONNECTED) continue
                 try {
                     com.carnelia.vpn.core.SniffingGuard.checkAll(this@CarheliaVpnService)
                 } catch (e: Exception) {
                     AppLogger.error("Service: SniffingGuard check failed", e)
-                }
-
-                val healthy = try {
-                    com.carnelia.vpn.core.CalibrationManager.quickHealthCheck(this@CarheliaVpnService, config)
-                } catch (e: Exception) {
-                    AppLogger.error("Service: self-heal check failed", e)
-                    true // не уверены — не дёргаем соединение на пустом месте
-                }
-                if (healthy) {
-                    consecutiveFailures = 0
-                } else {
-                    consecutiveFailures++
-                    AppLogger.log("Service: self-heal — трафик не подтверждён ($consecutiveFailures/2)")
-                    if (consecutiveFailures >= 2) {
-                        AppLogger.log("Service: self-heal — запускаю перекалибровку")
-                        consecutiveFailures = 0
-                        try {
-                            com.carnelia.vpn.core.CalibrationManager.calibrate(this@CarheliaVpnService) { }
-                        } catch (e: Exception) {
-                            AppLogger.error("Service: self-heal calibration failed", e)
-                        }
-                    }
                 }
             }
         }
