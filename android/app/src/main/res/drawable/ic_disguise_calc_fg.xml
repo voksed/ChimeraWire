@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- корпус -->
+    <path android:fillColor="#FFFFFF" android:pathData="M30,18 L78,18 L78,90 L30,90 Z"/>
+    <!-- экран -->
+    <path android:fillColor="#37474F" android:pathData="M36,24 L72,24 L72,40 L36,40 Z"/>
+    <!-- кнопки: 3x4 сетка -->
+    <path android:fillColor="#37474F" android:pathData="M36,46 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M50,46 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M64,46 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M36,58 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M50,58 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M64,58 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M36,70 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M50,70 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M64,70 h7 v7 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M36,82 h7 v6 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M50,82 h7 v6 h-7 z"/>
+    <path android:fillColor="#37474F" android:pathData="M64,82 h7 v6 h-7 z"/>
+</vector>
