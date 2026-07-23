@@ -394,6 +394,16 @@ class CarheliaVpnService : VpnService() {
 
             builder.addRoute("0.0.0.0", 0)
 
+            // IPv6: заворачиваем ВЕСЬ IPv6 в туннель, иначе IPv6-трафик приложений уходит
+            // мимо VPN с реальным адресом (утечка + прямой IP-деанон). Если апстрим IPv4-only,
+            // IPv6-пакеты в туннеле просто отбрасываются (fail-closed) — наружу ничего не течёт.
+            try {
+                builder.addAddress("fd00:1111:2222:3333::1", 64)
+                builder.addRoute("::", 0)
+            } catch (e: Exception) {
+                AppLogger.error("Service: IPv6 capture setup failed", e)
+            }
+
             // IPv4-only DNS — IPv6 DNS causes requests to IPv6 destinations that IPv4-only
             // VLESS servers can't proxy, leading to high TX / near-zero RX (requests sent but
             // no responses). Force IPv4 DNS so all resolution stays in IPv4 space.
