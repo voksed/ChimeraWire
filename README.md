@@ -55,9 +55,6 @@ Carnelia VPN — полноценный VPN-клиент для обхода б�
 | AmneziaWG | нативный AWG | AmneziaWG | ✅ |
 | Hysteria2 | QUIC | sing-box / Hysteria2 | ✅ |
 | TUIC | QUIC | sing-box | ✅ |
-| OpenVPN | ics-openvpn | vpnLib | ✅ |
-| Cloudflare WARP | WireGuard | WARP | ✅ |
-
 ---
 
 ## Возможности
