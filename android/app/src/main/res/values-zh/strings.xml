@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Carnelia VPN</string>
+    <string name="connect_button">连接</string>
+    <string name="disconnect_button">断开</string>
+    <string name="connected_status">已连接</string>
+    <string name="disconnected_status">已断开</string>
+    <string name="auto_select_server">自动选择</string>
+
+    <!-- MainActivity -->
+    <string name="add_server_title">添加服务器</string>
+    <string name="add_server_instruction">粘贴访问密钥（ss://、vless://、vmess://、trojan://）</string>
+    <string name="access_key_label">访问密钥</string>
+    <string name="paste_button">粘贴</string>
+    <string name="clipboard_empty">剪贴板为空</string>
+    <string name="server_added">已添加服务器：%1$s</string>
+    <string name="invalid_key_format">密钥格式无效</string>
+    <string name="parsing_error">解析错误：%1$s</string>
+    <string name="add_action">添加</string>
+    <string name="cancel_action">取消</string>
+    <string name="scan_button">扫描</string>
+    <string name="share_button">分享</string>
+    <string name="menu_title">菜单</string>
+    <string name="orbot_title">Orbot (Tor)</string>
+    <string name="settings_title_menu">设置</string>
+    <string name="tor_i2p_settings">Tor 和 I2P 设置</string>
+    <string name="scan_to_import">扫码导入</string>
+    <string name="close_button">关闭</string>
+    <string name="error_generating_qr">生成二维码出错</string>
+    <string name="no_server_selected">未选择服务器</string>
+    <string name="import_tooltip">从剪贴板导入</string>
+    <string name="scan_tooltip">扫描二维码</string>
+    <string name="share_tooltip">分享配置</string>
+    <string name="orbot_enabled">已启用 Orbot</string>
+    <string name="orbot_disabled">已禁用 Orbot</string>
+    <string name="browser_opening">正在打开浏览器…</string>
+    <string name="status_secured">已保护</string>
+    <string name="status_connecting">连接中…</string>
+    <string name="status_switching">切换中…</string>
+    <string name="status_not_protected">未受保护</string>
+    <string name="status_hint_disconnected">点按连接</string>
+    <string name="status_hint_connected">点按断开</string>
+    <string name="select_server_btn">选择服务器</string>
+    <string name="received_label">已接收</string>
+    <string name="sent_label">已发送</string>
+    <string name="quick_connect">快速连接</string>
+    <string name="disconnect_caps">断开</string>
+    <string name="ton_vpn_title">CARNELIA VPN</string>
+    <string name="voks_vpn_title">VOKS VPN</string>
+    <string name="carnelia_vpn_title">CARNELIA VPN</string>
+    <string name="status_active">● 活动</string>
+    <string name="status_inactive">● 未活动</string>
+    <string name="status_error">● 错误</string>
+    <string name="select_server_hint">选择服务器</string>
+    <string name="permission_granted_toast">已授予权限。请再次点按“连接”。</string>
+    <string name="permission_denied_toast">VPN 权限被拒绝。</string>
+    <string name="vpn_start_error">VPN 启动错误：%1$s</string>
+    <string name="error_prefix">错误：%1$s</string>
+    <string name="clipboard_not_readable">剪贴板不包含可读文本</string>
+    <string name="logs_copied_toast">日志已复制到剪贴板</string>
+    <string name="geo_spoof_title">GPS 伪装</string>
+    <string name="geo_invalid_coordinates">坐标无效</string>
+    <string name="geo_point_set">已设置位置：%1$.6f, %2$.6f</string>
+    <string name="geo_enable_mock_location">请先在开发者选项中启用模拟位置！</string>
+    <string name="manual_server_entry_title">手动输入服务器</string>
+    <string name="manual_entry_paste_config_hint">粘贴配置（vless://、vmess:// 等）</string>
+    <string name="manual_entry_empty_config">配置不能为空</string>
+    <string name="manual_entry_parse_configuration">解析配置</string>
+    <string name="manual_entry_back">返回</string>
+    <string name="delete_button">删除</string>
+    <string name="rename_server_title">重命名服务器</string>
+    <string name="rename_server_hint">服务器名称</string>
+    <string name="save_action">保存</string>
+    <string name="rename_tooltip">重命名</string>
+    <string name="subscriptions_title">订阅</string>
+    <string name="subscriptions_desc">从 URL 自动更新服务器列表</string>
+    <string name="add_subscription_title">添加订阅</string>
+    <string name="subscription_name_hint">名称（可选）</string>
+    <string name="subscription_url_hint">URL</string>
+    <string name="no_subscriptions_yet">暂无订阅。请添加一个！</string>
+    <string name="fallback_title">自动切换</string>
+    <string name="fallback_desc">连接出错时切换到下一个服务器</string>
+    <string name="invalid_reality_public_key_warning">密钥无效：REALITY 公钥 (pbk) 看起来是占位符。请删除并导入真实的服务器链接。</string>
+    <string name="no_servers_found_add_one">未找到服务器。请添加一个！</string>
+
+    <!-- SettingsActivity -->
+    <string name="settings_title">设置</string>
+    <string name="appearance_section">外观</string>
+    <string name="accent_color">强调色</string>
+    <string name="general_section">常规</string>
+    <string name="dns_server_label">DNS 服务器</string>
+    <string name="google_dns">Google</string>
+    <string name="cloudflare_dns">Cloudflare</string>
+    <string name="advanced_section">高级</string>
+    <string name="split_tunneling_title">分应用代理</string>
+    <string name="split_tunneling_summary">仅所选应用使用 VPN</string>
+    <string name="exclude_apps_title">排除应用</string>
+    <string name="bypass_ru_title">绕过 RU</string>
+    <string name="bypass_ru_summary">RU 的 IP 直连</string>
+    <string name="kill_switch_title">网络断路器</string>
+    <string name="kill_switch_summary">VPN 断开时阻断网络</string>
+    <string name="auto_connect_title">自动连接</string>
+    <string name="auto_connect_summary">打开应用时连接</string>
+
+    <!-- DPI Bypass -->
+    <string name="dpi_bypass_section">DPI 绕过</string>
+    <string name="fragmentation_title">分片</string>
+    <string name="fragmentation_summary">拆分数据包以绕过 DPI</string>
+    <string name="frag_packets_label">数据包（例如 1-2）</string>
+    <string name="frag_length_label">长度（例如 500-1000）</string>
+    <string name="frag_interval_label">间隔（例如 1-3）</string>
+
+    <!-- Support -->
+    <string name="support_section">支持</string>
+    <string name="view_logs">查看日志</string>
+    <string name="report_bug">报告问题</string>
+    <string name="language_title">语言</string>
+    <string name="language_summary">需要重启才能生效</string>
+    <string name="your_servers">你的服务器</string>
+    <string name="download_label">下载</string>
+    <string name="upload_label">上传</string>
+    <string name="cancel_upper">取消</string>
+    <string name="please_add_server">请先添加一个服务器</string>
+    <string name="connecting_status">⟳ 连接中</string>
+    <string name="disconnecting_status">⟳ 断开中</string>
+    <string name="debug_section">调试</string>
+    <string name="show_app_logs">显示应用日志</string>
+    <string name="reset_settings_caps">恢复默认设置</string>
+    <string name="telegram_channel">官方频道 @mistervoksed</string>
+    <string name="version_fmt">版本：%1$s</string>
+    <string name="smart_routing_title">智能路由</string>
+    <string name="smart_routing_summary">RU 网站绕过 VPN</string>
+    <string name="bypass_advanced_section">审查绕过（高级）</string>
+    <string name="frag_mode_label">分片模式</string>
+    <string name="frag_mode_balanced">均衡</string>
+    <string name="frag_mode_aggressive">激进</string>
+    <string name="frag_mode_light">轻量</string>
+    <string name="security_section">安全</string>
+    <string name="kill_switch_internal">网络断路器（应用内）</string>
+    <string name="kill_switch_internal_desc">VPN 断开时阻断网络（软件实现）。</string>
+    <string name="kill_switch_system">系统网络断路器</string>
+    <string name="kill_switch_system_desc">如需 100% 保护，请使用 Android 设置：\'阻止无 VPN 时的连接\'。</string>
+    <string name="open_android_settings">打开 Android 设置</string>
+    <string name="enabled_status">已启用</string>
+    <string name="disabled_status">已禁用</string>
+    <string name="select_apps">选择应用</string>
+    <string name="connection_section">连接</string>
+    <string name="custom_dns_label">自定义</string>
+    <string name="dns_ip_label">IP 地址</string>
+    <string name="log_viewer_title">事件日志</string>
+    <string name="copy_to_clipboard">复制到剪贴板</string>
+    <string name="mode_allow">仅代理所选</string>
+    <string name="mode_disallow">绕过所选</string>
+
+    <!-- Fragmentation Descriptions -->
+    <string name="frag_desc_light">轻量：速度快，基础 DPI 绕过。拆分 ClientHello（1-1）。</string>
+    <string name="frag_desc_balanced">均衡：速度与隐蔽性兼顾。随机分片（1-2）。</string>
+    <string name="frag_desc_aggressive">激进：高隐蔽，较慢。大量小分片（2-5）。</string>
+
+    <!-- Tunnel Settings -->
+    <string name="tunnel_settings_section">隧道设置</string>
+    <string name="use_mux_title">使用 Mux（多路复用）</string>
+    <string name="use_mux_summary">将多个请求合并到一条连接（降低延迟）。</string>
+    <string name="preferred_ip_title">首选 IP 类型</string>
+    <string name="ip_type_auto">自动</string>
+    <string name="ip_type_ipv4">IPv4</string>
+    <string name="ip_type_ipv6">IPv6</string>
+    <string name="allow_lan_title">允许 LAN 连接</string>
+    <string name="allow_lan_summary">与局域网内的其他设备共享 VPN 连接。</string>
+    <string name="auto_start_title">应用自启动</string>
+    <string name="auto_start_summary">设备开机时启动 Carnelia VPN。</string>
+    <string name="auto_start_summary_desc">设备开机时启动 Carnelia VPN。</string>
+
+    <!-- Auto Connect Feature -->
+    <string name="smart_auto_connect_title">智能自动连接</string>
+    <string name="auto_connect_wifi_title">连接 Wi-Fi 时自动连接</string>
+    <string name="auto_connect_wifi_summary">加入 Wi-Fi 网络时连接</string>
+    <string name="auto_connect_mobile_title">使用移动数据时自动连接</string>
+    <string name="auto_connect_mobile_summary">使用移动数据时连接</string>
+
+    <!-- Server Dialogs -->
+    <string name="connection_check_title">连接检查</string>
+    <string name="checking_status">检查中…</string>
+    <string name="ok_button">确定</string>
+    <string name="edit_server_title">编辑服务器</string>
+    <string name="edit_server_instruction">在下方更新服务器信息。</string>
+    <string name="server_name_label">服务器名称</string>
+    <string name="server_name_optional_label">服务器名称（可选）</string>
+    <string name="new_key_label">新密钥（留空则保留当前）</string>
+    <string name="key_placeholder">ss://… 或 vless://…</string>
+    <string name="username_label">用户名</string>
+    <string name="password_label">密码</string>
+    <string name="save_button">保存</string>
+    <string name="server_updated_toast">服务器已更新</string>
+
+    <!-- Statistics Screen -->
+    <string name="stats_screen_title">流量历史</string>
+    <string name="clear_history">清除历史</string>
+    <string name="history_empty">暂无连接历史。</string>
+    <string name="unit_auto">自动</string>
+    <string name="unit_mb">MB</string>
+    <string name="unit_gb">GB</string>
+    <string name="total_session">总计</string>
+    <string name="date_header">日期</string>
+    <string name="downloaded_header">下载</string>
+    <string name="uploaded_header">上传</string>
+
+    <!-- New Social & Report -->
+    <string name="telegram_news_channel">新闻频道</string>
+    <string name="bug_report_subject">Carnelia VPN 问题报告</string>
+    <string name="bug_report_body_template">
+请在此描述问题：
+
+----------------------------
+技术信息（请勿删除）：
+设备：%1$s
+Android：%2$s
+应用版本：%3$s
+地区：%4$s
+最近错误：%5$s
+----------------------------
+    </string>
+    <!-- Advanced Protection -->
+    <string name="advanced_protection_section">高级保护</string>
+    <string name="netshield_title">AdGuard DNS</string>
+    <string name="netshield_desc">使用 AdGuard DNS 拦截广告和跟踪器。</string>
+    <string name="stealth_mode_title">隐身模式 v2.0</string>
+
+    <string name="mux_protocols_title">Mux 与协议</string>
+    <string name="connectivity_title">连接性</string>
+    <string name="advanced_anti_dpi_title">高级反 DPI 与隐身</string>
+    <string name="custom_params_title">自定义参数</string>
+    <string name="frag_desc_text">拆分数据包以规避 DPI 检测。在大多数受限网络中 100% 有效。</string>
+    <string name="quic_mode_reject">拒绝（推荐）</string>
+    <string name="quic_mode_allow">允许</string>
+    <string name="mux_tcp_concurrency">TCP 并发</string>
+    <string name="mux_udp_concurrency">UDP 并发</string>
+    <string name="mux_quic_mode">QUIC 模式</string>
+    <string name="stealth_mode_desc">强制严格的 TCP/TLS 规则。修复 YouTube 缓冲和严重的 DPI 封锁。</string>
+    <string name="secure_key_title">安全密钥审计</string>
+    <string name="secure_key_desc">连接前对不安全、未加密或可疑的密钥发出警告。</string>
+
+    <!-- Security Check Report -->
+    <string name="security_check_title">安全检查</string>
+    <string name="security_high">高安全性</string>
+    <string name="security_medium">中等安全性</string>
+    <string name="security_low">低安全性</string>
+
+    <!-- Security Analysis Report (used in SecurityUtils) -->
+    <string name="sec_report_high_intro">✅ 此密钥非常安全。\n\n</string>
+    <string name="sec_report_med_intro">⚠️ 密钥不错，但可能被严格的 DPI 封锁。\n\n</string>
+    <string name="sec_report_low_intro">⛔ 密钥使用了过时的加密或混淆。\n\n</string>
+
+    <string name="sec_proto_vless">• 协议：VLESS（现代、快速）。\n</string>
+    <string name="sec_flow_vision">• Flow：XTLS-Vision（极佳的抗检测能力）。\n</string>
+    <string name="sec_security_reality">• 安全：REALITY（最高伪装，冒充 Google/Microsoft）。\n</string>
+    <string name="sec_security_tls">• 安全：TLS（良好加密，类似 HTTPS）。\n</string>
+    <string name="sec_security_none">⚠ 安全：无/明文（流量未加密或易被检测）。\n</string>
+    <string name="sec_proto_vmess">• 协议：VMess（标准，易被主动探测）。\n</string>
+    <string name="sec_obfu_tls">• 混淆：TLS/WebSocket（隐蔽性尚可）。\n</string>
+    <string name="sec_proto_ss2022">• 协议：Shadowsocks 2022（改进版，防重放）。\n</string>
+    <string name="sec_proto_ss">• 协议：Shadowsocks（经典。可能被 DPI 封锁）。\n</string>
+    <string name="sec_proto_wg">• 协议：WireGuard（极速与强加密。UDP 可能被封）。\n</string>
+    <string name="sec_proto_outline">• 协议：Outline（抗封锁，但并不完美）。\n</string>
+    <string name="sec_proto_openvpn">• 协议：OpenVPN（可靠但较慢）。\n</string>
+    <string name="sec_proto_other">• 协议：%1$s（通用）。\n</string>
+
+    <string name="sec_port_443">• 端口：443（伪装成 HTTPS）。\n</string>
+    <string name="sec_port_80">⚠ 端口：80（明文 HTTP。对 VPN 而言可疑）。\n</string>
+    <string name="sec_port_other">• 端口：%1$d（非标准端口）。\n</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_light_hc">浅色 — 高对比度</string>
+    <string name="theme_dark">深色</string>
+    <string name="theme_dark_amoled">深色 — AMOLED</string>
+
+    <!-- Games -->
+    <string name="game_miner_title">Carnelia Miner</string>
+    <string name="game_miner_score">余额：%1$d</string>
+    <string name="game_miner_tap">点击挖矿</string>
+
+    <!-- Donation & Theming -->
+    <string name="donation_section_title">支持项目</string>
+    <string name="donate_dev_title">支持开发者</string>
+    <string name="donate_dev_desc">捐赠与支持</string>
+    <string name="app_theme_title">应用主题</string>
+    <string name="donate_page_header">支持 Carnelia VPN</string>
+    <string name="donate_page_body">本应用完全免费且无广告。\n服务器由我个人出资。\n如果你喜欢这项服务，可以用任意金额支持本项目。</string>
+    <string name="donate_ton_title">加密货币</string>
+    <string name="address_copied_toast">地址已复制！</string>
+    <string name="copy_address_btn">复制地址</string>
+
+    <!-- Tor Settings -->
+    <string name="tor_integration_title">Tor 网络集成</string>
+    <string name="tor_internal_title">使用内置 Tor</string>
+    <string name="tor_external_title">使用外部 Orbot 应用</string>
+    <string name="tor_internal_desc">自成一体。更耗电。</string>
+    <string name="tor_external_desc">通过 Orbot 应用路由。需要已安装 Orbot。</string>
+
+    <!-- Double Tunnel -->
+    <string name="double_tunnel_title">双重隧道</string>
+    <string name="double_tunnel_desc">经两台服务器路由以获得最高匿名性</string>
+    <string name="double_tunnel_first_server">第一台服务器（入口）</string>
+    <string name="double_tunnel_second_server">第二台服务器（出口）</string>
+    <string name="double_tunnel_select">选择服务器</string>
+    <string name="double_tunnel_not_selected">未选择</string>
+    <string name="double_tunnel_warning">双重隧道会增加延迟。请仅与高速服务器配合使用。</string>
+    <string name="double_tunnel_same_server_error">第二台服务器必须与第一台不同。</string>
+
+    <!-- Noise Mode -->
+    <string name="noise_mode_title">噪声模式</string>
+    <string name="noise_mode_desc">生成虚假流量以迷惑 DPI 系统</string>
+    <string name="noise_intensity_label">强度</string>
+    <string name="noise_low">低（每 30 秒）</string>
+    <string name="noise_medium">中（每 10 秒）</string>
+    <string name="noise_high">高（每 3 秒）</string>
+    <string name="noise_mode_active">噪声模式：已开启</string>
+
+    <!-- Traffic Map -->
+    <string name="traffic_map_title">流量地图</string>
+    <string name="traffic_map_subtitle">实时按应用流量可视化</string>
+    <string name="traffic_map_not_connected">连接 VPN 以查看流量</string>
+    <string name="traffic_map_app_count">%d 个应用有活动流量</string>
+    <string name="traffic_low">低</string>
+    <string name="traffic_medium">中</string>
+    <string name="traffic_high">高</string>
+    <string name="traffic_map_vpn_node">VPN</string>
+    <string name="traffic_map_no_traffic">暂无流量数据</string>
+
+    <!-- v2.4.0: Health Checker / Search -->
+    <string name="auto_best_server">自动最佳</string>
+    <string name="search_servers_hint">搜索服务器…</string>
+
+    <!-- v2.4.0: Backup & Restore -->
+    <string name="backup_section_title">备份与恢复</string>
+    <string name="backup_desc">保存并恢复你的服务器配置</string>
+    <string name="backup_export">导出备份</string>
+    <string name="backup_import">从剪贴板导入</string>
+    <string name="backup_exported">备份已复制到剪贴板</string>
+    <string name="backup_imported">已导入 %1$d 个服务器</string>
+    <string name="backup_import_error">导入备份失败 — 格式无效</string>
+    <string name="backup_nothing_to_export">没有可导出的服务器</string>
+
+    <!-- v2.4.0: Server Groups -->
+    <string name="server_group_hint">分组名称（留空为默认）</string>
+    <string name="filter_all">全部</string>
+
+    <!-- v2.4.0: Network Boost -->
+    <string name="network_boost_title">网络加速</string>
+    <string name="network_boost_desc">智能端口、双网络、端口跳跃</string>
+
+    <!-- Sub-sections -->
+    <string name="private_network_bypass_section">私有网络绕过</string>
+    <string name="dual_network_section">双网络（Wi-Fi + 移动）</string>
+
+    <!-- Smart Port -->
+    <string name="smart_port_title">智能端口选择</string>
+    <string name="smart_port_desc">自动探测开放端口，绕过酒店、企业或强制门户防火墙</string>
+
+    <!-- Port Hopping -->
+    <string name="port_hopping_title">端口跳跃</string>
+    <string name="port_hopping_desc">在一个范围内定期切换到随机端口 — 击败基于时间的 DPI 检测</string>
+    <string name="port_hopping_range_label">端口范围（例如 10000–20000）</string>
+    <string name="port_hopping_interval_label">间隔（分钟）</string>
+
+    <!-- HTTP Camouflage -->
+    <string name="http_camouflage_title">HTTP 伪装</string>
+    <string name="http_camouflage_desc">通过注入伪造的 Host 头，使 VPN 流量看起来像普通 HTTPS</string>
+    <string name="http_camouflage_host_label">伪造 Host（SNI）</string>
+
+    <!-- Dual Network -->
+    <string name="dual_network_title">Wi-Fi + 移动加速</string>
+    <string name="dual_network_desc">在 Wi-Fi 之外保持移动数据活动，用于备用和提速</string>
+    <string name="dual_network_note">Android 会同时保持 Wi-Fi 和移动数据连接。VPN 隧道在任一时刻使用延迟更低的网络。在 Wi-Fi 不稳定的区域很有用。</string>
+
+    <!-- v2.4.0: Standalone Tools -->
+    <string name="tools_title">网络工具</string>
+
+    <!-- DNS Protection -->
+    <string name="dns_protection_section">DNS 保护</string>
+    <string name="dns_only_title">仅 DNS 模式</string>
+    <string name="dns_only_desc">在不使用完整 VPN 的情况下加密并过滤 DNS 查询。适用于任何网络。</string>
+    <string name="dns_only_active">已启用 — %1$s DNS</string>
+    <string name="dns_vpn_permission_needed">请先授予 VPN 权限，然后重试</string>
+    <string name="custom_dns_ip_label">自定义 DNS IP</string>
+    <string name="open_private_dns_settings">打开系统私有 DNS 设置</string>
+
+    <!-- Network Boost standalone -->
+    <string name="network_boost_section_standalone">网络加速</string>
+    <string name="dual_network_standalone_title">Wi-Fi + 移动加速</string>
+    <string name="dual_network_standalone_desc">在 Wi-Fi 之外保持移动数据活动，用于备用和提速</string>
+    <string name="dual_network_standalone_active">两个接口均活动 — Android 自动选择更快的路径</string>
+
+    <!-- Network Info -->
+    <string name="network_info_section">网络信息</string>
+    <string name="dns_ping_title">DNS 服务器延迟</string>
+
+    <!-- v2.4.0: Biometric Lock -->
+    <string name="biometric_lock_title">生物识别 / PIN 锁</string>
+    <string name="biometric_lock_desc">打开应用需要指纹或 PIN</string>
+    <string name="biometric_prompt_title">Carnelia VPN</string>
+    <string name="biometric_prompt_subtitle">请验证以继续</string>
+
+    <!-- v2.4.0: VPN Schedule -->
+    <string name="schedule_title">VPN 定时</string>
+    <string name="schedule_desc">按时间自动连接和断开</string>
+    <string name="schedule_enabled">启用定时</string>
+    <string name="schedule_connect_at">连接于</string>
+    <string name="schedule_disconnect_at">断开于</string>
+    <string name="schedule_note">定时每天在所选时间触发。需要应用至少被打开过一次。</string>
+
+    <!-- v2.4.0: Traffic Chart -->
+    <string name="traffic_chart_title">按日流量</string>
+    <string name="traffic_chart_no_data">连接以开始收集数据</string>
+
+    <!-- v2.4.2: Leak Test -->
+    <string name="leak_test_title">泄漏检测</string>
+    <string name="leak_test_checking">检查中…</string>
+    <string name="leak_test_no_data">暂无数据。点按刷新。</string>
+    <string name="leak_test_protected">已保护</string>
+    <string name="leak_test_protected_desc">流量经 VPN 路由</string>
+    <string name="leak_test_not_connected">VPN 未连接</string>
+    <string name="leak_test_not_connected_desc">连接 VPN 以获得保护</string>
+    <string name="leak_test_external_ip">外部 IP</string>
+    <string name="leak_test_unknown">未知</string>
+    <string name="leak_test_dns_servers">DNS 服务器</string>
+    <string name="leak_test_dns_not_found">未检测到</string>
+    <string name="leak_test_servers_found">检测到 %d 个服务器</string>
+    <string name="leak_test_disclaimer">此检测会检查你的外部 IP 和可用的 DNS 服务器。如果 IP 属于你的网络运营商，则 VPN 未在工作。</string>
+    <string name="leak_test_error">错误：%1$s</string>
+
+    <!-- v2.4.2: Auto-Update -->
+    <string name="update_available_title">有可用更新 %1$s</string>
+    <string name="update_current_version">当前版本：%1$s</string>
+    <string name="update_action">更新</string>
+    <string name="update_later">稍后</string>
+
+    <!-- v2.4.2: Encrypted Backup -->
+    <string name="backup_dialog_title">服务器备份</string>
+    <string name="backup_dialog_desc">文件使用 AES-256 加密。至少 4 个字符。</string>
+    <string name="backup_password_label">密码</string>
+    <string name="backup_export_action">导出</string>
+    <string name="backup_import_action">导入</string>
+    <string name="backup_password_min">至少 4 个字符</string>
+    <string name="backup_exported_count">已导出 %1$d 个服务器</string>
+    <string name="backup_imported_count">已导入 %1$d 个服务器</string>
+    <string name="backup_error">错误：%1$s</string>
+    <string name="backup_section_desc">将服务器导出/导入为加密文件</string>
+
+    <!-- v2.4.2: Reality Scanner -->
+    <string name="reality_scanner_title">Reality 扫描器</string>
+    <string name="reality_scanner_starting">开始扫描…</string>
+    <string name="reality_scanner_tcp_ping">TCP ping</string>
+    <string name="reality_scanner_unavailable">不可用</string>
+    <string name="reality_scanner_ports">端口：</string>
+    <string name="reality_scanner_recommended">推荐</string>
+    <string name="reality_scanner_fingerprint">指纹：</string>
+    <string name="reality_scanner_recommended_fp">推荐：%1$s</string>
+    <string name="reality_scanner_apply_fp">应用指纹：%1$s</string>
+    <string name="reality_scanner_timeout">超时</string>
+    <string name="reality_scanner_error">扫描出错</string>
+    <string name="reality_scanner_analyzing">正在分析连接稳定性…</string>
+    <string name="reality_scanner_checking_port">正在检查端口 %1$d…</string>
+
+    <!-- v2.4.3: Tools Hub -->
+    <string name="tools_hub_title">工具</string>
+
+    <!-- Fingerprint Check -->
+    <string name="fingerprint_title">指纹检查</string>
+    <string name="fingerprint_via_vpn">经 VPN 路由 — 显示 VPN 身份</string>
+    <string name="fingerprint_no_vpn">VPN 已关闭 — 显示真实 IP 身份</string>
+    <string name="fingerprint_other_vpn">有另一个 VPN 应用在运行 — 显示其身份</string>
+    <string name="fingerprint_ip">IP 地址</string>
+    <string name="fingerprint_location">位置</string>
+    <string name="fingerprint_isp">网络运营商 (ISP)</string>
+    <string name="fingerprint_org">组织</string>
+    <string name="fingerprint_asn">ASN</string>
+    <string name="fingerprint_timezone">时区</string>
+    <string name="fingerprint_flag_proxy">代理</string>
+    <string name="fingerprint_flag_hosting">主机托管</string>
+    <string name="fingerprint_flag_mobile">移动</string>
+
+    <!-- DNS Audit -->
+    <string name="dns_audit_title">DNS 审计</string>
+    <string name="dns_audit_system_servers">系统 DNS 服务器</string>
+    <string name="dns_audit_resolving">解析中…</string>
+    <string name="dns_audit_failed">解析失败</string>
+
+    <!-- Route Tracer -->
+    <string name="route_tracer_title">路由追踪</string>
+    <string name="route_tracer_hint">目标主机 / IP</string>
+    <string name="route_tracer_btn">追踪</string>
+    <string name="route_tracer_hint_empty">输入主机并点按“追踪”</string>
+
+    <!-- Traffic Graph -->
+    <string name="traffic_graph_title">流量图</string>
+    <string name="traffic_graph_download">下载</string>
+    <string name="traffic_graph_upload">上传</string>
+    <string name="traffic_graph_legend">最近 60 秒 · 绿色 = 下载 · 橙色 = 上传</string>
+    <string name="traffic_graph_total_down">下载总量</string>
+    <string name="traffic_graph_total_up">上传总量</string>
+
+    <!-- TLS Inspector -->
+    <string name="tls_inspector_title">TLS 检查器</string>
+    <string name="tls_host_label">主机</string>
+    <string name="tls_port_label">端口</string>
+    <string name="tls_inspect_btn">检查</string>
+    <string name="tls_version">TLS 版本</string>
+    <string name="tls_cipher">加密套件</string>
+    <string name="tls_chain_depth">证书链深度</string>
+    <string name="tls_subject">主题</string>
+    <string name="tls_issuer">颁发者</string>
+    <string name="tls_valid_from">有效期自</string>
+    <string name="tls_valid_until">有效期至</string>
+    <string name="tls_sha256">SHA-256</string>
+
+    <!-- Packet Inspector -->
+    <string name="packet_inspector_title">数据包检查器</string>
+    <string name="packet_inspector_empty">未捕获到代理流量</string>
+    <string name="packet_inspector_empty_hint">连接 VPN 以查看实时流量</string>
+
+    <!-- TLS Inspector extras -->
+    <string name="tls_sans">SAN</string>
+    <string name="tls_sha256_fp">SHA-256 指纹</string>
+    <string name="tls_certs_suffix">%d 个证书</string>
+
+    <!-- Tools Hub card strings -->
+    <string name="tool_leak_test_name">泄漏检测</string>
+    <string name="tool_leak_test_desc">IP 与 DNS 泄漏检测</string>
+    <string name="tool_fingerprint_name">指纹检查</string>
+    <string name="tool_fingerprint_desc">IP 地理定位、ASN、代理标记</string>
+    <string name="tool_dns_audit_name">DNS 审计</string>
+    <string name="tool_dns_audit_desc">解析域名、检测 DNS 泄漏</string>
+    <string name="tool_route_tracer_name">路由追踪</string>
+    <string name="tool_route_tracer_desc">经 VPN 隧道的 traceroute</string>
+    <string name="tool_traffic_graph_name">流量图</string>
+    <string name="tool_traffic_graph_desc">实时速度与延迟图</string>
+    <string name="tool_tls_inspector_name">TLS 检查器</string>
+    <string name="tool_tls_inspector_desc">证书链、加密套件、SNI</string>
+    <string name="tool_packet_inspector_name">数据包检查器</string>
+    <string name="tool_packet_inspector_desc">实时代理流量流</string>
+    <string name="tool_local_share_name">局域网分享</string>
+    <string name="tool_local_share_desc">通过 LAN 发送服务器/应用 — 无需云端</string>
+    <string name="tool_lan_scan_name">LAN 扫描器</string>
+    <string name="tool_lan_scan_desc">谁在你的 Wi-Fi 上 — 设备、MAC、新主机</string>
+    <string name="tool_port_scan_name">端口扫描器</string>
+    <string name="tool_port_scan_desc">扫描任意主机的常见端口</string>
+    <string name="tool_speedtest_name">测速</string>
+    <string name="tool_speedtest_desc">下载速度与延迟</string>
+    <string name="tool_blackwall_name">Black Wall（绕过）</string>
+    <string name="tool_blackwall_desc">反 DPI 隐身：Ghost / Phantom / Wraith</string>
+    <string name="tool_torrent_name">Torrent</string>
+    <string name="tool_torrent_desc">Magnet / .torrent 下载</string>
+    <string name="disguise_calculator_label">计算器</string>
+    <string name="disguise_notes_label">备忘录</string>
+</resources>

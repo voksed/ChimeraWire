@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Carnelia VPN</string>
+    <string name="connect_button">اتصال</string>
+    <string name="disconnect_button">قطع الاتصال</string>
+    <string name="connected_status">متصل</string>
+    <string name="disconnected_status">غير متصل</string>
+    <string name="auto_select_server">اختيار تلقائي</string>
+
+    <!-- MainActivity -->
+    <string name="add_server_title">إضافة خادم</string>
+    <string name="add_server_instruction">الصق مفتاح الوصول (ss://، vless://، vmess://، trojan://)</string>
+    <string name="access_key_label">مفتاح الوصول</string>
+    <string name="paste_button">لصق</string>
+    <string name="clipboard_empty">الحافظة فارغة</string>
+    <string name="server_added">تمت إضافة الخادم: %1$s</string>
+    <string name="invalid_key_format">تنسيق المفتاح غير صالح</string>
+    <string name="parsing_error">خطأ في التحليل: %1$s</string>
+    <string name="add_action">إضافة</string>
+    <string name="cancel_action">إلغاء</string>
+    <string name="scan_button">مسح</string>
+    <string name="share_button">مشاركة</string>
+    <string name="menu_title">القائمة</string>
+    <string name="orbot_title">Orbot (Tor)</string>
+    <string name="settings_title_menu">الإعدادات</string>
+    <string name="tor_i2p_settings">إعدادات Tor و I2P</string>
+    <string name="scan_to_import">امسح للاستيراد</string>
+    <string name="close_button">إغلاق</string>
+    <string name="error_generating_qr">خطأ في إنشاء رمز QR</string>
+    <string name="no_server_selected">لم يتم اختيار خادم</string>
+    <string name="import_tooltip">استيراد من الحافظة</string>
+    <string name="scan_tooltip">مسح رمز QR</string>
+    <string name="share_tooltip">مشاركة الإعداد</string>
+    <string name="orbot_enabled">تم تفعيل Orbot</string>
+    <string name="orbot_disabled">تم تعطيل Orbot</string>
+    <string name="browser_opening">جارٍ فتح المتصفح…</string>
+    <string name="status_secured">محمي</string>
+    <string name="status_connecting">جارٍ الاتصال…</string>
+    <string name="status_switching">جارٍ التبديل…</string>
+    <string name="status_not_protected">غير محمي</string>
+    <string name="status_hint_disconnected">اضغط للاتصال</string>
+    <string name="status_hint_connected">اضغط لقطع الاتصال</string>
+    <string name="select_server_btn">اختيار خادم</string>
+    <string name="received_label">مستلَم</string>
+    <string name="sent_label">مُرسَل</string>
+    <string name="quick_connect">اتصال سريع</string>
+    <string name="disconnect_caps">قطع الاتصال</string>
+    <string name="ton_vpn_title">CARNELIA VPN</string>
+    <string name="voks_vpn_title">VOKS VPN</string>
+    <string name="carnelia_vpn_title">CARNELIA VPN</string>
+    <string name="status_active">● نشط</string>
+    <string name="status_inactive">● غير نشط</string>
+    <string name="status_error">● خطأ</string>
+    <string name="select_server_hint">اختيار خادم</string>
+    <string name="permission_granted_toast">تم منح الإذن. اضغط اتصال مرة أخرى.</string>
+    <string name="permission_denied_toast">تم رفض إذن VPN.</string>
+    <string name="vpn_start_error">خطأ في بدء VPN: %1$s</string>
+    <string name="error_prefix">خطأ: %1$s</string>
+    <string name="clipboard_not_readable">لا تحتوي الحافظة على نص قابل للقراءة</string>
+    <string name="logs_copied_toast">تم نسخ السجلات إلى الحافظة</string>
+    <string name="geo_spoof_title">تزييف GPS</string>
+    <string name="geo_invalid_coordinates">إحداثيات غير صالحة</string>
+    <string name="geo_point_set">تم تعيين النقطة: %1$.6f, %2$.6f</string>
+    <string name="geo_enable_mock_location">فعّل المواقع الوهمية أولاً في خيارات المطوّر!</string>
+    <string name="manual_server_entry_title">إدخال خادم يدويًا</string>
+    <string name="manual_entry_paste_config_hint">الصق الإعداد (vless://، vmess:// إلخ)</string>
+    <string name="manual_entry_empty_config">لا يمكن أن يكون الإعداد فارغًا</string>
+    <string name="manual_entry_parse_configuration">تحليل الإعداد</string>
+    <string name="manual_entry_back">رجوع</string>
+    <string name="delete_button">حذف</string>
+    <string name="rename_server_title">إعادة تسمية الخادم</string>
+    <string name="rename_server_hint">اسم الخادم</string>
+    <string name="save_action">حفظ</string>
+    <string name="rename_tooltip">إعادة تسمية</string>
+    <string name="subscriptions_title">الاشتراكات</string>
+    <string name="subscriptions_desc">تحديث قوائم الخوادم تلقائيًا من رابط</string>
+    <string name="add_subscription_title">إضافة اشتراك</string>
+    <string name="subscription_name_hint">الاسم (اختياري)</string>
+    <string name="subscription_url_hint">الرابط</string>
+    <string name="no_subscriptions_yet">لا اشتراكات. أضف واحدًا!</string>
+    <string name="fallback_title">التبديل التلقائي</string>
+    <string name="fallback_desc">التبديل إلى الخادم التالي عند خطأ الاتصال</string>
+    <string name="invalid_reality_public_key_warning">مفتاح غير صالح: يبدو مفتاح REALITY العام (pbk) كعنصر نائب. احذفه واستورد رابط خادم حقيقي.</string>
+    <string name="no_servers_found_add_one">لا توجد خوادم. أضف واحدًا!</string>
+
+    <!-- SettingsActivity -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="appearance_section">المظهر</string>
+    <string name="accent_color">لون التمييز</string>
+    <string name="general_section">عام</string>
+    <string name="dns_server_label">خادم DNS</string>
+    <string name="google_dns">Google</string>
+    <string name="cloudflare_dns">Cloudflare</string>
+    <string name="advanced_section">متقدم</string>
+    <string name="split_tunneling_title">النفق المُقسّم</string>
+    <string name="split_tunneling_summary">التطبيقات المحددة فقط تستخدم VPN</string>
+    <string name="exclude_apps_title">استثناء التطبيقات</string>
+    <string name="bypass_ru_title">تجاوز RU</string>
+    <string name="bypass_ru_summary">اتصال مباشر لعناوين RU</string>
+    <string name="kill_switch_title">قاطع الاتصال</string>
+    <string name="kill_switch_summary">حظر الإنترنت عند انقطاع VPN</string>
+    <string name="auto_connect_title">اتصال تلقائي</string>
+    <string name="auto_connect_summary">الاتصال عند تشغيل التطبيق</string>
+
+    <!-- DPI Bypass -->
+    <string name="dpi_bypass_section">تجاوز DPI</string>
+    <string name="fragmentation_title">التجزئة</string>
+    <string name="fragmentation_summary">تقسيم الحزم لتجاوز DPI</string>
+    <string name="frag_packets_label">الحزم (مثال 1-2)</string>
+    <string name="frag_length_label">الطول (مثال 500-1000)</string>
+    <string name="frag_interval_label">الفاصل (مثال 1-3)</string>
+
+    <!-- Support -->
+    <string name="support_section">الدعم</string>
+    <string name="view_logs">عرض السجلات</string>
+    <string name="report_bug">الإبلاغ عن خلل</string>
+    <string name="language_title">اللغة</string>
+    <string name="language_summary">يتطلب إعادة التشغيل للتطبيق</string>
+    <string name="your_servers">خوادمك</string>
+    <string name="download_label">تنزيل</string>
+    <string name="upload_label">رفع</string>
+    <string name="cancel_upper">إلغاء</string>
+    <string name="please_add_server">يرجى إضافة خادم أولاً</string>
+    <string name="connecting_status">⟳ جارٍ الاتصال</string>
+    <string name="disconnecting_status">⟳ جارٍ قطع الاتصال</string>
+    <string name="debug_section">تصحيح الأخطاء</string>
+    <string name="show_app_logs">عرض سجلات التطبيق</string>
+    <string name="reset_settings_caps">إعادة التعيين للافتراضي</string>
+    <string name="telegram_channel">القناة الرسمية @mistervoksed</string>
+    <string name="version_fmt">الإصدار: %1$s</string>
+    <string name="smart_routing_title">التوجيه الذكي</string>
+    <string name="smart_routing_summary">تجاوز VPN لمواقع RU</string>
+    <string name="bypass_advanced_section">تجاوز الرقابة (متقدم)</string>
+    <string name="frag_mode_label">وضع التجزئة</string>
+    <string name="frag_mode_balanced">متوازن</string>
+    <string name="frag_mode_aggressive">عدواني</string>
+    <string name="frag_mode_light">خفيف</string>
+    <string name="security_section">الأمان</string>
+    <string name="kill_switch_internal">قاطع الاتصال (داخل التطبيق)</string>
+    <string name="kill_switch_internal_desc">حظر الإنترنت عند انقطاع VPN (برمجيًا).</string>
+    <string name="kill_switch_system">قاطع اتصال النظام</string>
+    <string name="kill_switch_system_desc">لحماية 100% استخدم إعدادات Android: \'حظر الاتصالات بدون VPN\'.</string>
+    <string name="open_android_settings">فتح إعدادات Android</string>
+    <string name="enabled_status">مُفعّل</string>
+    <string name="disabled_status">مُعطّل</string>
+    <string name="select_apps">اختيار التطبيقات</string>
+    <string name="connection_section">الاتصال</string>
+    <string name="custom_dns_label">مخصص</string>
+    <string name="dns_ip_label">عنوان IP</string>
+    <string name="log_viewer_title">سجل الأحداث</string>
+    <string name="copy_to_clipboard">نسخ إلى الحافظة</string>
+    <string name="mode_allow">توجيه المحددة فقط</string>
+    <string name="mode_disallow">تجاوز المحددة</string>
+
+    <!-- Fragmentation Descriptions -->
+    <string name="frag_desc_light">خفيف: سرعة عالية، تجاوز DPI أساسي. يقسم ClientHello ‏(1-1).</string>
+    <string name="frag_desc_balanced">متوازن: توازن جيد بين السرعة والتخفي. أجزاء عشوائية ‏(1-2).</string>
+    <string name="frag_desc_aggressive">عدواني: تخفٍّ عالٍ، أبطأ. أجزاء صغيرة كثيرة ‏(2-5).</string>
+
+    <!-- Tunnel Settings -->
+    <string name="tunnel_settings_section">إعدادات النفق</string>
+    <string name="use_mux_title">استخدام Mux (المضاعفة)</string>
+    <string name="use_mux_summary">دمج عدة طلبات في اتصال واحد (يقلل زمن الاستجابة).</string>
+    <string name="preferred_ip_title">نوع IP المفضّل</string>
+    <string name="ip_type_auto">تلقائي</string>
+    <string name="ip_type_ipv4">IPv4</string>
+    <string name="ip_type_ipv6">IPv6</string>
+    <string name="allow_lan_title">السماح باتصالات LAN</string>
+    <string name="allow_lan_summary">مشاركة اتصال VPN مع أجهزة أخرى على الشبكة المحلية.</string>
+    <string name="auto_start_title">تشغيل التطبيق تلقائيًا</string>
+    <string name="auto_start_summary">تشغيل Carnelia VPN عند إقلاع الجهاز.</string>
+    <string name="auto_start_summary_desc">تشغيل Carnelia VPN عند إقلاع الجهاز.</string>
+
+    <!-- Auto Connect Feature -->
+    <string name="smart_auto_connect_title">اتصال تلقائي ذكي</string>
+    <string name="auto_connect_wifi_title">الاتصال التلقائي على Wi-Fi</string>
+    <string name="auto_connect_wifi_summary">الاتصال عند الانضمام لشبكات Wi-Fi</string>
+    <string name="auto_connect_mobile_title">الاتصال التلقائي على بيانات الجوال</string>
+    <string name="auto_connect_mobile_summary">الاتصال عند استخدام بيانات الجوال</string>
+
+    <!-- Server Dialogs -->
+    <string name="connection_check_title">فحص الاتصال</string>
+    <string name="checking_status">جارٍ الفحص…</string>
+    <string name="ok_button">موافق</string>
+    <string name="edit_server_title">تعديل الخادم</string>
+    <string name="edit_server_instruction">حدّث تفاصيل الخادم أدناه.</string>
+    <string name="server_name_label">اسم الخادم</string>
+    <string name="server_name_optional_label">اسم الخادم (اختياري)</string>
+    <string name="new_key_label">مفتاح جديد (اتركه فارغًا للإبقاء على الحالي)</string>
+    <string name="key_placeholder">‏ss://… أو vless://…</string>
+    <string name="username_label">اسم المستخدم</string>
+    <string name="password_label">كلمة المرور</string>
+    <string name="save_button">حفظ</string>
+    <string name="server_updated_toast">تم تحديث الخادم</string>
+
+    <!-- Statistics Screen -->
+    <string name="stats_screen_title">سجل حركة البيانات</string>
+    <string name="clear_history">مسح السجل</string>
+    <string name="history_empty">لا يوجد سجل اتصالات بعد.</string>
+    <string name="unit_auto">تلقائي</string>
+    <string name="unit_mb">م.بايت</string>
+    <string name="unit_gb">ج.بايت</string>
+    <string name="total_session">الإجمالي</string>
+    <string name="date_header">التاريخ</string>
+    <string name="downloaded_header">تنزيل</string>
+    <string name="uploaded_header">رفع</string>
+
+    <!-- New Social & Report -->
+    <string name="telegram_news_channel">قناة الأخبار</string>
+    <string name="bug_report_subject">تقرير خلل Carnelia VPN</string>
+    <string name="bug_report_body_template">
+صف المشكلة هنا:
+
+----------------------------
+معلومات تقنية (لا تحذفها):
+الجهاز: %1$s
+Android: %2$s
+إصدار التطبيق: %3$s
+المنطقة: %4$s
+آخر خطأ: %5$s
+----------------------------
+    </string>
+    <!-- Advanced Protection -->
+    <string name="advanced_protection_section">حماية متقدمة</string>
+    <string name="netshield_title">AdGuard DNS</string>
+    <string name="netshield_desc">استخدم AdGuard DNS لحظر الإعلانات والمتعقّبات.</string>
+    <string name="stealth_mode_title">وضع التخفي 2.0</string>
+
+    <string name="mux_protocols_title">Mux والبروتوكولات</string>
+    <string name="connectivity_title">الاتصال</string>
+    <string name="advanced_anti_dpi_title">مضاد DPI متقدم وتخفٍّ</string>
+    <string name="custom_params_title">معطيات مخصصة</string>
+    <string name="frag_desc_text">يقسم الحزم للتهرّب من فحص DPI. يعمل بنسبة 100% على معظم الشبكات المقيّدة.</string>
+    <string name="quic_mode_reject">رفض (مُوصى به)</string>
+    <string name="quic_mode_allow">سماح</string>
+    <string name="mux_tcp_concurrency">تزامن TCP</string>
+    <string name="mux_udp_concurrency">تزامن UDP</string>
+    <string name="mux_quic_mode">وضع QUIC</string>
+    <string name="stealth_mode_desc">يفرض قواعد TCP/TLS صارمة. يصلح تقطيع YouTube وحجب DPI الشديد.</string>
+    <string name="secure_key_title">تدقيق المفتاح الآمن</string>
+    <string name="secure_key_desc">ينبّه بشأن المفاتيح غير الآمنة أو غير المشفّرة أو المشبوهة قبل الاتصال.</string>
+
+    <!-- Security Check Report -->
+    <string name="security_check_title">فحص الأمان</string>
+    <string name="security_high">أمان مرتفع</string>
+    <string name="security_medium">أمان متوسط</string>
+    <string name="security_low">أمان منخفض</string>
+
+    <!-- Security Analysis Report (used in SecurityUtils) -->
+    <string name="sec_report_high_intro">✅ هذا المفتاح آمن جدًا.\n\n</string>
+    <string name="sec_report_med_intro">⚠️ مفتاح جيد، لكن قد يُحجب بواسطة DPI صارم.\n\n</string>
+    <string name="sec_report_low_intro">⛔ يستخدم المفتاح تشفيرًا أو تمويهًا قديمًا.\n\n</string>
+
+    <string name="sec_proto_vless">• البروتوكول: VLESS (حديث وسريع).\n</string>
+    <string name="sec_flow_vision">• Flow: XTLS-Vision (حماية ممتازة ضد الكشف).\n</string>
+    <string name="sec_security_reality">• الأمان: REALITY (أعلى تمويه كـ Google/Microsoft).\n</string>
+    <string name="sec_security_tls">• الأمان: TLS (تشفير جيد، مثل HTTPS).\n</string>
+    <string name="sec_security_none">⚠ الأمان: لا يوجد/نص صريح (البيانات غير مشفّرة أو تُكتشف بسهولة).\n</string>
+    <string name="sec_proto_vmess">• البروتوكول: VMess (قياسي، معرّض للسبر).\n</string>
+    <string name="sec_obfu_tls">• التمويه: TLS/WebSocket (تخفٍّ لا بأس به).\n</string>
+    <string name="sec_proto_ss2022">• البروتوكول: Shadowsocks 2022 (محسّن، حماية ضد إعادة التشغيل).\n</string>
+    <string name="sec_proto_ss">• البروتوكول: Shadowsocks (كلاسيكي. قد يُحجب بواسطة DPI).\n</string>
+    <string name="sec_proto_wg">• البروتوكول: WireGuard (سرعة وتشفير أقصى. قد يُحجب UDP).\n</string>
+    <string name="sec_proto_outline">• البروتوكول: Outline (مقاوم للحجب، لكنه ليس مثاليًا).\n</string>
+    <string name="sec_proto_openvpn">• البروتوكول: OpenVPN (موثوق لكنه بطيء).\n</string>
+    <string name="sec_proto_other">• البروتوكول: %1$s (عام).\n</string>
+
+    <string name="sec_port_443">• المنفذ: 443 (يتنكّر كـ HTTPS).\n</string>
+    <string name="sec_port_80">⚠ المنفذ: 80 (HTTP صريح. مشبوه لـ VPN).\n</string>
+    <string name="sec_port_other">• المنفذ: %1$d (منفذ غير قياسي).\n</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_light_hc">فاتح — تباين عالٍ</string>
+    <string name="theme_dark">داكن</string>
+    <string name="theme_dark_amoled">داكن — AMOLED</string>
+
+    <!-- Games -->
+    <string name="game_miner_title">Carnelia Miner</string>
+    <string name="game_miner_score">الرصيد: %1$d</string>
+    <string name="game_miner_tap">اضغط للتعدين</string>
+
+    <!-- Donation & Theming -->
+    <string name="donation_section_title">دعم المشروع</string>
+    <string name="donate_dev_title">ادعم المطوّر</string>
+    <string name="donate_dev_desc">تبرّع وادعم</string>
+    <string name="app_theme_title">مظهر التطبيق</string>
+    <string name="donate_page_header">ادعم Carnelia VPN</string>
+    <string name="donate_page_body">التطبيق مجاني تمامًا وبلا إعلانات.\nالخوادم مدفوعة من جيبي الخاص.\nإذا أعجبتك الخدمة، يمكنك دعم المشروع بأي مبلغ.</string>
+    <string name="donate_ton_title">عملة رقمية</string>
+    <string name="address_copied_toast">تم نسخ العنوان!</string>
+    <string name="copy_address_btn">نسخ العنوان</string>
+
+    <!-- Tor Settings -->
+    <string name="tor_integration_title">تكامل شبكة Tor</string>
+    <string name="tor_internal_title">استخدام Tor المدمج</string>
+    <string name="tor_external_title">استخدام تطبيق Orbot الخارجي</string>
+    <string name="tor_internal_desc">مستقل بذاته. يستهلك بطارية أكثر.</string>
+    <string name="tor_external_desc">يوجّه عبر تطبيق Orbot. يتطلب تثبيت Orbot.</string>
+
+    <!-- Double Tunnel -->
+    <string name="double_tunnel_title">نفق مزدوج</string>
+    <string name="double_tunnel_desc">التوجيه عبر خادمين لأقصى درجات إخفاء الهوية</string>
+    <string name="double_tunnel_first_server">الخادم الأول (الدخول)</string>
+    <string name="double_tunnel_second_server">الخادم الثاني (الخروج)</string>
+    <string name="double_tunnel_select">اختيار خادم</string>
+    <string name="double_tunnel_not_selected">غير محدد</string>
+    <string name="double_tunnel_warning">النفق المزدوج يزيد زمن الاستجابة. استخدمه مع خوادم سريعة فقط.</string>
+    <string name="double_tunnel_same_server_error">يجب أن يختلف الخادم الثاني عن الأول.</string>
+
+    <!-- Noise Mode -->
+    <string name="noise_mode_title">وضع الضوضاء</string>
+    <string name="noise_mode_desc">توليد حركة بيانات وهمية لإرباك أنظمة DPI</string>
+    <string name="noise_intensity_label">الشدة</string>
+    <string name="noise_low">منخفض (كل 30 ثانية)</string>
+    <string name="noise_medium">متوسط (كل 10 ثوانٍ)</string>
+    <string name="noise_high">عالٍ (كل 3 ثوانٍ)</string>
+    <string name="noise_mode_active">وضع الضوضاء: نشط</string>
+
+    <!-- Traffic Map -->
+    <string name="traffic_map_title">خريطة حركة البيانات</string>
+    <string name="traffic_map_subtitle">عرض مرئي لحركة البيانات لكل تطبيق في الوقت الفعلي</string>
+    <string name="traffic_map_not_connected">اتصل بـ VPN لرؤية حركة البيانات</string>
+    <string name="traffic_map_app_count">%d تطبيقات ذات حركة بيانات نشطة</string>
+    <string name="traffic_low">منخفض</string>
+    <string name="traffic_medium">متوسط</string>
+    <string name="traffic_high">عالٍ</string>
+    <string name="traffic_map_vpn_node">VPN</string>
+    <string name="traffic_map_no_traffic">لا توجد بيانات حركة بعد</string>
+
+    <!-- v2.4.0: Health Checker / Search -->
+    <string name="auto_best_server">الأفضل تلقائيًا</string>
+    <string name="search_servers_hint">البحث عن خوادم…</string>
+
+    <!-- v2.4.0: Backup & Restore -->
+    <string name="backup_section_title">النسخ الاحتياطي والاستعادة</string>
+    <string name="backup_desc">احفظ واستعد إعدادات خوادمك</string>
+    <string name="backup_export">تصدير نسخة احتياطية</string>
+    <string name="backup_import">استيراد من الحافظة</string>
+    <string name="backup_exported">تم نسخ النسخة الاحتياطية إلى الحافظة</string>
+    <string name="backup_imported">تم استيراد %1$d خوادم</string>
+    <string name="backup_import_error">فشل استيراد النسخة الاحتياطية — تنسيق غير صالح</string>
+    <string name="backup_nothing_to_export">لا توجد خوادم للتصدير</string>
+
+    <!-- v2.4.0: Server Groups -->
+    <string name="server_group_hint">اسم المجموعة (اتركه فارغًا للافتراضي)</string>
+    <string name="filter_all">الكل</string>
+
+    <!-- v2.4.0: Network Boost -->
+    <string name="network_boost_title">تعزيز الشبكة</string>
+    <string name="network_boost_desc">منفذ ذكي، شبكة مزدوجة، تنقّل بين المنافذ</string>
+
+    <!-- Sub-sections -->
+    <string name="private_network_bypass_section">تجاوز الشبكة الخاصة</string>
+    <string name="dual_network_section">شبكة مزدوجة (Wi-Fi + جوال)</string>
+
+    <!-- Smart Port -->
+    <string name="smart_port_title">اختيار المنفذ الذكي</string>
+    <string name="smart_port_desc">يكتشف المنافذ المفتوحة تلقائيًا لتجاوز جدران حماية الفنادق أو الشركات أو البوابات المقيّدة</string>
+
+    <!-- Port Hopping -->
+    <string name="port_hopping_title">التنقّل بين المنافذ</string>
+    <string name="port_hopping_desc">يبدّل دوريًا إلى منفذ عشوائي ضمن نطاق — يهزم كشف DPI المعتمد على الزمن</string>
+    <string name="port_hopping_range_label">نطاق المنافذ (مثال 10000–20000)</string>
+    <string name="port_hopping_interval_label">الفاصل (بالدقائق)</string>
+
+    <!-- HTTP Camouflage -->
+    <string name="http_camouflage_title">تمويه HTTP</string>
+    <string name="http_camouflage_desc">يجعل حركة VPN تبدو كـ HTTPS عادي عبر حقن ترويسة Host مزيّفة</string>
+    <string name="http_camouflage_host_label">Host مزيّف (SNI)</string>
+
+    <!-- Dual Network -->
+    <string name="dual_network_title">تعزيز Wi-Fi + جوال</string>
+    <string name="dual_network_desc">يُبقي بيانات الجوال نشطة إلى جانب Wi-Fi للاحتياط وتحسين السرعة</string>
+    <string name="dual_network_note">سيحافظ Android على اتصالي Wi-Fi وبيانات الجوال في آنٍ معًا. يستخدم نفق VPN الشبكة الأقل زمن استجابة في كل لحظة. مفيد في المناطق ذات Wi-Fi غير المستقر.</string>
+
+    <!-- v2.4.0: Standalone Tools -->
+    <string name="tools_title">أدوات الشبكة</string>
+
+    <!-- DNS Protection -->
+    <string name="dns_protection_section">حماية DNS</string>
+    <string name="dns_only_title">وضع DNS فقط</string>
+    <string name="dns_only_desc">تشفير وتصفية استعلامات DNS دون VPN كامل. يعمل على أي شبكة.</string>
+    <string name="dns_only_active">نشط — DNS %1$s</string>
+    <string name="dns_vpn_permission_needed">امنح إذن VPN أولاً ثم أعد المحاولة</string>
+    <string name="custom_dns_ip_label">عنوان DNS مخصص</string>
+    <string name="open_private_dns_settings">فتح إعدادات DNS الخاص بالنظام</string>
+
+    <!-- Network Boost standalone -->
+    <string name="network_boost_section_standalone">تعزيز الشبكة</string>
+    <string name="dual_network_standalone_title">تعزيز Wi-Fi + جوال</string>
+    <string name="dual_network_standalone_desc">أبقِ بيانات الجوال نشطة إلى جانب Wi-Fi للاحتياط والسرعة</string>
+    <string name="dual_network_standalone_active">كلا الواجهتين نشطة — يختار Android المسار الأسرع تلقائيًا</string>
+
+    <!-- Network Info -->
+    <string name="network_info_section">معلومات الشبكة</string>
+    <string name="dns_ping_title">زمن استجابة خادم DNS</string>
+
+    <!-- v2.4.0: Biometric Lock -->
+    <string name="biometric_lock_title">قفل بصمة / PIN</string>
+    <string name="biometric_lock_desc">طلب بصمة أو PIN لفتح التطبيق</string>
+    <string name="biometric_prompt_title">Carnelia VPN</string>
+    <string name="biometric_prompt_subtitle">تحقّق للمتابعة</string>
+
+    <!-- v2.4.0: VPN Schedule -->
+    <string name="schedule_title">جدولة VPN</string>
+    <string name="schedule_desc">اتصال وقطع تلقائي حسب الوقت</string>
+    <string name="schedule_enabled">تفعيل الجدولة</string>
+    <string name="schedule_connect_at">الاتصال عند</string>
+    <string name="schedule_disconnect_at">قطع الاتصال عند</string>
+    <string name="schedule_note">تعمل الجدولة يوميًا في الوقت المحدد. يتطلب فتح التطبيق مرة واحدة على الأقل.</string>
+
+    <!-- v2.4.0: Traffic Chart -->
+    <string name="traffic_chart_title">حركة البيانات حسب اليوم</string>
+    <string name="traffic_chart_no_data">اتصل لبدء جمع البيانات</string>
+
+    <!-- v2.4.2: Leak Test -->
+    <string name="leak_test_title">اختبار التسرّب</string>
+    <string name="leak_test_checking">جارٍ الفحص…</string>
+    <string name="leak_test_no_data">لا بيانات. اضغط تحديث.</string>
+    <string name="leak_test_protected">محمي</string>
+    <string name="leak_test_protected_desc">حركة البيانات موجّهة عبر VPN</string>
+    <string name="leak_test_not_connected">VPN غير متصل</string>
+    <string name="leak_test_not_connected_desc">اتصل بـ VPN للحماية</string>
+    <string name="leak_test_external_ip">IP الخارجي</string>
+    <string name="leak_test_unknown">غير معروف</string>
+    <string name="leak_test_dns_servers">خوادم DNS</string>
+    <string name="leak_test_dns_not_found">لم يُكتشف</string>
+    <string name="leak_test_servers_found">تم اكتشاف %d خادم</string>
+    <string name="leak_test_disclaimer">يفحص هذا الاختبار عنوان IP الخارجي وخوادم DNS المتاحة. إذا كان IP يخص مزوّد خدمتك — فإن VPN لا يعمل.</string>
+    <string name="leak_test_error">خطأ: %1$s</string>
+
+    <!-- v2.4.2: Auto-Update -->
+    <string name="update_available_title">يتوفر تحديث %1$s</string>
+    <string name="update_current_version">الإصدار الحالي: %1$s</string>
+    <string name="update_action">تحديث</string>
+    <string name="update_later">لاحقًا</string>
+
+    <!-- v2.4.2: Encrypted Backup -->
+    <string name="backup_dialog_title">نسخ احتياطي للخوادم</string>
+    <string name="backup_dialog_desc">الملف مشفّر بـ AES-256. 4 أحرف كحد أدنى.</string>
+    <string name="backup_password_label">كلمة المرور</string>
+    <string name="backup_export_action">تصدير</string>
+    <string name="backup_import_action">استيراد</string>
+    <string name="backup_password_min">4 أحرف على الأقل</string>
+    <string name="backup_exported_count">تم تصدير %1$d خوادم</string>
+    <string name="backup_imported_count">تم استيراد %1$d خوادم</string>
+    <string name="backup_error">خطأ: %1$s</string>
+    <string name="backup_section_desc">تصدير/استيراد الخوادم إلى ملف مشفّر</string>
+
+    <!-- v2.4.2: Reality Scanner -->
+    <string name="reality_scanner_title">ماسح Reality</string>
+    <string name="reality_scanner_starting">بدء المسح…</string>
+    <string name="reality_scanner_tcp_ping">‏TCP ping</string>
+    <string name="reality_scanner_unavailable">غير متاح</string>
+    <string name="reality_scanner_ports">المنافذ:</string>
+    <string name="reality_scanner_recommended">مُوصى به</string>
+    <string name="reality_scanner_fingerprint">البصمة:</string>
+    <string name="reality_scanner_recommended_fp">مُوصى به: %1$s</string>
+    <string name="reality_scanner_apply_fp">تطبيق البصمة: %1$s</string>
+    <string name="reality_scanner_timeout">انتهت المهلة</string>
+    <string name="reality_scanner_error">خطأ في المسح</string>
+    <string name="reality_scanner_analyzing">جارٍ تحليل استقرار الاتصال…</string>
+    <string name="reality_scanner_checking_port">جارٍ فحص المنفذ %1$d…</string>
+
+    <!-- v2.4.3: Tools Hub -->
+    <string name="tools_hub_title">الأدوات</string>
+
+    <!-- Fingerprint Check -->
+    <string name="fingerprint_title">فحص البصمة</string>
+    <string name="fingerprint_via_vpn">التوجيه عبر VPN — عرض هوية VPN</string>
+    <string name="fingerprint_no_vpn">VPN متوقف — عرض هوية IP الحقيقية</string>
+    <string name="fingerprint_other_vpn">تطبيق VPN آخر نشط — عرض هويته</string>
+    <string name="fingerprint_ip">عنوان IP</string>
+    <string name="fingerprint_location">الموقع</string>
+    <string name="fingerprint_isp">مزوّد الخدمة (ISP)</string>
+    <string name="fingerprint_org">المؤسسة</string>
+    <string name="fingerprint_asn">ASN</string>
+    <string name="fingerprint_timezone">المنطقة الزمنية</string>
+    <string name="fingerprint_flag_proxy">وكيل</string>
+    <string name="fingerprint_flag_hosting">استضافة</string>
+    <string name="fingerprint_flag_mobile">جوال</string>
+
+    <!-- DNS Audit -->
+    <string name="dns_audit_title">تدقيق DNS</string>
+    <string name="dns_audit_system_servers">خوادم DNS للنظام</string>
+    <string name="dns_audit_resolving">جارٍ التحليل…</string>
+    <string name="dns_audit_failed">فشل التحليل</string>
+
+    <!-- Route Tracer -->
+    <string name="route_tracer_title">متتبّع المسار</string>
+    <string name="route_tracer_hint">المضيف / IP الهدف</string>
+    <string name="route_tracer_btn">تتبّع</string>
+    <string name="route_tracer_hint_empty">أدخل مضيفًا واضغط تتبّع</string>
+
+    <!-- Traffic Graph -->
+    <string name="traffic_graph_title">رسم حركة البيانات</string>
+    <string name="traffic_graph_download">تنزيل</string>
+    <string name="traffic_graph_upload">رفع</string>
+    <string name="traffic_graph_legend">آخر 60 ثانية · أخضر = تنزيل · برتقالي = رفع</string>
+    <string name="traffic_graph_total_down">إجمالي التنزيل</string>
+    <string name="traffic_graph_total_up">إجمالي الرفع</string>
+
+    <!-- TLS Inspector -->
+    <string name="tls_inspector_title">فاحص TLS</string>
+    <string name="tls_host_label">المضيف</string>
+    <string name="tls_port_label">المنفذ</string>
+    <string name="tls_inspect_btn">فحص</string>
+    <string name="tls_version">إصدار TLS</string>
+    <string name="tls_cipher">مجموعة التشفير</string>
+    <string name="tls_chain_depth">عمق السلسلة</string>
+    <string name="tls_subject">الموضوع</string>
+    <string name="tls_issuer">المُصدِر</string>
+    <string name="tls_valid_from">صالح من</string>
+    <string name="tls_valid_until">صالح حتى</string>
+    <string name="tls_sha256">SHA-256</string>
+
+    <!-- Packet Inspector -->
+    <string name="packet_inspector_title">فاحص الحزم</string>
+    <string name="packet_inspector_empty">لم يُلتقط أي حركة وكيل</string>
+    <string name="packet_inspector_empty_hint">اتصل بـ VPN لرؤية الحركة الحية</string>
+
+    <!-- TLS Inspector extras -->
+    <string name="tls_sans">SANs</string>
+    <string name="tls_sha256_fp">بصمة SHA-256</string>
+    <string name="tls_certs_suffix">%d شهادات</string>
+
+    <!-- Tools Hub card strings -->
+    <string name="tool_leak_test_name">اختبار التسرّب</string>
+    <string name="tool_leak_test_desc">كشف تسرّب IP و DNS</string>
+    <string name="tool_fingerprint_name">فحص البصمة</string>
+    <string name="tool_fingerprint_desc">تحديد موقع IP، ASN، علامات الوكيل</string>
+    <string name="tool_dns_audit_name">تدقيق DNS</string>
+    <string name="tool_dns_audit_desc">تحليل النطاقات، كشف تسرّب DNS</string>
+    <string name="tool_route_tracer_name">متتبّع المسار</string>
+    <string name="tool_route_tracer_desc">‏traceroute عبر نفق VPN</string>
+    <string name="tool_traffic_graph_name">رسم حركة البيانات</string>
+    <string name="tool_traffic_graph_desc">رسم السرعة وزمن الاستجابة في الوقت الفعلي</string>
+    <string name="tool_tls_inspector_name">فاحص TLS</string>
+    <string name="tool_tls_inspector_desc">سلسلة الشهادات، التشفير، SNI</string>
+    <string name="tool_packet_inspector_name">فاحص الحزم</string>
+    <string name="tool_packet_inspector_desc">تدفّق حركة الوكيل الحية</string>
+    <string name="tool_local_share_name">مشاركة محلية</string>
+    <string name="tool_local_share_desc">أرسل الخوادم/التطبيق عبر LAN — بدون سحابة</string>
+    <string name="tool_lan_scan_name">ماسح LAN</string>
+    <string name="tool_lan_scan_desc">مَن على Wi-Fi لديك — الأجهزة، MAC، مضيفون جدد</string>
+    <string name="tool_port_scan_name">ماسح المنافذ</string>
+    <string name="tool_port_scan_desc">افحص المنافذ الشائعة على أي مضيف</string>
+    <string name="tool_speedtest_name">اختبار السرعة</string>
+    <string name="tool_speedtest_desc">سرعة التنزيل وزمن الاستجابة</string>
+    <string name="tool_blackwall_name">Black Wall (تجاوز)</string>
+    <string name="tool_blackwall_desc">تخفٍّ مضاد لـ DPI: Ghost / Phantom / Wraith</string>
+    <string name="tool_torrent_name">Torrent</string>
+    <string name="tool_torrent_desc">تنزيلات Magnet / .torrent</string>
+    <string name="disguise_calculator_label">آلة حاسبة</string>
+    <string name="disguise_notes_label">ملاحظات</string>
+</resources>

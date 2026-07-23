@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Carnelia VPN</string>
+    <string name="connect_button">CONECTAR</string>
+    <string name="disconnect_button">DESCONECTAR</string>
+    <string name="connected_status">CONECTADO</string>
+    <string name="disconnected_status">DESCONECTADO</string>
+    <string name="auto_select_server">Selección automática</string>
+
+    <!-- MainActivity -->
+    <string name="add_server_title">Añadir servidor</string>
+    <string name="add_server_instruction">Pega la clave de acceso (ss://, vless://, vmess://, trojan://)</string>
+    <string name="access_key_label">Clave de acceso</string>
+    <string name="paste_button">Pegar</string>
+    <string name="clipboard_empty">El portapapeles está vacío</string>
+    <string name="server_added">Servidor añadido: %1$s</string>
+    <string name="invalid_key_format">Formato de clave no válido</string>
+    <string name="parsing_error">Error de análisis: %1$s</string>
+    <string name="add_action">Añadir</string>
+    <string name="cancel_action">Cancelar</string>
+    <string name="scan_button">Escanear</string>
+    <string name="share_button">Compartir</string>
+    <string name="menu_title">Menú</string>
+    <string name="orbot_title">Orbot (Tor)</string>
+    <string name="settings_title_menu">Ajustes</string>
+    <string name="tor_i2p_settings">Ajustes de Tor e I2P</string>
+    <string name="scan_to_import">Escanear para importar</string>
+    <string name="close_button">Cerrar</string>
+    <string name="error_generating_qr">Error al generar el QR</string>
+    <string name="no_server_selected">Ningún servidor seleccionado</string>
+    <string name="import_tooltip">Importar del portapapeles</string>
+    <string name="scan_tooltip">Escanear código QR</string>
+    <string name="share_tooltip">Compartir configuración</string>
+    <string name="orbot_enabled">Orbot activado</string>
+    <string name="orbot_disabled">Orbot desactivado</string>
+    <string name="browser_opening">Abriendo el navegador…</string>
+    <string name="status_secured">PROTEGIDO</string>
+    <string name="status_connecting">CONECTANDO…</string>
+    <string name="status_switching">CAMBIANDO…</string>
+    <string name="status_not_protected">SIN PROTECCIÓN</string>
+    <string name="status_hint_disconnected">Toca para conectar</string>
+    <string name="status_hint_connected">Toca para desconectar</string>
+    <string name="select_server_btn">Elegir servidor</string>
+    <string name="received_label">RECIBIDO</string>
+    <string name="sent_label">ENVIADO</string>
+    <string name="quick_connect">CONEXIÓN RÁPIDA</string>
+    <string name="disconnect_caps">DESCONECTAR</string>
+    <string name="ton_vpn_title">CARNELIA VPN</string>
+    <string name="voks_vpn_title">VOKS VPN</string>
+    <string name="carnelia_vpn_title">CARNELIA VPN</string>
+    <string name="status_active">● ACTIVO</string>
+    <string name="status_inactive">● INACTIVO</string>
+    <string name="status_error">● ERROR</string>
+    <string name="select_server_hint">Elegir servidor</string>
+    <string name="permission_granted_toast">Permiso concedido. Pulsa Conectar de nuevo.</string>
+    <string name="permission_denied_toast">Permiso de VPN denegado.</string>
+    <string name="vpn_start_error">Error al iniciar la VPN: %1$s</string>
+    <string name="error_prefix">Error: %1$s</string>
+    <string name="clipboard_not_readable">El portapapeles no contiene texto legible</string>
+    <string name="logs_copied_toast">Registros copiados al portapapeles</string>
+    <string name="geo_spoof_title">Falsear GPS</string>
+    <string name="geo_invalid_coordinates">Coordenadas no válidas</string>
+    <string name="geo_point_set">Punto establecido: %1$.6f, %2$.6f</string>
+    <string name="geo_enable_mock_location">¡Primero activa las ubicaciones simuladas en las opciones de desarrollador!</string>
+    <string name="manual_server_entry_title">Entrada manual de servidor</string>
+    <string name="manual_entry_paste_config_hint">Pega la configuración (vless://, vmess://, etc.)</string>
+    <string name="manual_entry_empty_config">La configuración no puede estar vacía</string>
+    <string name="manual_entry_parse_configuration">Analizar configuración</string>
+    <string name="manual_entry_back">Atrás</string>
+    <string name="delete_button">Eliminar</string>
+    <string name="rename_server_title">Renombrar servidor</string>
+    <string name="rename_server_hint">Nombre del servidor</string>
+    <string name="save_action">Guardar</string>
+    <string name="rename_tooltip">Renombrar</string>
+    <string name="subscriptions_title">Suscripciones</string>
+    <string name="subscriptions_desc">Actualizar listas de servidores desde una URL</string>
+    <string name="add_subscription_title">Añadir suscripción</string>
+    <string name="subscription_name_hint">Nombre (opcional)</string>
+    <string name="subscription_url_hint">URL</string>
+    <string name="no_subscriptions_yet">Sin suscripciones. ¡Añade una!</string>
+    <string name="fallback_title">Conmutación automática</string>
+    <string name="fallback_desc">Cambiar al siguiente servidor si falla la conexión</string>
+    <string name="invalid_reality_public_key_warning">Clave no válida: la clave pública REALITY (pbk) parece un marcador de posición. Elimínala e importa un enlace de servidor real.</string>
+    <string name="no_servers_found_add_one">No hay servidores. ¡Añade uno!</string>
+
+    <!-- SettingsActivity -->
+    <string name="settings_title">Ajustes</string>
+    <string name="appearance_section">APARIENCIA</string>
+    <string name="accent_color">Color de acento</string>
+    <string name="general_section">GENERAL</string>
+    <string name="dns_server_label">Servidor DNS</string>
+    <string name="google_dns">Google</string>
+    <string name="cloudflare_dns">Cloudflare</string>
+    <string name="advanced_section">AVANZADO</string>
+    <string name="split_tunneling_title">Túnel dividido</string>
+    <string name="split_tunneling_summary">Solo las apps seleccionadas usan la VPN</string>
+    <string name="exclude_apps_title">Excluir apps</string>
+    <string name="bypass_ru_title">Omitir RU</string>
+    <string name="bypass_ru_summary">Conexión directa para IP de RU</string>
+    <string name="kill_switch_title">Kill Switch</string>
+    <string name="kill_switch_summary">Bloquear internet si la VPN se cae</string>
+    <string name="auto_connect_title">Conexión automática</string>
+    <string name="auto_connect_summary">Conectar al abrir la app</string>
+
+    <!-- DPI Bypass -->
+    <string name="dpi_bypass_section">EVASIÓN DPI</string>
+    <string name="fragmentation_title">Fragmentación</string>
+    <string name="fragmentation_summary">Dividir paquetes para evadir el DPI</string>
+    <string name="frag_packets_label">Paquetes (p. ej., 1-2)</string>
+    <string name="frag_length_label">Longitud (p. ej., 500-1000)</string>
+    <string name="frag_interval_label">Intervalo (p. ej., 1-3)</string>
+
+    <!-- Support -->
+    <string name="support_section">SOPORTE</string>
+    <string name="view_logs">Ver registros</string>
+    <string name="report_bug">Informar de un fallo</string>
+    <string name="language_title">Idioma</string>
+    <string name="language_summary">Requiere reiniciar para aplicar</string>
+    <string name="your_servers">TUS SERVIDORES</string>
+    <string name="download_label">Descarga</string>
+    <string name="upload_label">Subida</string>
+    <string name="cancel_upper">CANCELAR</string>
+    <string name="please_add_server">Añade primero un servidor</string>
+    <string name="connecting_status">⟳ CONECTANDO</string>
+    <string name="disconnecting_status">⟳ DESCONECTANDO</string>
+    <string name="debug_section">DEPURACIÓN</string>
+    <string name="show_app_logs">Mostrar registros de la app</string>
+    <string name="reset_settings_caps">RESTABLECER VALORES</string>
+    <string name="telegram_channel">Canal oficial @mistervoksed</string>
+    <string name="version_fmt">Versión: %1$s</string>
+    <string name="smart_routing_title">Enrutamiento inteligente</string>
+    <string name="smart_routing_summary">Omitir la VPN para sitios de RU</string>
+    <string name="bypass_advanced_section">EVASIÓN DE CENSURA (AVANZADO)</string>
+    <string name="frag_mode_label">Modo de fragmentación</string>
+    <string name="frag_mode_balanced">Equilibrado</string>
+    <string name="frag_mode_aggressive">Agresivo</string>
+    <string name="frag_mode_light">Ligero</string>
+    <string name="security_section">SEGURIDAD</string>
+    <string name="kill_switch_internal">Kill Switch (en la app)</string>
+    <string name="kill_switch_internal_desc">Bloquear internet si la VPN se cae (software).</string>
+    <string name="kill_switch_system">Kill Switch del sistema</string>
+    <string name="kill_switch_system_desc">Para una protección del 100 %, usa los ajustes de Android: \'Bloquear conexiones sin VPN\'.</string>
+    <string name="open_android_settings">Abrir ajustes de Android</string>
+    <string name="enabled_status">Activado</string>
+    <string name="disabled_status">Desactivado</string>
+    <string name="select_apps">Seleccionar apps</string>
+    <string name="connection_section">CONEXIÓN</string>
+    <string name="custom_dns_label">Personalizado</string>
+    <string name="dns_ip_label">Dirección IP</string>
+    <string name="log_viewer_title">Registro de eventos</string>
+    <string name="copy_to_clipboard">Copiar al portapapeles</string>
+    <string name="mode_allow">Solo proxy seleccionados</string>
+    <string name="mode_disallow">Omitir seleccionados</string>
+
+    <!-- Fragmentation Descriptions -->
+    <string name="frag_desc_light">Ligero: rápido, evasión DPI básica. Divide el ClientHello (1-1).</string>
+    <string name="frag_desc_balanced">Equilibrado: buen equilibrio velocidad/sigilo. Fragmentos aleatorios (1-2).</string>
+    <string name="frag_desc_aggressive">Agresivo: alto sigilo, más lento. Muchos fragmentos pequeños (2-5).</string>
+
+    <!-- Tunnel Settings -->
+    <string name="tunnel_settings_section">AJUSTES DEL TÚNEL</string>
+    <string name="use_mux_title">Usar Mux (multiplexación)</string>
+    <string name="use_mux_summary">Combina varias solicitudes en una conexión (reduce la latencia).</string>
+    <string name="preferred_ip_title">Tipo de IP preferido</string>
+    <string name="ip_type_auto">Automático</string>
+    <string name="ip_type_ipv4">IPv4</string>
+    <string name="ip_type_ipv6">IPv6</string>
+    <string name="allow_lan_title">Permitir conexiones LAN</string>
+    <string name="allow_lan_summary">Compartir la conexión VPN con otros dispositivos de la red local.</string>
+    <string name="auto_start_title">Inicio automático de la app</string>
+    <string name="auto_start_summary">Iniciar Carnelia VPN al arrancar el dispositivo.</string>
+    <string name="auto_start_summary_desc">Iniciar Carnelia VPN al arrancar el dispositivo.</string>
+
+    <!-- Auto Connect Feature -->
+    <string name="smart_auto_connect_title">Conexión automática inteligente</string>
+    <string name="auto_connect_wifi_title">Conectar automáticamente en Wi-Fi</string>
+    <string name="auto_connect_wifi_summary">Conectar al unirse a redes Wi-Fi</string>
+    <string name="auto_connect_mobile_title">Conectar automáticamente con datos móviles</string>
+    <string name="auto_connect_mobile_summary">Conectar al usar datos móviles</string>
+
+    <!-- Server Dialogs -->
+    <string name="connection_check_title">Comprobación de conexión</string>
+    <string name="checking_status">Comprobando…</string>
+    <string name="ok_button">OK</string>
+    <string name="edit_server_title">Editar servidor</string>
+    <string name="edit_server_instruction">Actualiza los datos del servidor abajo.</string>
+    <string name="server_name_label">Nombre del servidor</string>
+    <string name="server_name_optional_label">Nombre del servidor (opcional)</string>
+    <string name="new_key_label">Nueva clave (deja vacío para mantener la actual)</string>
+    <string name="key_placeholder">ss://… o vless://…</string>
+    <string name="username_label">Usuario</string>
+    <string name="password_label">Contraseña</string>
+    <string name="save_button">Guardar</string>
+    <string name="server_updated_toast">Servidor actualizado</string>
+
+    <!-- Statistics Screen -->
+    <string name="stats_screen_title">Historial de tráfico</string>
+    <string name="clear_history">Borrar historial</string>
+    <string name="history_empty">Aún no hay historial de conexiones.</string>
+    <string name="unit_auto">Automático</string>
+    <string name="unit_mb">MB</string>
+    <string name="unit_gb">GB</string>
+    <string name="total_session">Total</string>
+    <string name="date_header">Fecha</string>
+    <string name="downloaded_header">Descarga</string>
+    <string name="uploaded_header">Subida</string>
+
+    <!-- New Social & Report -->
+    <string name="telegram_news_channel">Canal de noticias</string>
+    <string name="bug_report_subject">Informe de fallos de Carnelia VPN</string>
+    <string name="bug_report_body_template">
+Describe el problema aquí:
+
+----------------------------
+Información técnica (no borrar):
+Dispositivo: %1$s
+Android: %2$s
+Versión de la app: %3$s
+Región: %4$s
+Último error: %5$s
+----------------------------
+    </string>
+    <!-- Advanced Protection -->
+    <string name="advanced_protection_section">PROTECCIÓN AVANZADA</string>
+    <string name="netshield_title">AdGuard DNS</string>
+    <string name="netshield_desc">Usa AdGuard DNS para bloquear anuncios y rastreadores.</string>
+    <string name="stealth_mode_title">Modo sigilo v2.0</string>
+
+    <string name="mux_protocols_title">Mux y protocolos</string>
+    <string name="connectivity_title">Conectividad</string>
+    <string name="advanced_anti_dpi_title">Anti-DPI avanzado y sigilo</string>
+    <string name="custom_params_title">Parámetros personalizados</string>
+    <string name="frag_desc_text">Divide los paquetes para evadir la inspección DPI. Funciona al 100 % en la mayoría de redes restringidas.</string>
+    <string name="quic_mode_reject">Rechazar (recomendado)</string>
+    <string name="quic_mode_allow">Permitir</string>
+    <string name="mux_tcp_concurrency">Concurrencia TCP</string>
+    <string name="mux_udp_concurrency">Concurrencia UDP</string>
+    <string name="mux_quic_mode">Modo QUIC</string>
+    <string name="stealth_mode_desc">Fuerza reglas TCP/TLS estrictas. Corrige el buffering de YouTube y bloqueos DPI severos.</string>
+    <string name="secure_key_title">Auditoría de clave segura</string>
+    <string name="secure_key_desc">Avisa sobre claves inseguras, sin cifrar o sospechosas antes de conectar.</string>
+
+    <!-- Security Check Report -->
+    <string name="security_check_title">Comprobación de seguridad</string>
+    <string name="security_high">Seguridad alta</string>
+    <string name="security_medium">Seguridad media</string>
+    <string name="security_low">Seguridad baja</string>
+
+    <!-- Security Analysis Report (used in SecurityUtils) -->
+    <string name="sec_report_high_intro">✅ Esta clave es muy segura.\n\n</string>
+    <string name="sec_report_med_intro">⚠️ Buena clave, pero podría ser bloqueada por un DPI estricto.\n\n</string>
+    <string name="sec_report_low_intro">⛔ La clave usa cifrado u ofuscación obsoletos.\n\n</string>
+
+    <string name="sec_proto_vless">• Protocolo: VLESS (moderno, rápido).\n</string>
+    <string name="sec_flow_vision">• Flow: XTLS-Vision (excelente protección contra detección).\n</string>
+    <string name="sec_security_reality">• Seguridad: REALITY (máximo camuflaje como Google/Microsoft).\n</string>
+    <string name="sec_security_tls">• Seguridad: TLS (buen cifrado, como HTTPS).\n</string>
+    <string name="sec_security_none">⚠ Seguridad: ninguna/plana (el tráfico no está cifrado o se detecta fácilmente).\n</string>
+    <string name="sec_proto_vmess">• Protocolo: VMess (estándar, vulnerable al sondeo).\n</string>
+    <string name="sec_obfu_tls">• Ofuscación: TLS/WebSocket (sigilo aceptable).\n</string>
+    <string name="sec_proto_ss2022">• Protocolo: Shadowsocks 2022 (mejorado, protección anti-repetición).\n</string>
+    <string name="sec_proto_ss">• Protocolo: Shadowsocks (clásico. Puede bloquearlo el DPI).\n</string>
+    <string name="sec_proto_wg">• Protocolo: WireGuard (máx. velocidad y cifrado. UDP puede bloquearse).\n</string>
+    <string name="sec_proto_outline">• Protocolo: Outline (resistente a bloqueos, pero no perfecto).\n</string>
+    <string name="sec_proto_openvpn">• Protocolo: OpenVPN (fiable pero lento).\n</string>
+    <string name="sec_proto_other">• Protocolo: %1$s (genérico).\n</string>
+
+    <string name="sec_port_443">• Puerto: 443 (se camufla como HTTPS).\n</string>
+    <string name="sec_port_80">⚠ Puerto: 80 (HTTP plano. Sospechoso para una VPN).\n</string>
+    <string name="sec_port_other">• Puerto: %1$d (puerto no estándar).\n</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_light_hc">Claro — alto contraste</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_dark_amoled">Oscuro — AMOLED</string>
+
+    <!-- Games -->
+    <string name="game_miner_title">Carnelia Miner</string>
+    <string name="game_miner_score">Saldo: %1$d</string>
+    <string name="game_miner_tap">TOCA PARA MINAR</string>
+
+    <!-- Donation & Theming -->
+    <string name="donation_section_title">Apoyo al proyecto</string>
+    <string name="donate_dev_title">Apoyar al desarrollador</string>
+    <string name="donate_dev_desc">Donar y apoyar</string>
+    <string name="app_theme_title">Tema de la app</string>
+    <string name="donate_page_header">Apoya Carnelia VPN</string>
+    <string name="donate_page_body">La app es totalmente gratuita y sin anuncios.\nLos servidores se pagan de mi propio bolsillo.\nSi te gusta el servicio, puedes apoyar el proyecto con cualquier cantidad.</string>
+    <string name="donate_ton_title">Cripto</string>
+    <string name="address_copied_toast">¡Dirección copiada!</string>
+    <string name="copy_address_btn">Copiar dirección</string>
+
+    <!-- Tor Settings -->
+    <string name="tor_integration_title">Integración con la red Tor</string>
+    <string name="tor_internal_title">Usar Tor integrado</string>
+    <string name="tor_external_title">Usar la app externa Orbot</string>
+    <string name="tor_internal_desc">Autónomo. Consume más batería.</string>
+    <string name="tor_external_desc">Enruta a través de Orbot. Requiere Orbot instalado.</string>
+
+    <!-- Double Tunnel -->
+    <string name="double_tunnel_title">Túnel doble</string>
+    <string name="double_tunnel_desc">Enrutar a través de dos servidores para máximo anonimato</string>
+    <string name="double_tunnel_first_server">Primer servidor (entrada)</string>
+    <string name="double_tunnel_second_server">Segundo servidor (salida)</string>
+    <string name="double_tunnel_select">Elegir servidor</string>
+    <string name="double_tunnel_not_selected">Sin seleccionar</string>
+    <string name="double_tunnel_warning">El túnel doble aumenta la latencia. Úsalo solo con servidores rápidos.</string>
+    <string name="double_tunnel_same_server_error">El segundo servidor debe ser distinto del primero.</string>
+
+    <!-- Noise Mode -->
+    <string name="noise_mode_title">Modo ruido</string>
+    <string name="noise_mode_desc">Genera tráfico falso para confundir a los sistemas DPI</string>
+    <string name="noise_intensity_label">Intensidad</string>
+    <string name="noise_low">Baja (cada 30 s)</string>
+    <string name="noise_medium">Media (cada 10 s)</string>
+    <string name="noise_high">Alta (cada 3 s)</string>
+    <string name="noise_mode_active">Modo ruido: activo</string>
+
+    <!-- Traffic Map -->
+    <string name="traffic_map_title">Mapa de tráfico</string>
+    <string name="traffic_map_subtitle">Visualización del tráfico por app en tiempo real</string>
+    <string name="traffic_map_not_connected">Conéctate a la VPN para ver el tráfico</string>
+    <string name="traffic_map_app_count">%d apps con tráfico activo</string>
+    <string name="traffic_low">Bajo</string>
+    <string name="traffic_medium">Medio</string>
+    <string name="traffic_high">Alto</string>
+    <string name="traffic_map_vpn_node">VPN</string>
+    <string name="traffic_map_no_traffic">Aún no hay datos de tráfico</string>
+
+    <!-- v2.4.0: Health Checker / Search -->
+    <string name="auto_best_server">Mejor automático</string>
+    <string name="search_servers_hint">Buscar servidores…</string>
+
+    <!-- v2.4.0: Backup & Restore -->
+    <string name="backup_section_title">Copia de seguridad y restauración</string>
+    <string name="backup_desc">Guarda y restaura tus configuraciones de servidor</string>
+    <string name="backup_export">Exportar copia</string>
+    <string name="backup_import">Importar del portapapeles</string>
+    <string name="backup_exported">Copia copiada al portapapeles</string>
+    <string name="backup_imported">%1$d servidores importados</string>
+    <string name="backup_import_error">Error al importar la copia: formato no válido</string>
+    <string name="backup_nothing_to_export">No hay servidores que exportar</string>
+
+    <!-- v2.4.0: Server Groups -->
+    <string name="server_group_hint">Nombre del grupo (vacío para Predeterminado)</string>
+    <string name="filter_all">Todos</string>
+
+    <!-- v2.4.0: Network Boost -->
+    <string name="network_boost_title">MEJORA DE RED</string>
+    <string name="network_boost_desc">Puerto inteligente, red dual, salto de puertos</string>
+
+    <!-- Sub-sections -->
+    <string name="private_network_bypass_section">OMISIÓN DE RED PRIVADA</string>
+    <string name="dual_network_section">RED DUAL (Wi-Fi + Móvil)</string>
+
+    <!-- Smart Port -->
+    <string name="smart_port_title">Selección de puerto inteligente</string>
+    <string name="smart_port_desc">Detecta puertos abiertos para evadir cortafuegos de hoteles, empresas o portales cautivos</string>
+
+    <!-- Port Hopping -->
+    <string name="port_hopping_title">Salto de puertos</string>
+    <string name="port_hopping_desc">Cambia periódicamente a un puerto aleatorio de un rango: vence la detección DPI por tiempo</string>
+    <string name="port_hopping_range_label">Rango de puertos (p. ej. 10000–20000)</string>
+    <string name="port_hopping_interval_label">Intervalo (minutos)</string>
+
+    <!-- HTTP Camouflage -->
+    <string name="http_camouflage_title">Camuflaje HTTP</string>
+    <string name="http_camouflage_desc">Hace que el tráfico VPN parezca HTTPS normal inyectando una cabecera Host falsa</string>
+    <string name="http_camouflage_host_label">Host falso (SNI)</string>
+
+    <!-- Dual Network -->
+    <string name="dual_network_title">Mejora Wi-Fi + Móvil</string>
+    <string name="dual_network_desc">Mantiene los datos móviles activos junto al Wi-Fi para respaldo y más velocidad</string>
+    <string name="dual_network_note">Android mantendrá activas a la vez las conexiones Wi-Fi y de datos móviles. El túnel VPN usa la red con menor latencia en cada momento. Útil en zonas con Wi-Fi inestable.</string>
+
+    <!-- v2.4.0: Standalone Tools -->
+    <string name="tools_title">Herramientas de red</string>
+
+    <!-- DNS Protection -->
+    <string name="dns_protection_section">PROTECCIÓN DNS</string>
+    <string name="dns_only_title">Modo solo DNS</string>
+    <string name="dns_only_desc">Cifra y filtra las consultas DNS sin una VPN completa. Funciona en cualquier red.</string>
+    <string name="dns_only_active">Activo — DNS %1$s</string>
+    <string name="dns_vpn_permission_needed">Concede primero el permiso de VPN e inténtalo de nuevo</string>
+    <string name="custom_dns_ip_label">IP de DNS personalizada</string>
+    <string name="open_private_dns_settings">Abrir ajustes de DNS privado del sistema</string>
+
+    <!-- Network Boost standalone -->
+    <string name="network_boost_section_standalone">MEJORA DE RED</string>
+    <string name="dual_network_standalone_title">Mejora Wi-Fi + Móvil</string>
+    <string name="dual_network_standalone_desc">Mantén los datos móviles activos junto al Wi-Fi para respaldo y velocidad</string>
+    <string name="dual_network_standalone_active">Ambas interfaces activas — Android elige la ruta más rápida</string>
+
+    <!-- Network Info -->
+    <string name="network_info_section">INFORMACIÓN DE RED</string>
+    <string name="dns_ping_title">Latencia del servidor DNS</string>
+
+    <!-- v2.4.0: Biometric Lock -->
+    <string name="biometric_lock_title">Bloqueo biométrico / PIN</string>
+    <string name="biometric_lock_desc">Requerir huella o PIN para abrir la app</string>
+    <string name="biometric_prompt_title">Carnelia VPN</string>
+    <string name="biometric_prompt_subtitle">Autentícate para continuar</string>
+
+    <!-- v2.4.0: VPN Schedule -->
+    <string name="schedule_title">Programación de VPN</string>
+    <string name="schedule_desc">Conectar y desconectar automáticamente por horario</string>
+    <string name="schedule_enabled">Activar programación</string>
+    <string name="schedule_connect_at">Conectar a las</string>
+    <string name="schedule_disconnect_at">Desconectar a las</string>
+    <string name="schedule_note">La programación se ejecuta a diario a la hora elegida. Requiere haber abierto la app al menos una vez.</string>
+
+    <!-- v2.4.0: Traffic Chart -->
+    <string name="traffic_chart_title">Tráfico por día</string>
+    <string name="traffic_chart_no_data">Conéctate para empezar a recopilar datos</string>
+
+    <!-- v2.4.2: Leak Test -->
+    <string name="leak_test_title">Prueba de fugas</string>
+    <string name="leak_test_checking">Comprobando…</string>
+    <string name="leak_test_no_data">Sin datos. Toca actualizar.</string>
+    <string name="leak_test_protected">Protegido</string>
+    <string name="leak_test_protected_desc">El tráfico se enruta por la VPN</string>
+    <string name="leak_test_not_connected">VPN no conectada</string>
+    <string name="leak_test_not_connected_desc">Conéctate a la VPN para protegerte</string>
+    <string name="leak_test_external_ip">IP externa</string>
+    <string name="leak_test_unknown">Desconocido</string>
+    <string name="leak_test_dns_servers">Servidores DNS</string>
+    <string name="leak_test_dns_not_found">No detectado</string>
+    <string name="leak_test_servers_found">%d servidor(es) detectado(s)</string>
+    <string name="leak_test_disclaimer">Esta prueba comprueba tu IP externa y los servidores DNS disponibles. Si la IP pertenece a tu proveedor, la VPN no está funcionando.</string>
+    <string name="leak_test_error">Error: %1$s</string>
+
+    <!-- v2.4.2: Auto-Update -->
+    <string name="update_available_title">Actualización %1$s disponible</string>
+    <string name="update_current_version">Versión actual: %1$s</string>
+    <string name="update_action">Actualizar</string>
+    <string name="update_later">Más tarde</string>
+
+    <!-- v2.4.2: Encrypted Backup -->
+    <string name="backup_dialog_title">Copia de servidores</string>
+    <string name="backup_dialog_desc">El archivo se cifra con AES-256. Mínimo 4 caracteres.</string>
+    <string name="backup_password_label">Contraseña</string>
+    <string name="backup_export_action">Exportar</string>
+    <string name="backup_import_action">Importar</string>
+    <string name="backup_password_min">Al menos 4 caracteres</string>
+    <string name="backup_exported_count">%1$d servidores exportados</string>
+    <string name="backup_imported_count">%1$d servidores importados</string>
+    <string name="backup_error">Error: %1$s</string>
+    <string name="backup_section_desc">Exportar/importar servidores a un archivo cifrado</string>
+
+    <!-- v2.4.2: Reality Scanner -->
+    <string name="reality_scanner_title">Escáner Reality</string>
+    <string name="reality_scanner_starting">Iniciando escaneo…</string>
+    <string name="reality_scanner_tcp_ping">Ping TCP</string>
+    <string name="reality_scanner_unavailable">no disponible</string>
+    <string name="reality_scanner_ports">Puertos:</string>
+    <string name="reality_scanner_recommended">recomendado</string>
+    <string name="reality_scanner_fingerprint">Huella:</string>
+    <string name="reality_scanner_recommended_fp">Recomendado: %1$s</string>
+    <string name="reality_scanner_apply_fp">Aplicar huella: %1$s</string>
+    <string name="reality_scanner_timeout">tiempo agotado</string>
+    <string name="reality_scanner_error">Error de escaneo</string>
+    <string name="reality_scanner_analyzing">Analizando la estabilidad de la conexión…</string>
+    <string name="reality_scanner_checking_port">Comprobando el puerto %1$d…</string>
+
+    <!-- v2.4.3: Tools Hub -->
+    <string name="tools_hub_title">Herramientas</string>
+
+    <!-- Fingerprint Check -->
+    <string name="fingerprint_title">Comprobación de huella</string>
+    <string name="fingerprint_via_vpn">Enrutando por la VPN — mostrando la identidad de la VPN</string>
+    <string name="fingerprint_no_vpn">La VPN está APAGADA — mostrando tu identidad real</string>
+    <string name="fingerprint_other_vpn">Hay otra app VPN activa — mostrando su identidad</string>
+    <string name="fingerprint_ip">Dirección IP</string>
+    <string name="fingerprint_location">Ubicación</string>
+    <string name="fingerprint_isp">Proveedor (ISP)</string>
+    <string name="fingerprint_org">Organización</string>
+    <string name="fingerprint_asn">ASN</string>
+    <string name="fingerprint_timezone">Zona horaria</string>
+    <string name="fingerprint_flag_proxy">Proxy</string>
+    <string name="fingerprint_flag_hosting">Hosting</string>
+    <string name="fingerprint_flag_mobile">Móvil</string>
+
+    <!-- DNS Audit -->
+    <string name="dns_audit_title">Auditoría DNS</string>
+    <string name="dns_audit_system_servers">Servidores DNS del sistema</string>
+    <string name="dns_audit_resolving">resolviendo…</string>
+    <string name="dns_audit_failed">error de resolución</string>
+
+    <!-- Route Tracer -->
+    <string name="route_tracer_title">Rastreador de rutas</string>
+    <string name="route_tracer_hint">Host / IP de destino</string>
+    <string name="route_tracer_btn">Rastrear</string>
+    <string name="route_tracer_hint_empty">Introduce un host y toca Rastrear</string>
+
+    <!-- Traffic Graph -->
+    <string name="traffic_graph_title">Gráfico de tráfico</string>
+    <string name="traffic_graph_download">Descarga</string>
+    <string name="traffic_graph_upload">Subida</string>
+    <string name="traffic_graph_legend">Últimos 60 segundos · verde = descarga · naranja = subida</string>
+    <string name="traffic_graph_total_down">Total bajada</string>
+    <string name="traffic_graph_total_up">Total subida</string>
+
+    <!-- TLS Inspector -->
+    <string name="tls_inspector_title">Inspector TLS</string>
+    <string name="tls_host_label">Host</string>
+    <string name="tls_port_label">Puerto</string>
+    <string name="tls_inspect_btn">Inspeccionar</string>
+    <string name="tls_version">Versión TLS</string>
+    <string name="tls_cipher">Suite de cifrado</string>
+    <string name="tls_chain_depth">Profundidad de la cadena</string>
+    <string name="tls_subject">Sujeto</string>
+    <string name="tls_issuer">Emisor</string>
+    <string name="tls_valid_from">Válido desde</string>
+    <string name="tls_valid_until">Válido hasta</string>
+    <string name="tls_sha256">SHA-256</string>
+
+    <!-- Packet Inspector -->
+    <string name="packet_inspector_title">Inspector de paquetes</string>
+    <string name="packet_inspector_empty">No se capturó tráfico del proxy</string>
+    <string name="packet_inspector_empty_hint">Conéctate a la VPN para ver el tráfico en vivo</string>
+
+    <!-- TLS Inspector extras -->
+    <string name="tls_sans">SAN</string>
+    <string name="tls_sha256_fp">Huella SHA-256</string>
+    <string name="tls_certs_suffix">%d certificados</string>
+
+    <!-- Tools Hub card strings -->
+    <string name="tool_leak_test_name">Prueba de fugas</string>
+    <string name="tool_leak_test_desc">Detección de fugas de IP y DNS</string>
+    <string name="tool_fingerprint_name">Comprobación de huella</string>
+    <string name="tool_fingerprint_desc">Geolocalización IP, ASN, marcas de proxy</string>
+    <string name="tool_dns_audit_name">Auditoría DNS</string>
+    <string name="tool_dns_audit_desc">Resolver dominios, detectar fugas DNS</string>
+    <string name="tool_route_tracer_name">Rastreador de rutas</string>
+    <string name="tool_route_tracer_desc">Traceroute a través del túnel VPN</string>
+    <string name="tool_traffic_graph_name">Gráfico de tráfico</string>
+    <string name="tool_traffic_graph_desc">Gráfico de velocidad y latencia en tiempo real</string>
+    <string name="tool_tls_inspector_name">Inspector TLS</string>
+    <string name="tool_tls_inspector_desc">Cadena de certificados, cifrado, SNI</string>
+    <string name="tool_packet_inspector_name">Inspector de paquetes</string>
+    <string name="tool_packet_inspector_desc">Flujo de tráfico del proxy en vivo</string>
+    <string name="tool_local_share_name">Compartir local</string>
+    <string name="tool_local_share_desc">Envía servidores/app por LAN — sin nube</string>
+    <string name="tool_lan_scan_name">Escáner LAN</string>
+    <string name="tool_lan_scan_desc">Quién está en tu Wi-Fi — dispositivos, MAC, nuevos hosts</string>
+    <string name="tool_port_scan_name">Escáner de puertos</string>
+    <string name="tool_port_scan_desc">Escanea puertos comunes en cualquier host</string>
+    <string name="tool_speedtest_name">Test de velocidad</string>
+    <string name="tool_speedtest_desc">Velocidad de descarga y latencia</string>
+    <string name="tool_blackwall_name">Black Wall (evasión)</string>
+    <string name="tool_blackwall_desc">Sigilo anti-DPI: Ghost / Phantom / Wraith</string>
+    <string name="tool_torrent_name">Torrent</string>
+    <string name="tool_torrent_desc">Descargas magnet / .torrent</string>
+    <string name="disguise_calculator_label">Calculadora</string>
+    <string name="disguise_notes_label">Notas</string>
+</resources>
