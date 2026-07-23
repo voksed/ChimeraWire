@@ -212,7 +212,11 @@ class CarheliaVpnService : VpnService() {
      * (новые CA-сертификаты, ARP-спуфинг шлюза, системный прокси).
      */
     private fun startSelfHealingLoop() {
-        scope.launch {
+        // ВАЖНО: на Dispatchers.IO, а не на scope по умолчанию (Main).
+        // SniffingGuard.checkAll читает /proc/net/arp с диска и считает SHA-256 по всем
+        // системным CA — это блокирующая работа. На главном потоке раз в 4 минуты она
+        // подвешивала UI и приводила к ANR при длительной работе VPN.
+        scope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay(4 * 60_000L)
                 if (currentState != ConnectionState.CONNECTED) continue
