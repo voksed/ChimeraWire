@@ -1,0 +1,30 @@
+# ==== Секреты (НИКОГДА не коммитить — публичный репозиторий) ====
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties
+local.properties
+android/local.properties
+
+# ==== Build output ====
+.gradle
+.cxx/
+build/
+bin/
+gen/
+*.iml
+*.class
+*.dex
+*.ap_
+
+# ==== IDE / инструменты ====
+.idea
+.vscode
+.claude/
+
+# ==== Логи и артефакты ====
+*.log
+*.apk
+*.bak
+.DS_Store
+releases/android/*.apk

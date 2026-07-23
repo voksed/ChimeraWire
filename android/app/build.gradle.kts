@@ -1,7 +1,19 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+
+// Секреты подписи в коде НЕ хранятся: локально берутся из keystore.properties (в .gitignore),
+// в CI — из переменных окружения (GitHub Secrets). В публичный репозиторий пароли не попадают.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) FileInputStream(f).use { load(it) }
+}
+fun signingSecret(prop: String, env: String): String =
+    keystoreProps.getProperty(prop) ?: System.getenv(env) ?: ""
 
 android {
     compileSdk = 34
@@ -18,10 +30,10 @@ android {
 
     signingConfigs {
         create("carnelia") {
-            storeFile = file("release.jks")
-            storePassword = "***REMOVED***"
-            keyAlias = "carnelia"
-            keyPassword = "***REMOVED***"
+            storeFile = file(signingSecret("storeFile", "KEYSTORE_FILE").ifBlank { "release.jks" })
+            storePassword = signingSecret("storePassword", "KEYSTORE_PASSWORD")
+            keyAlias = signingSecret("keyAlias", "KEY_ALIAS").ifBlank { "carnelia" }
+            keyPassword = signingSecret("keyPassword", "KEY_PASSWORD")
         }
     }
 
