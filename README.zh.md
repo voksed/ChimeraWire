@@ -56,7 +56,7 @@ VLESS（REALITY / TLS / WSS / gRPC）、VMess、Trojan、Shadowsocks、WireGuard
 - **工具中心：** DNS 审计、泄漏检测、数据包检查器、路由追踪、TLS 检查器、指纹检查、端口扫描器、内置终端、root/模拟器检测
 - **隐私：** 🆘 Panic（即时断开 + 清除日志）、🎭 图标伪装（计算器 / 备忘录）、GPS 伪装
 - **P2P 聊天**，基于公共 Mainline DHT（BitTorrent 网络）——无需自建服务器
-- **5 种语言：** English、Русский、Español、中文、العربية
+- **6 种语言：** English、Русский、Español、中文、العربية、Français
 
 ---
 

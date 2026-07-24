@@ -56,7 +56,7 @@ VLESS (REALITY / TLS / WSS / gRPC), VMess, Trojan, Shadowsocks, WireGuard, Amnez
 - **Tools Hub:** DNS Audit, Leak Test, Packet Inspector, Route Tracer, TLS Inspector, Fingerprint Check, Port Scanner, встроенный терминал, детект root/эмулятора
 - **Приватность:** 🆘 Panic (мгновенный разрыв + очистка логов), 🎭 маскировка иконки (Калькулятор / Заметки), подмена GPS
 - **P2P-чат** по публичной Mainline DHT (сеть BitTorrent) — без своего сервера
-- **5 языков:** English, Русский, Español, 中文, العربية
+- **6 языков:** English, Русский, Español, 中文, العربية, Français
 
 ---
 

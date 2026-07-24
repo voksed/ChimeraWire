@@ -56,7 +56,7 @@ Importación mediante `vless://` `vmess://` `ss://` `trojan://` `wireguard://` `
 - **Tools Hub:** Auditoría DNS, Prueba de fugas, Inspector de paquetes, Rastreador de rutas, Inspector TLS, Comprobación de huella, Escáner de puertos, terminal integrada, detección de root/emulador
 - **Privacidad:** 🆘 Panic (desconexión instantánea + borrado de registros), 🎭 disfraz de icono (Calculadora / Notas), falseo de GPS
 - **Chat P2P** sobre la Mainline DHT pública (red BitTorrent) — sin servidor propio
-- **5 idiomas:** English, Русский, Español, 中文, العربية
+- **6 idiomas:** English, Русский, Español, 中文, العربية, Français
 
 ---
 

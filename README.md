@@ -56,7 +56,7 @@ Import via `vless://` `vmess://` `ss://` `trojan://` `wireguard://` `hysteria2:/
 - **Tools Hub:** DNS Audit, Leak Test, Packet Inspector, Route Tracer, TLS Inspector, Fingerprint Check, Port Scanner, built-in Terminal, root/emulator detection
 - **Privacy:** 🆘 Panic (instant disconnect + wipe logs), 🎭 icon disguise (Calculator / Notes), GPS spoofing
 - **P2P chat** over the public Mainline DHT (BitTorrent network) — no server of its own
-- **5 languages:** English, Русский, Español, 中文, العربية
+- **6 languages:** English, Русский, Español, 中文, العربية, Français
 
 ---
 
