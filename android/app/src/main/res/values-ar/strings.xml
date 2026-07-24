@@ -553,4 +553,8 @@ Android: %2$s
     <string name="disguise_calculator_label">آلة حاسبة</string>
     <string name="disguise_notes_label">ملاحظات</string>
     <string name="github_source">الكود المصدري · GitHub</string>
+    <string name="privacy_policy_title">سياسة الخصوصية</string>
+    <string name="privacy_policy_tile_desc">ما الذي نجمعه (المفاجأة: لا شيء)</string>
+    <string name="home_screen_appearance">المظهر على الشاشة الرئيسية</string>
+    <string name="profile_label">الملف الشخصي</string>
 </resources>

@@ -553,4 +553,8 @@ Dernière erreur : %5$s
     <string name="disguise_calculator_label">Calculatrice</string>
     <string name="disguise_notes_label">Notes</string>
     <string name="github_source">Code source · GitHub</string>
+    <string name="privacy_policy_title">Politique de confidentialité</string>
+    <string name="privacy_policy_tile_desc">Ce que nous collectons (spoiler : rien)</string>
+    <string name="home_screen_appearance">Apparence sur l\'écran d\'accueil</string>
+    <string name="profile_label">Profil</string>
 </resources>

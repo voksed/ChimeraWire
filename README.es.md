@@ -9,7 +9,7 @@
 [![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/carnelia-vpn)
 [![Cores](https://img.shields.io/badge/Cores-Xray%20%7C%20sing--box%20%7C%20AmneziaWG-FF6B35?style=flat-square)](https://github.com/XTLS/Xray-core)
 [![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-success?style=flat-square)](https://github.com/voksed/carnelia-vpn/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.1-success?style=flat-square)](https://github.com/voksed/carnelia-vpn/releases)
 
 [English](README.md) · [Русский](README.ru.md) · **Español** · [中文](README.zh.md) · [العربية](README.ar.md) · [Français](README.fr.md)
 

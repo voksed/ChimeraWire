@@ -553,4 +553,8 @@ Región: %4$s
     <string name="disguise_calculator_label">Calculadora</string>
     <string name="disguise_notes_label">Notas</string>
     <string name="github_source">Código fuente · GitHub</string>
+    <string name="privacy_policy_title">Política de privacidad</string>
+    <string name="privacy_policy_tile_desc">Qué recopilamos (spoiler: nada)</string>
+    <string name="home_screen_appearance">Aspecto en la pantalla de inicio</string>
+    <string name="profile_label">Perfil</string>
 </resources>

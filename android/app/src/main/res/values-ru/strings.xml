@@ -555,4 +555,8 @@ Android: %2$s
     <string name="disguise_calculator_label">Калькулятор</string>
     <string name="disguise_notes_label">Заметки</string>
     <string name="github_source">Исходный код · GitHub</string>
+    <string name="privacy_policy_title">Политика конфиденциальности</string>
+    <string name="privacy_policy_tile_desc">Что мы собираем (спойлер: ничего)</string>
+    <string name="home_screen_appearance">Вид на рабочем столе</string>
+    <string name="profile_label">Профиль</string>
 </resources>

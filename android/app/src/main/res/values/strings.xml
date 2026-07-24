@@ -553,4 +553,8 @@ Last Error: %5$s
     <string name="disguise_calculator_label">Calculator</string>
     <string name="disguise_notes_label">Notes</string>
     <string name="github_source">Source code · GitHub</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_tile_desc">What we collect (spoiler: nothing)</string>
+    <string name="home_screen_appearance">Home screen appearance</string>
+    <string name="profile_label">Profile</string>
 </resources>

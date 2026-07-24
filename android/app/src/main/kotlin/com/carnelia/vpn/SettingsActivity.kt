@@ -363,8 +363,8 @@ fun MainSettingsMenu(
 
         SettingsCategoryItem(
             icon = Icons.Default.PrivacyTip,
-            title = "Политика конфиденциальности",
-            description = "Что мы собираем (спойлер: ничего)",
+            title = stringResource(R.string.privacy_policy_title),
+            description = stringResource(R.string.privacy_policy_tile_desc),
             onClick = {
                 context.startActivity(Intent(context, PrivacyPolicyActivity::class.java))
             }
@@ -780,7 +780,7 @@ fun SecuritySettings(context: Context) {
         )
         val selectedDisguiseIdx = disguiseOptions.indexOfFirst { it.second == disguise.name }.coerceAtLeast(0)
         DropdownSettingItem(
-            title = "Вид на рабочем столе",
+            title = stringResource(R.string.home_screen_appearance),
             options = disguiseOptions,
             selectedOptionIdx = selectedDisguiseIdx,
             onOptionSelected = { idx ->
@@ -1265,7 +1265,7 @@ fun CensorshipBypassSettings(context: Context) {
                 )
                 val selectedFpIdx = fpOptions.indexOfFirst { it.second == tlsFingerprint }.coerceAtLeast(0)
                 DropdownSettingItem(
-                    title = "Профиль",
+                    title = stringResource(R.string.profile_label),
                     options = fpOptions,
                     selectedOptionIdx = selectedFpIdx,
                     onOptionSelected = { idx ->
@@ -1327,7 +1327,7 @@ fun CensorshipBypassSettings(context: Context) {
                             }
                         }
                         DropdownSettingItem(
-                            title = "Входной сервер",
+                            title = stringResource(R.string.double_tunnel_first_server),
                             options = entryOptions,
                             selectedOptionIdx = selectedEntryIdx,
                             onOptionSelected = { idx ->

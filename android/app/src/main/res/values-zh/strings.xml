@@ -553,4 +553,8 @@ Android：%2$s
     <string name="disguise_calculator_label">计算器</string>
     <string name="disguise_notes_label">备忘录</string>
     <string name="github_source">源代码 · GitHub</string>
+    <string name="privacy_policy_title">隐私政策</string>
+    <string name="privacy_policy_tile_desc">我们收集什么（剧透：什么都不收集）</string>
+    <string name="home_screen_appearance">主屏幕外观</string>
+    <string name="profile_label">配置文件</string>
 </resources>
