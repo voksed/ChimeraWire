@@ -17,11 +17,18 @@ class ServerListRemoteViewsFactory(private val context: Context) : RemoteViewsSe
     private var servers: List<com.carnelia.vpn.core.VpnServerConfig> = emptyList()
 
     override fun onCreate() {
-        servers = ServerRepository(context).getServers()
+        servers = loadServers()
     }
 
     override fun onDataSetChanged() {
-        servers = ServerRepository(context).getServers()
+        servers = loadServers()
+    }
+
+    // Чтение серверов не должно ронять хост-процесс виджета при повреждённых/устаревших данных.
+    private fun loadServers(): List<com.carnelia.vpn.core.VpnServerConfig> = try {
+        ServerRepository(context).getServers()
+    } catch (e: Exception) {
+        emptyList()
     }
 
     override fun onDestroy() {

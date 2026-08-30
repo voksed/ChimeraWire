@@ -32,17 +32,17 @@ class VpnWidgetProvider : AppWidgetProvider() {
                 }
             }
             ACTION_SELECT_SERVER -> {
-                val serverId = intent.getStringExtra("server_id")
-                if (!serverId.isNullOrBlank()) {
-                    val repo = com.carnelia.vpn.data.ServerRepository(context)
-                    val config = repo.getServers().find { it.id == serverId }
-                    if (config != null) {
+                try {
+                    val serverId = intent.getStringExtra("server_id")
+                    if (!serverId.isNullOrBlank()) {
                         val mainIntent = Intent(context, com.carnelia.vpn.MainActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             putExtra("connect_server_id", serverId)
                         }
                         context.startActivity(mainIntent)
                     }
+                } catch (e: Exception) {
+                    com.carnelia.vpn.utils.AppLogger.error("Widget: не удалось открыть сервер", e)
                 }
             }
         }
@@ -53,6 +53,7 @@ class VpnWidgetProvider : AppWidgetProvider() {
         const val ACTION_SELECT_SERVER = "com.carnelia.vpn.SELECT_SERVER"
 
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+          try {
             val views = RemoteViews(context.packageName, R.layout.vpn_widget_info)
 
             val state = CarheliaVpnService.currentState
@@ -114,6 +115,9 @@ class VpnWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_root, appPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
+          } catch (e: Exception) {
+            com.carnelia.vpn.utils.AppLogger.error("Widget: обновление не удалось", e)
+          }
         }
     }
 }
