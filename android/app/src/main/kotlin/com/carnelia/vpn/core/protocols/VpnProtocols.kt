@@ -175,7 +175,7 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
                 
                 // Tun2Socks client
                 val client = Shadowsocks.newClientFromJSON(jsonConfig.toString())
-                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
+                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.detachFd().toLong(), client, true)
                 
                 activeTunnel = tunnel
                 AppLogger.log("XrayVpnProtocol: Tunnel Established!")
@@ -312,7 +312,7 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
                     put("method", com.carnelia.vpn.core.XrayCoreManager.LOCAL_METHOD)
                 }
                 val client = shadowsocks.Shadowsocks.newClientFromJSON(json.toString())
-                activeTunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
+                activeTunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.detachFd().toLong(), client, true)
                 AppLogger.log("SingboxVpnProtocol: Tunnel established!")
 
                 // Hysteria2 (and TUIC/QUIC protocols) drop idle sessions after ~5-6 min.
@@ -436,7 +436,7 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
                 jsonConfig.put("password", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PASSWORD)
                 jsonConfig.put("method", com.carnelia.vpn.core.XrayCoreManager.LOCAL_METHOD)
                 val client = shadowsocks.Shadowsocks.newClientFromJSON(jsonConfig.toString())
-                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.fd.toLong(), client, true)
+                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.detachFd().toLong(), client, true)
                 activeTunnel = tunnel
                 AppLogger.log("Hysteria2VpnProtocol: Tun2Socks tunnel established!")
                 // Stats
@@ -513,7 +513,7 @@ class AmneziaWgVpnProtocol(private val context: Context) : IVpnProtocol {
             return
         }
         scope.launch {
-            val ok = com.carnelia.vpn.core.AmneziaWgCoreManager.startTunnel(fileDescriptor.fd, config)
+            val ok = com.carnelia.vpn.core.AmneziaWgCoreManager.startTunnel(fileDescriptor.detachFd(), config)
             if (!ok) {
                 AppLogger.error("AmneziaWgVpnProtocol: tunnel failed to start")
                 updateConnectionState(ConnectionState.ERROR)
