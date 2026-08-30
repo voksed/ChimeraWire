@@ -2,7 +2,6 @@ package com.carnelia.vpn
 
 import android.app.Application
 import com.carnelia.vpn.core.NetworkChangeWatcher
-import com.carnelia.vpn.core.SniffingGuard
 import com.carnelia.vpn.security.SecurityChecker
 import com.carnelia.vpn.service.NetworkMonitor
 import com.carnelia.vpn.utils.AppLogger
@@ -45,10 +44,5 @@ class CarheliaApplication : Application() {
 
         // Разрыв VPN при смене сети (домашний Wi-Fi → мобильная и т.п.) — fail closed
         NetworkChangeWatcher.register(this)
-
-        // Защита от снифинга: подозрительные CA-сертификаты, ARP-спуфинг, системный proxy
-        CoroutineScope(Dispatchers.Default).launch {
-            SniffingGuard.checkAll(this@CarheliaApplication)
-        }
     }
 }

@@ -396,6 +396,15 @@ fun MainSettingsMenu(
         ) {
              Text(stringResource(R.string.github_source), fontSize = 12.sp, color = Color.White)
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            stringResource(R.string.version_fmt, com.carnelia.vpn.BuildConfig.VERSION_NAME),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
         
         Spacer(modifier = Modifier.height(24.dp))
         

@@ -80,7 +80,6 @@ class CarheliaVpnService : VpnService() {
             }
         }
         setupVpnListeners()
-        startSelfHealingLoop()
 
         // Start foreground immediately to prevent crash on Android 8+
         if (android.os.Build.VERSION.SDK_INT >= 34) {
@@ -230,28 +229,6 @@ class CarheliaVpnService : VpnService() {
         try { scope.cancel() } catch (e: Exception) {}
         try { currentInterface?.close() } catch (e: Exception) {}
         currentInterface = null
-    }
-
-    /**
-     * Пока VPN подключён, периодически проверяет признаки перехвата трафика
-     * (новые CA-сертификаты, ARP-спуфинг шлюза, системный прокси).
-     */
-    private fun startSelfHealingLoop() {
-        // ВАЖНО: на Dispatchers.IO, а не на scope по умолчанию (Main).
-        // SniffingGuard.checkAll читает /proc/net/arp с диска и считает SHA-256 по всем
-        // системным CA — это блокирующая работа. На главном потоке раз в 4 минуты она
-        // подвешивала UI и приводила к ANR при длительной работе VPN.
-        scope.launch(Dispatchers.IO) {
-            while (isActive) {
-                delay(4 * 60_000L)
-                if (currentState != ConnectionState.CONNECTED) continue
-                try {
-                    com.carnelia.vpn.core.SniffingGuard.checkAll(this@CarheliaVpnService)
-                } catch (e: Exception) {
-                    AppLogger.error("Service: SniffingGuard check failed", e)
-                }
-            }
-        }
     }
 
     private fun setupVpnListeners() {

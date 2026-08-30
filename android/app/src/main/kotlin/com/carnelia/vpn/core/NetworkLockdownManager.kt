@@ -7,8 +7,7 @@ import com.carnelia.vpn.service.CarheliaVpnService
 
 /**
  * Включает/выключает режим защиты (полная блокировка сети устройства) через
- * CarheliaVpnService. Используется автоматически при обнаружении опасного
- * приложения (PackageInstallReceiver) и вручную из экрана Black Wall.
+ * CarheliaVpnService — TUN забирает весь трафик и никуда его не выпускает.
  */
 object NetworkLockdownManager {
 

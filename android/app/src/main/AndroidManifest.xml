@@ -238,18 +238,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Анти-шпион: проверка каждого нового приложения сразу после установки -->
-        <receiver
-            android:name=".service.PackageInstallReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED" />
-                <action android:name="android.intent.action.PACKAGE_REPLACED" />
-                <data android:scheme="package" />
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
