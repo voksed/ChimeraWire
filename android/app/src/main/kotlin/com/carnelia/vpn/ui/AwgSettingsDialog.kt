@@ -48,13 +48,14 @@ fun AwgSettingsDialog(
     var i5 by remember { mutableStateOf(server.config["I5"]?.toIntOrNull()?.toString() ?: "") }
     var port by remember { mutableStateOf(server.port.toString()) }
 
+    val scheme = MaterialTheme.colorScheme
     val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color.White,
-        unfocusedTextColor = Color.White,
+        focusedTextColor = scheme.onSurface,
+        unfocusedTextColor = scheme.onSurface,
         focusedBorderColor = accentColor,
-        unfocusedBorderColor = Color(0xFF555555),
+        unfocusedBorderColor = scheme.outline,
         focusedLabelColor = accentColor,
-        unfocusedLabelColor = Color.Gray
+        unfocusedLabelColor = scheme.onSurfaceVariant
     )
 
     @Composable
@@ -74,7 +75,7 @@ fun AwgSettingsDialog(
         title = {
             Text(
                 if (isAmnezia) "Настройки AmneziaWG" else "Настройки WireGuard",
-                color = Color.White,
+                color = scheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
         },
@@ -109,7 +110,7 @@ fun AwgSettingsDialog(
 
                 Text(
                     "Настройки сервера",
-                    color = Color.White,
+                    color = scheme.onSurface,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 8.dp)
@@ -142,8 +143,8 @@ fun AwgSettingsDialog(
             }) { Text("Сохранить", color = accentColor) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена", color = Color.Gray) }
+            TextButton(onClick = onDismiss) { Text("Отмена", color = scheme.onSurfaceVariant) }
         },
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = scheme.surface
     )
 }

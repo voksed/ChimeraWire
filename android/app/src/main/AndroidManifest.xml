@@ -375,9 +375,25 @@
             android:foregroundServiceType="dataSync"
             android:exported="false" />
 
+        <!-- Serverless per-app internet blocker (local VPN sink, no external server) -->
+        <service
+            android:name=".service.LocalFirewallService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
         <!-- v2.4.0: Standalone Tools screen -->
         <activity
             android:name=".StandaloneToolsActivity"
+            android:exported="false" />
+
+        <!-- App traffic analyzer + per-app blocker -->
+        <activity
+            android:name=".AppFirewallActivity"
             android:exported="false" />
 
         <receiver

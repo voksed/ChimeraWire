@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Security
@@ -488,6 +490,22 @@ fun CarheliaApp(
                         scope.launch { drawerState.close() }
                     },
                     icon = { Icon(Icons.Default.Security, contentDescription = null, tint = onSurface) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color.Transparent,
+                        unselectedTextColor = onSurface
+                    )
+                )
+
+                // App traffic blocker + analyzer (serverless local firewall)
+                NavigationDrawerItem(
+                    label = { Text("Блокатор трафика") },
+                    selected = false,
+                    onClick = {
+                        context.startActivity(Intent(context, AppFirewallActivity::class.java))
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Block, contentDescription = null, tint = onSurface) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                     colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color.Transparent,
@@ -1258,6 +1276,7 @@ fun ServerSelectionDialog(
     var renameText by remember { mutableStateOf("") }
     var serverToScan by remember { mutableStateOf<VpnServerConfig?>(null) }
     var serverToConfig by remember { mutableStateOf<VpnServerConfig?>(null) }
+    var serverToEdit by remember { mutableStateOf<VpnServerConfig?>(null) }
 
     serverToScan?.let { scanServer ->
         RealityScannerDialog(
@@ -1281,6 +1300,20 @@ fun ServerSelectionDialog(
                 repository.updateServer(updated)
                 servers = repository.getServers()
                 serverToConfig = null
+            }
+        )
+    }
+
+    serverToEdit?.let { editServer ->
+        com.carnelia.vpn.ui.ServerEditDialog(
+            server = editServer,
+            accentColor = accentColor,
+            onDismiss = { serverToEdit = null },
+            onSave = { updated ->
+                repository.updateServer(updated)
+                servers = repository.getServers()
+                if (activeInfo?.id == updated.id) onServerSelected(updated)
+                serverToEdit = null
             }
         )
     }
@@ -1577,6 +1610,23 @@ fun ServerSelectionDialog(
                                             Icon(
                                                 Icons.Default.Tune,
                                                 contentDescription = "Protocol Settings",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+
+                                    // Proxy server parameters (host / port / SNI, plus REALITY pbk/sid/fp)
+                                    // with an availability + certificate probe. Not shown for WireGuard,
+                                    // which is served by the Tune dialog above.
+                                    if (server.protocol != VpnProtocol.WIREGUARD && server.protocol != VpnProtocol.AMNEZIA_WG) {
+                                        IconButton(
+                                            onClick = { serverToEdit = server },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Settings,
+                                                contentDescription = "Параметры сервера",
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                                 modifier = Modifier.size(20.dp)
                                             )

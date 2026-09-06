@@ -30,7 +30,6 @@ object PrefsManager {
     private const val KEY_THEME_INDEX = "theme_index"
     private const val KEY_SECRET_THEME_UNLOCKED = "secret_theme_unlocked"
     private const val KEY_NET_SHIELD = "net_shield_enabled"
-    private const val KEY_STEALTH_MODE = "stealth_mode_v2"
     private const val KEY_SECURE_KEYS = "secure_key_check"
     private const val KEY_TOR_SOCKS_PORT = "tor_socks_port"
     private const val KEY_TOR_HTTP_PORT = "tor_http_port"
@@ -45,9 +44,6 @@ object PrefsManager {
     // New Features
     fun isNetShieldEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_NET_SHIELD, true) // Default On
     fun setNetShieldEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_NET_SHIELD, enabled).apply()
-
-    fun isStealthModeEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_STEALTH_MODE, true) // Default On
-    fun setStealthModeEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_STEALTH_MODE, enabled).apply()
 
     fun isSecureKeyCheckEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_SECURE_KEYS, true) // Default On
     fun setSecureKeyCheckEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_SECURE_KEYS, enabled).apply()

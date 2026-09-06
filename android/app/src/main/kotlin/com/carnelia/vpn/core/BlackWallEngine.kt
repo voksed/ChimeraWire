@@ -81,10 +81,23 @@ object BlackWallEngine {
         val level = getLevel(context)
         if (level == StealthLevel.OFF) return
 
+        val streamSettings = outbound.optJSONObject("streamSettings") ?: JSONObject()
+
+        // REALITY carries its own DPI camouflage: the client emits a genuine uTLS
+        // ClientHello that the server parses to authenticate the session. Re-segmenting
+        // that hello via sockopt.fragment corrupts the REALITY auth and the server drops
+        // the connection right after the TCP handshake (endless reconnect, zero traffic).
+        // Black Wall must therefore leave REALITY streams untouched.
+        val isReality = streamSettings.optString("security") == "reality" ||
+            streamSettings.has("realitySettings")
+        if (isReality) {
+            AppLogger.log("BlackWall: REALITY outbound detected — fragmentation skipped (REALITY provides camouflage)")
+            return
+        }
+
         AppLogger.log("BlackWall: Applying level ${level.label} to ${config.protocol}")
 
         // Layer 1: TLS Fragmentation (all levels)
-        val streamSettings = outbound.optJSONObject("streamSettings") ?: JSONObject()
         val sockopt = streamSettings.optJSONObject("sockopt") ?: JSONObject()
 
         val fragment = JSONObject().apply {

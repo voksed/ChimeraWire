@@ -33,6 +33,7 @@ fun RealityScannerDialog(
     onApplied: (VpnServerConfig) -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val scheme = MaterialTheme.colorScheme
     var progress by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<RealityScannerManager.ScanResult?>(null) }
     var isScanning by remember { mutableStateOf(true) }
@@ -57,15 +58,15 @@ fun RealityScannerDialog(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF121212))
+            colors = CardDefaults.cardColors(containerColor = scheme.surface)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(stringResource(R.string.reality_scanner_title), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
-                Text(server.name, color = Color.Gray, fontSize = 12.sp)
-                HorizontalDivider(color = Color(0xFF333333))
+                Text(stringResource(R.string.reality_scanner_title), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = scheme.onSurface)
+                Text(server.name, color = scheme.onSurfaceVariant, fontSize = 12.sp)
+                HorizontalDivider(color = scheme.outline)
 
                 if (isScanning) {
                     Column(
@@ -74,7 +75,7 @@ fun RealityScannerDialog(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
                     ) {
                         CircularProgressIndicator(color = Color(0xFFFF1744))
-                        Text(progress, color = Color.Gray, fontSize = 13.sp)
+                        Text(progress, color = scheme.onSurfaceVariant, fontSize = 13.sp)
                     }
                 } else {
                     val r = result
@@ -88,7 +89,7 @@ fun RealityScannerDialog(
                         )
 
                         // Ports
-                        Text(stringResource(R.string.reality_scanner_ports), color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.reality_scanner_ports), color = scheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         r.portResults.forEach { pr ->
                             val isRecommended = pr.port == r.recommendedPort
                             Row(
@@ -100,7 +101,7 @@ fun RealityScannerDialog(
                                     Box(modifier = Modifier.size(6.dp).background(
                                         if (pr.pingMs != null) Color(0xFF00CC66) else Color(0xFFFF4444), CircleShape
                                     ))
-                                    Text(":${pr.port}", color = if (isRecommended) Color(0xFFFF1744) else Color.White, fontSize = 13.sp)
+                                    Text(":${pr.port}", color = if (isRecommended) Color(0xFFFF1744) else scheme.onSurface, fontSize = 13.sp)
                                     if (isRecommended) Text(stringResource(R.string.reality_scanner_recommended), color = Color(0xFFFF1744), fontSize = 10.sp)
                                 }
                                 Text(
@@ -110,10 +111,10 @@ fun RealityScannerDialog(
                             }
                         }
 
-                        HorizontalDivider(color = Color(0xFF2A2A2A))
+                        HorizontalDivider(color = scheme.outline)
 
                         // Recommended fingerprint
-                        Text(stringResource(R.string.reality_scanner_fingerprint), color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.reality_scanner_fingerprint), color = scheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         Text(
                             stringResource(R.string.reality_scanner_recommended_fp, r.recommendedFingerprint),
                             color = Color(0xFFFF1744), fontSize = 14.sp, fontWeight = FontWeight.Bold
@@ -126,8 +127,8 @@ fun RealityScannerDialog(
                                 val isSelected = fp == appliedFp
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
-                                        .border(1.dp, if (isSelected) Color(0xFFFF1744) else Color(0xFF2A2A2A), RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) Color(0xFF2A0A0A) else Color.Transparent, RoundedCornerShape(8.dp)),
+                                        .border(1.dp, if (isSelected) Color(0xFFFF1744) else scheme.outline, RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) Color(0xFFFF1744).copy(alpha = 0.12f) else Color.Transparent, RoundedCornerShape(8.dp)),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
@@ -135,7 +136,7 @@ fun RealityScannerDialog(
                                         onClick = { appliedFp = fp },
                                         colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFF1744))
                                     )
-                                    Text(fp, color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                                    Text(fp, color = scheme.onSurface, fontSize = 13.sp, modifier = Modifier.weight(1f))
                                     if (isRecommended) {
                                         Icon(Icons.Default.Check, null, tint = Color(0xFF00CC66), modifier = Modifier.size(14.dp).padding(end = 8.dp))
                                     }
@@ -165,7 +166,7 @@ fun RealityScannerDialog(
                 }
 
                 TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
-                    Text(stringResource(R.string.close_button), color = Color.Gray)
+                    Text(stringResource(R.string.close_button), color = scheme.onSurfaceVariant)
                 }
             }
         }
@@ -175,8 +176,8 @@ fun RealityScannerDialog(
 @Composable
 private fun ScanInfoRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = Color.Gray, fontSize = 13.sp)
-        Text(value, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+        Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }
 

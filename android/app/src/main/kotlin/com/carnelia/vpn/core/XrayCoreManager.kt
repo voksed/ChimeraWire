@@ -32,8 +32,56 @@ object XrayCoreManager {
     private fun defaultFingerprint(): String =
         PrefsManager.getTlsFingerprint(com.carnelia.vpn.CarheliaApplication.instance)
 
+    /**
+     * REALITY mandates TLS 1.3. Some uTLS fingerprints emit a TLS 1.2-only ClientHello —
+     * notably "android" (Android11/OkHttp) — which makes the REALITY handshake impossible
+     * ("Current fingerprint Android11 does not support TLS 1.3"). Such values, and a blank
+     * one, are remapped to a modern TLS 1.3 browser fingerprint.
+     */
+    private fun realityFingerprint(fp: String): String {
+        val tls13Capable = setOf(
+            "chrome", "firefox", "edge", "ios", "safari", "360", "qq",
+            "random", "randomized", "randomizedalpn", "randomizednoalpn"
+        )
+        return fp.trim().lowercase().takeIf { it in tls13Capable } ?: "chrome"
+    }
+
+    private var lastRealityWarnAt = 0L
+
+    /**
+     * Turns the core's silent REALITY-handshake failures into a visible reason. When the
+     * outbound cannot authenticate, Xray retries in a tight loop while the UI still shows
+     * "connected" with no traffic; this surfaces the cause (wrong key or fingerprint) as a
+     * toast and a stored error. Purely informational — it does not touch tunnel lifecycle.
+     * Debounced so the reconnect storm raises it at most once per window.
+     */
+    private fun reportRealityFailure(line: String) {
+        val realCert = line.contains("received real certificate")
+        val noTls13 = line.contains("does not support TLS 1.3")
+        val invalid = line.contains("reality", ignoreCase = true) && line.contains("invalid", ignoreCase = true)
+        if (!realCert && !noTls13 && !invalid) return
+
+        val now = System.currentTimeMillis()
+        if (now - lastRealityWarnAt < 15000) return
+        lastRealityWarnAt = now
+
+        val message = when {
+            noTls13 -> "REALITY: fingerprint без TLS 1.3. Смени fp на chrome в параметрах сервера."
+            realCert -> "REALITY: сервер отдаёт реальный сертификат — ключ (pbk/sid) не совпадает с сервером. Проверь ключ."
+            else -> "REALITY: рукопожатие отклонено сервером. Проверь параметры ключа."
+        }
+        VpnGlobalState.setError(message)
+        try {
+            val app = com.carnelia.vpn.CarheliaApplication.instance
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                android.widget.Toast.makeText(app, message, android.widget.Toast.LENGTH_LONG).show()
+            }
+        } catch (_: Exception) {}
+    }
+
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
         stopCore() // Ensure clean state
+        lastRealityWarnAt = 0L // let a fresh connection surface its own failure promptly
 
         try {
             // 1. Prepare Executable
@@ -76,6 +124,7 @@ object XrayCoreManager {
                         for (line in reader.lineSequence()) {
                             if (!isActive) break
                             AppLogger.log("Xray: $line")
+                            reportRealityFailure(line)
                         }
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
@@ -430,16 +479,6 @@ object XrayCoreManager {
 
         val rules = JSONArray()
 
-        // 1. Stealth Mode (Block UDP 443)
-        if (PrefsManager.isStealthModeEnabled(context)) {
-             val blockQuic = JSONObject()
-             blockQuic.put("type", "field")
-             blockQuic.put("port", "443")
-             blockQuic.put("network", "udp")
-             blockQuic.put("outboundTag", TAG_BLOCKED)
-             rules.put(blockQuic)
-        }
-
         // Private IP Bypass (hardcoded ranges, no geo files needed)
         val privateRule = JSONObject()
         privateRule.put("type", "field")
@@ -473,8 +512,13 @@ object XrayCoreManager {
     private fun applySockOpt(context: Context, outboundJson: JSONObject) {
          val streamSettings = outboundJson.optJSONObject("streamSettings") ?: JSONObject()
          val sockopt = JSONObject()
-         
-         if (PrefsManager.isFragmentationEnabled(context)) {
+
+         // REALITY crafts its own ClientHello for server-side authentication; sockopt.fragment
+         // re-segments it and breaks the handshake. Fragmentation is only safe on plain TLS.
+         val isReality = streamSettings.optString("security") == "reality" ||
+             streamSettings.has("realitySettings")
+
+         if (!isReality && PrefsManager.isFragmentationEnabled(context)) {
              val fragment = JSONObject()
              // No "enabled" field — xray enables fragment by presence of the object itself
              fragment.put("packets", PrefsManager.getFragmentPackets(context))
@@ -551,7 +595,7 @@ object XrayCoreManager {
              val sid = (config.config["sid"] ?: config.config["shortId"] ?: "").trim()
              val fp  = (config.config["fp"]  ?: config.config["fingerprint"] ?: "").trim()
              val reality = JSONObject()
-             reality.put("fingerprint", if (fp.isNotBlank()) fp else defaultFingerprint())
+             reality.put("fingerprint", realityFingerprint(fp.ifBlank { defaultFingerprint() }))
              reality.put("serverName", sni)
              reality.put("publicKey", pbk)
              reality.put("shortId", sid)

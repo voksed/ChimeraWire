@@ -319,7 +319,7 @@ fun MainSettingsMenu(
         SettingsCategoryItem(
             icon = Icons.Default.VpnLock,
             title = stringResource(R.string.bypass_advanced_section),
-            description = stringResource(R.string.stealth_mode_title) + ", " + stringResource(R.string.fragmentation_title),
+            description = stringResource(R.string.fragmentation_title),
             onClick = { onNavigate(SettingsPage.CENSORSHIP_BYPASS) }
         )
 
@@ -1143,7 +1143,6 @@ fun ConnectionSettings(context: Context) {
 
 @Composable
 fun CensorshipBypassSettings(context: Context) {
-    var stealthModeEnabled by remember { mutableStateOf(PrefsManager.isStealthModeEnabled(context)) }
     var fragEnabled by remember { mutableStateOf(PrefsManager.isFragmentationEnabled(context)) }
     var fragMode by remember { mutableStateOf(PrefsManager.getFragmentationMode(context)) }
     var blackWallEnabled by remember { mutableStateOf(com.carnelia.vpn.core.BlackWallEngine.isEnabled(context)) }
@@ -1363,20 +1362,6 @@ fun CensorshipBypassSettings(context: Context) {
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Stealth Mode
-        ToggleCard(
-            title = stringResource(R.string.stealth_mode_title),
-            description = stringResource(R.string.stealth_mode_desc),
-            checked = stealthModeEnabled,
-            onCheckedChange = { 
-                stealthModeEnabled = it
-                PrefsManager.setStealthModeEnabled(context, it)
-                VpnGlobalState.isStealthModeEnabled = it
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-        
         // Fragmentation (Expanded)
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),

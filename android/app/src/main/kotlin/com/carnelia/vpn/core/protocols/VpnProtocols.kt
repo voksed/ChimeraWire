@@ -44,7 +44,12 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
     private var bytesSent = 0L
     private var bytesReceived = 0L
     private var activeTunnel: tun2socks.Tunnel? = null
-    
+    // Raw duplicate of the TUN fd handed to native tun2socks. detachFd() cleared its
+    // fdsan owner and the Go layer never closes it on disconnect, so it must be closed
+    // here — otherwise the last TUN reference lingers, the system keeps the VpnService
+    // bound, and tun0 plus the status-bar key stay up after disconnect.
+    private var nativeTunFd: Int = -1
+
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private var isRunning = false
     
@@ -138,6 +143,7 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
         try {
             activeTunnel?.disconnect()
             activeTunnel = null
+            closeNativeTunFd()
             XrayCoreManager.stopCore()
         } catch(e: Exception) {
              AppLogger.error("XrayVpnProtocol: Stop error", e)
@@ -145,7 +151,21 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
         scope.cancel()
         updateConnectionState(ConnectionState.DISCONNECTED)
     }
-    
+
+    /**
+     * Releases the duplicate TUN fd handed to native tun2socks. adoptFd takes ownership
+     * of the detached descriptor so close() drops the final reference to the TUN device.
+     */
+    private fun closeNativeTunFd() {
+        if (nativeTunFd < 0) return
+        try {
+            android.os.ParcelFileDescriptor.adoptFd(nativeTunFd).close()
+        } catch (e: Exception) {
+            AppLogger.error("XrayVpnProtocol: closeNativeTunFd error", e)
+        }
+        nativeTunFd = -1
+    }
+
     override fun getConnectionState(): ConnectionState = connectionState
     
     override fun getBytesTransferred(): Pair<Long, Long> = Pair(bytesSent, bytesReceived)
@@ -175,8 +195,9 @@ class XrayVpnProtocol(private val context: Context) : IVpnProtocol {
                 
                 // Tun2Socks client
                 val client = Shadowsocks.newClientFromJSON(jsonConfig.toString())
-                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.detachFd().toLong(), client, true)
-                
+                nativeTunFd = android.os.ParcelFileDescriptor.dup(fileDescriptor.fileDescriptor).detachFd()
+                val tunnel = Tun2socks.connectShadowsocksTunnel(nativeTunFd.toLong(), client, true)
+
                 activeTunnel = tunnel
                 AppLogger.log("XrayVpnProtocol: Tunnel Established!")
                 
@@ -226,6 +247,8 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
     private var bytesSent = 0L
     private var bytesReceived = 0L
     private var activeTunnel: tun2socks.Tunnel? = null
+    // Detached TUN fd copy given to native tun2socks; closed on stop so tun0 tears down.
+    private var nativeTunFd: Int = -1
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private var isRunning = false
     private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
@@ -288,11 +311,18 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
         updateConnectionState(ConnectionState.DISCONNECTING)
         try {
             activeTunnel?.disconnect(); activeTunnel = null
+            closeNativeTunFd()
             com.carnelia.vpn.core.SingboxCoreManager.stopCore()
             com.carnelia.vpn.core.XrayCoreManager.stopCore()
         } catch (_: Exception) {}
         scope.cancel()
         updateConnectionState(ConnectionState.DISCONNECTED)
+    }
+
+    private fun closeNativeTunFd() {
+        if (nativeTunFd < 0) return
+        try { android.os.ParcelFileDescriptor.adoptFd(nativeTunFd).close() } catch (_: Exception) {}
+        nativeTunFd = -1
     }
 
     override fun getConnectionState() = connectionState
@@ -312,7 +342,8 @@ class SingboxVpnProtocol(private val context: Context) : IVpnProtocol {
                     put("method", com.carnelia.vpn.core.XrayCoreManager.LOCAL_METHOD)
                 }
                 val client = shadowsocks.Shadowsocks.newClientFromJSON(json.toString())
-                activeTunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.detachFd().toLong(), client, true)
+                nativeTunFd = android.os.ParcelFileDescriptor.dup(fileDescriptor.fileDescriptor).detachFd()
+                activeTunnel = Tun2socks.connectShadowsocksTunnel(nativeTunFd.toLong(), client, true)
                 AppLogger.log("SingboxVpnProtocol: Tunnel established!")
 
                 // Hysteria2 (and TUIC/QUIC protocols) drop idle sessions after ~5-6 min.
@@ -368,6 +399,8 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
     private var bytesSent = 0L
     private var bytesReceived = 0L
     private var activeTunnel: tun2socks.Tunnel? = null
+    // Detached TUN fd copy given to native tun2socks; closed on stop so tun0 tears down.
+    private var nativeTunFd: Int = -1
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private var isRunning = false
     private val stateListeners = mutableListOf<(ConnectionState) -> Unit>()
@@ -413,11 +446,18 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
         updateConnectionState(ConnectionState.DISCONNECTING)
         try {
             activeTunnel?.disconnect(); activeTunnel = null
+            closeNativeTunFd()
             com.carnelia.vpn.core.Hysteria2ProcessManager.stop()
             com.carnelia.vpn.core.XrayCoreManager.stopCore()
         } catch (_: Exception) {}
         scope.cancel()
         updateConnectionState(ConnectionState.DISCONNECTED)
+    }
+
+    private fun closeNativeTunFd() {
+        if (nativeTunFd < 0) return
+        try { android.os.ParcelFileDescriptor.adoptFd(nativeTunFd).close() } catch (_: Exception) {}
+        nativeTunFd = -1
     }
 
     override fun getConnectionState() = connectionState
@@ -436,7 +476,8 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
                 jsonConfig.put("password", com.carnelia.vpn.core.XrayCoreManager.LOCAL_PASSWORD)
                 jsonConfig.put("method", com.carnelia.vpn.core.XrayCoreManager.LOCAL_METHOD)
                 val client = shadowsocks.Shadowsocks.newClientFromJSON(jsonConfig.toString())
-                val tunnel = Tun2socks.connectShadowsocksTunnel(fileDescriptor.detachFd().toLong(), client, true)
+                nativeTunFd = android.os.ParcelFileDescriptor.dup(fileDescriptor.fileDescriptor).detachFd()
+                val tunnel = Tun2socks.connectShadowsocksTunnel(nativeTunFd.toLong(), client, true)
                 activeTunnel = tunnel
                 AppLogger.log("Hysteria2VpnProtocol: Tun2Socks tunnel established!")
                 // Stats
@@ -513,7 +554,7 @@ class AmneziaWgVpnProtocol(private val context: Context) : IVpnProtocol {
             return
         }
         scope.launch {
-            val ok = com.carnelia.vpn.core.AmneziaWgCoreManager.startTunnel(fileDescriptor.detachFd(), config)
+            val ok = com.carnelia.vpn.core.AmneziaWgCoreManager.startTunnel(android.os.ParcelFileDescriptor.dup(fileDescriptor.fileDescriptor).detachFd(), config)
             if (!ok) {
                 AppLogger.error("AmneziaWgVpnProtocol: tunnel failed to start")
                 updateConnectionState(ConnectionState.ERROR)

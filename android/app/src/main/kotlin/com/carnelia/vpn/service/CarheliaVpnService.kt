@@ -130,16 +130,26 @@ class CarheliaVpnService : VpnService() {
                 }
                 ACTION_DISCONNECT -> {
                     scope.launch {
-                        if (isLockdown) {
-                            isLockdown = false
+                        try {
+                            if (isLockdown) {
+                                isLockdown = false
+                                AppLogger.log("Service: LOCKDOWN снят пользователем")
+                            } else {
+                                vpnManager.disconnect()
+                            }
+                        } catch (e: Exception) {
+                            AppLogger.error("Service: disconnect error", e)
+                        }
+                        // Teardown must complete even if the disconnect above cancelled this
+                        // scope: without destroying the service the system keeps the VPN
+                        // session alive (tun0 + status-bar key stay up, next connect misfires).
+                        withContext(NonCancellable) {
                             closeVpnInterface()
                             currentState = ConnectionState.DISCONNECTED
                             VpnGlobalState.updateState(ConnectionState.DISCONNECTED)
-                            AppLogger.log("Service: LOCKDOWN снят пользователем")
-                        } else {
-                            vpnManager.disconnect()
+                            stopForeground(STOP_FOREGROUND_REMOVE)
+                            stopSelf()
                         }
-                        stopSelf()
                     }
                 }
                 ACTION_LOCKDOWN -> {
@@ -396,15 +406,10 @@ class CarheliaVpnService : VpnService() {
 
             builder.addRoute("0.0.0.0", 0)
 
-            // IPv6: заворачиваем ВЕСЬ IPv6 в туннель, иначе IPv6-трафик приложений уходит
-            // мимо VPN с реальным адресом (утечка + прямой IP-деанон). Если апстрим IPv4-only,
-            // IPv6-пакеты в туннеле просто отбрасываются (fail-closed) — наружу ничего не течёт.
-            try {
-                builder.addAddress("fd00:1111:2222:3333::1", 64)
-                builder.addRoute("::", 0)
-            } catch (e: Exception) {
-                AppLogger.error("Service: IPv6 capture setup failed", e)
-            }
+            // IPv4-only routing: the tun2socks bridge forwards IPv4 exclusively.
+            // Adding a ::/0 route would pull app IPv6 traffic into a tunnel that cannot
+            // proxy it, producing high TX / near-zero RX. IPv6 is intentionally left
+            // to the underlying network here.
 
             // IPv4-only DNS — IPv6 DNS causes requests to IPv6 destinations that IPv4-only
             // VLESS servers can't proxy, leading to high TX / near-zero RX (requests sent but
