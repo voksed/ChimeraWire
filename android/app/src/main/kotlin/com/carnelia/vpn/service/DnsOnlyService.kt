@@ -341,7 +341,22 @@ class DnsOnlyService : VpnService() {
         buf.putShort(0) // UDP checksum (optional)
 
         buf.put(payload)
-        return buf.array()
+
+        // The kernel does not fill the IPv4 header checksum for packets injected into the
+        // TUN, so it is computed here; a zero/invalid checksum makes the receive path drop
+        // the reply and no domain resolves.
+        val out = buf.array()
+        var sum = 0
+        var i = 0
+        while (i < 20) {
+            sum += ((out[i].toInt() and 0xFF) shl 8) or (out[i + 1].toInt() and 0xFF)
+            i += 2
+        }
+        while ((sum ushr 16) != 0) sum = (sum and 0xFFFF) + (sum ushr 16)
+        val checksum = sum.inv() and 0xFFFF
+        out[10] = (checksum ushr 8).toByte()
+        out[11] = (checksum and 0xFF).toByte()
+        return out
     }
 
     private fun stop() {

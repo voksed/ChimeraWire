@@ -50,6 +50,7 @@ private data class ToolEntry(
 @Composable
 private fun ToolsHubScreen(onBack: () -> Unit, onTool: (Class<*>) -> Unit) {
     val tools = listOf(
+        ToolEntry(Icons.Default.Https,        "DNS без VPN (DoH)",                                 "Шифрованный DNS и сетевые инструменты без туннеля", StandaloneToolsActivity::class.java),
         ToolEntry(Icons.Default.Security,     stringResource(R.string.tool_leak_test_name),       stringResource(R.string.tool_leak_test_desc),       LeakTestActivity::class.java),
         ToolEntry(Icons.Default.Fingerprint,  stringResource(R.string.tool_fingerprint_name),    stringResource(R.string.tool_fingerprint_desc),    FingerprintCheckActivity::class.java),
         ToolEntry(Icons.Default.Dns,          stringResource(R.string.tool_dns_audit_name),      stringResource(R.string.tool_dns_audit_desc),      DnsAuditActivity::class.java),
