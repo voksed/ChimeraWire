@@ -28,3 +28,9 @@ gen/
 *.bak
 .DS_Store
 releases/android/*.apk
+
+# ==== Любые скрытые файлы/папки с точкой не должны попадать в репозиторий ====
+# (кроме самих git-конфигов). Покрывает .idea, .vscode, .claude, .github, .gradle и т.п.
+.*
+!.gitignore
+!.gitattributes
