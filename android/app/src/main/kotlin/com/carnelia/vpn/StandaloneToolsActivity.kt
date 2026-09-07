@@ -68,6 +68,7 @@ fun StandaloneToolsScreen(activity: StandaloneToolsActivity) {
     // ── DNS Protection state ──────────────────────────────────────
     var dnsRunning by remember { mutableStateOf(DnsOnlyService.isRunning) }
     var selectedDnsLabel by remember { mutableStateOf("adguard") }
+    var dohEnabled by remember { mutableStateOf(true) }
     var customDnsIp by remember { mutableStateOf("") }
     var showDnsCustom by remember { mutableStateOf(false) }
 
@@ -195,6 +196,7 @@ fun StandaloneToolsScreen(activity: StandaloneToolsActivity) {
                         action = DnsOnlyService.ACTION_START
                         putExtra(DnsOnlyService.EXTRA_DNS_LABEL, selectedDnsLabel)
                         putExtra(DnsOnlyService.EXTRA_DNS_IP, ip)
+                        putExtra(DnsOnlyService.EXTRA_DOH, dohEnabled && DnsOnlyService.DOH_ENDPOINTS.containsKey(selectedDnsLabel))
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         context.startForegroundService(startIntent)
@@ -222,6 +224,25 @@ fun StandaloneToolsScreen(activity: StandaloneToolsActivity) {
                             placeholder = { Text("192.168.1.1") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    val dohSupported = DnsOnlyService.DOH_ENDPOINTS.containsKey(selectedDnsLabel)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Шифровать запросы (DoH)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                if (dohSupported) "DNS поверх HTTPS — обходит подмену DNS без VPN" else "Недоступно для своего IP",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = dohEnabled && dohSupported,
+                            onCheckedChange = { dohEnabled = it },
+                            enabled = dohSupported
                         )
                     }
                 }

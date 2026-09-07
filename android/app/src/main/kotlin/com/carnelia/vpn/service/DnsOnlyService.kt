@@ -14,12 +14,18 @@ import com.carnelia.vpn.StandaloneToolsActivity
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.*
+import okhttp3.Dns
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.nio.ByteBuffer
+import java.util.concurrent.TimeUnit
 
 /**
  * DnsOnlyService — v2.4.0
@@ -57,6 +63,7 @@ class DnsOnlyService : VpnService() {
         const val ACTION_STOP   = "com.carnelia.vpn.DNSONLY_STOP"
         const val EXTRA_DNS_LABEL = "dns_label"  // "cloudflare" | "adguard" | "google" | "quad9" | "custom"
         const val EXTRA_DNS_IP    = "dns_ip"     // primary DNS IP string
+        const val EXTRA_DOH       = "doh_enabled" // encrypt queries over DNS-over-HTTPS
 
         private const val NOTIFICATION_ID = 43
         private const val CHANNEL_ID = "dnsonly_channel"
@@ -67,6 +74,8 @@ class DnsOnlyService : VpnService() {
             private set
         var activeDnsLabel: String = ""
             private set
+        var activeDohEnabled: Boolean = false
+            private set
 
         val DNS_PRESETS = mapOf(
             "cloudflare" to Pair("1.1.1.1", "1.0.0.1"),
@@ -74,10 +83,27 @@ class DnsOnlyService : VpnService() {
             "google"     to Pair("8.8.8.8", "8.8.4.4"),
             "quad9"      to Pair("9.9.9.9", "149.112.112.112")
         )
+
+        // DoH endpoint per preset: request host (matched by the TLS certificate) plus a
+        // pinned bootstrap IP, so the resolver is reached without a plaintext system DNS
+        // lookup that a censored network could block or poison. Custom IPs have no DoH.
+        val DOH_ENDPOINTS = mapOf(
+            "cloudflare" to Pair("https://cloudflare-dns.com/dns-query", "1.1.1.1"),
+            "adguard"    to Pair("https://dns.adguard-dns.com/dns-query", "94.140.14.14"),
+            "google"     to Pair("https://dns.google/dns-query", "8.8.8.8"),
+            "quad9"      to Pair("https://dns.quad9.net/dns-query", "9.9.9.9")
+        )
     }
 
     private var vpnInterface: ParcelFileDescriptor? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // Set when DoH is active: the endpoint URL, an HTTP client pinned to the resolver IP,
+    // and the DNS IP presented to the OS as the query source. Null in plain-UDP mode.
+    private var dohUrl: String? = null
+    private var dohClient: OkHttpClient? = null
+    private var activeDnsIp: String = ""
+    private val dnsMediaType = "application/dns-message".toMediaType()
 
     // ---------------------------------------------------------------
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -87,7 +113,8 @@ class DnsOnlyService : VpnService() {
                 val dnsIp = intent.getStringExtra(EXTRA_DNS_IP)
                     ?: DNS_PRESETS[label]?.first
                     ?: "1.1.1.1"
-                startDnsMode(label, dnsIp)
+                val useDoh = intent.getBooleanExtra(EXTRA_DOH, false) && DOH_ENDPOINTS.containsKey(label)
+                startDnsMode(label, dnsIp, useDoh)
             }
             ACTION_STOP -> stop()
         }
@@ -104,11 +131,14 @@ class DnsOnlyService : VpnService() {
     }
 
     // ---------------------------------------------------------------
-    private fun startDnsMode(label: String, primaryDns: String) {
+    private fun startDnsMode(label: String, primaryDns: String, useDoh: Boolean) {
         isRunning = true
         activeDnsLabel = label
+        activeDnsIp = primaryDns
+        activeDohEnabled = useDoh
+        setupDoh(if (useDoh) label else null)
         startForeground(NOTIFICATION_ID, buildNotification(label, primaryDns))
-        AppLogger.log("DnsOnly: Starting — label=$label dns=$primaryDns")
+        AppLogger.log("DnsOnly: Starting — label=$label dns=$primaryDns doh=$useDoh")
 
         try {
             val builder = Builder()
@@ -181,8 +211,15 @@ class DnsOnlyService : VpnService() {
                 val dnsPayloadLen = len - ihl - 8
                 if (dnsPayloadLen <= 0) continue
                 val dnsPayload = packet.copyOfRange(ihl + 8, len)
+                val srcPort = extractSourcePort(packet, ihl)
 
-                // Forward via protected socket
+                // Encrypted path: tunnel the query through DNS-over-HTTPS and write the reply back.
+                if (dohClient != null) {
+                    scope.launch(Dispatchers.IO) { forwardDoh(dnsPayload, srcPort, outputStream) }
+                    continue
+                }
+
+                // Forward via protected socket (plaintext UDP)
                 scope.launch(Dispatchers.IO) {
                     try {
                         val socket = DatagramSocket()
@@ -215,6 +252,56 @@ class DnsOnlyService : VpnService() {
             }
         } catch (e: Exception) {
             AppLogger.log("DnsOnly: Relay loop ended: ${e.message}")
+        }
+    }
+
+    /**
+     * Configures the DoH endpoint and an HTTP client that resolves only the resolver's own
+     * host to a pinned bootstrap IP, so the encrypted tunnel never needs a plaintext lookup.
+     * A null label disables DoH and leaves the plain-UDP relay in place.
+     */
+    private fun setupDoh(label: String?) {
+        val endpoint = label?.let { DOH_ENDPOINTS[it] }
+        if (endpoint == null) {
+            dohUrl = null; dohClient = null
+            return
+        }
+        val (url, ip) = endpoint
+        val host = url.removePrefix("https://").substringBefore("/")
+        val bootstrap = object : Dns {
+            override fun lookup(hostname: String): List<InetAddress> =
+                if (hostname.equals(host, ignoreCase = true)) listOf(InetAddress.getByName(ip))
+                else Dns.SYSTEM.lookup(hostname)
+        }
+        dohUrl = url
+        dohClient = OkHttpClient.Builder()
+            .dns(bootstrap)
+            .connectTimeout(6, TimeUnit.SECONDS)
+            .readTimeout(6, TimeUnit.SECONDS)
+            .build()
+    }
+
+    /**
+     * Sends one DNS query as application/dns-message over HTTPS and writes the wire-format
+     * answer back into the TUN, addressed as if it came from the resolver on port 53.
+     */
+    private fun forwardDoh(payload: ByteArray, dstPort: Int, out: FileOutputStream) {
+        val url = dohUrl ?: return
+        val client = dohClient ?: return
+        try {
+            val req = Request.Builder()
+                .url(url)
+                .header("Accept", "application/dns-message")
+                .post(payload.toRequestBody(dnsMediaType))
+                .build()
+            client.newCall(req).execute().use { resp ->
+                val answer = resp.body?.bytes() ?: return
+                if (answer.isEmpty()) return
+                val response = buildUdpResponse(activeDnsIp, TUN_ADDRESS, 53, dstPort, answer)
+                try { out.write(response) } catch (_: Exception) {}
+            }
+        } catch (e: Exception) {
+            AppLogger.log("DnsOnly: DoH error: ${e.message}")
         }
     }
 
@@ -260,6 +347,9 @@ class DnsOnlyService : VpnService() {
     private fun stop() {
         isRunning = false
         activeDnsLabel = ""
+        activeDohEnabled = false
+        dohUrl = null
+        dohClient = null
         scope.cancel()
         try { vpnInterface?.close() } catch (_: Exception) {}
         vpnInterface = null
@@ -281,10 +371,12 @@ class DnsOnlyService : VpnService() {
         val openPi = PendingIntent.getActivity(this, 1, openIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val labelDisplay = label.replaceFirstChar { it.uppercase() }
+        val method = if (activeDohEnabled) "DoH · $labelDisplay" else labelDisplay
+        val detail = if (activeDohEnabled) "DNS-over-HTTPS active → $labelDisplay" else "DNS active → $dnsIp"
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_lock)
-            .setContentTitle("DNS Protection: $labelDisplay")
-            .setContentText("Encrypted DNS active → $dnsIp")
+            .setContentTitle("DNS Protection: $method")
+            .setContentText(detail)
             .setContentIntent(openPi)
             .setOngoing(true)
             .addAction(
