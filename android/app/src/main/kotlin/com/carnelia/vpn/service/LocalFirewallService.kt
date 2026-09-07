@@ -88,7 +88,7 @@ class LocalFirewallService : VpnService() {
 
         try {
             val builder = Builder()
-            builder.setSession("Carnelia Firewall")
+            builder.setSession("ChimeraWire Firewall")
             builder.addAddress(TUN4, 32)
             builder.addAddress(TUN6, 128)
             // Capture every destination for the listed apps, both families, then drop it.

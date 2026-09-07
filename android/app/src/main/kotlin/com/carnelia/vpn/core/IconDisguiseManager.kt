@@ -6,7 +6,7 @@ import android.content.pm.PackageManager
 import com.carnelia.vpn.utils.AppLogger
 
 enum class DisguiseOption(val alias: String, val label: String) {
-    REAL(".LauncherReal", "Carnelia VPN"),
+    REAL(".LauncherReal", "ChimeraWire"),
     CALCULATOR(".LauncherCalculator", "Калькулятор"),
     NOTES(".LauncherNotes", "Заметки");
 }

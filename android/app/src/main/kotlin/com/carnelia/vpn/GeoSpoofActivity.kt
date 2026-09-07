@@ -752,7 +752,7 @@ private fun MockWarningCard() {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Перейдите в Настройки → Для разработчиков → Выбрать приложение для фиктивных местоположений → выберите Carnelia VPN",
+                "Перейдите в Настройки → Для разработчиков → Выбрать приложение для фиктивных местоположений → выберите ChimeraWire",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )

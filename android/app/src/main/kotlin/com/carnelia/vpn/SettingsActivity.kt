@@ -73,7 +73,7 @@ class SettingsActivity : AppCompatActivity() {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_EMAIL, arrayOf("carneliavpn@gmail.com")) 
-                    putExtra(Intent.EXTRA_SUBJECT, "Bug Report Carnelia VPN")
+                    putExtra(Intent.EXTRA_SUBJECT, "Bug Report ChimeraWire")
                     putExtra(Intent.EXTRA_TEXT, report)
                 }
                 context.startActivity(Intent.createChooser(intent, "Send Report"))

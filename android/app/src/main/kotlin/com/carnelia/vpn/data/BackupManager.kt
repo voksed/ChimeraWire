@@ -32,7 +32,7 @@ object BackupManager {
         val backupStr = "$PREFIX$encoded"
 
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("Carnelia VPN Backup", backupStr))
+        clipboard.setPrimaryClip(ClipData.newPlainText("ChimeraWire Backup", backupStr))
         AppLogger.log("BackupManager: Exported ${servers.size} servers to clipboard")
         return backupStr
     }

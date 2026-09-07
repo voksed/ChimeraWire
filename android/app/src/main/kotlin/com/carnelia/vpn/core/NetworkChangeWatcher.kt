@@ -75,7 +75,7 @@ object NetworkChangeWatcher {
         }
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_warning)
-            .setContentTitle("Carnelia")
+            .setContentTitle("ChimeraWire")
             .setContentText(text)
             .setAutoCancel(true)
             .build()

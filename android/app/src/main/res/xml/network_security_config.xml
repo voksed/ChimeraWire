@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Политика сетевой безопасности Carnelia VPN
+    Политика сетевой безопасности ChimeraWire
     - Запрещён cleartext (HTTP) для всех доменов
     - TLS обязателен
     - Исключение: localhost нужен для xray-core локального inbound-прокси

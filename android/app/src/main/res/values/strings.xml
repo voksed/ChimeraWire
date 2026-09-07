@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Carnelia VPN</string>
+    <string name="app_name">ChimeraWire</string>
     <string name="connect_button">CONNECT</string>
     <string name="disconnect_button">DISCONNECT</string>
     <string name="connected_status">CONNECTED</string>
@@ -45,9 +45,9 @@
     <string name="sent_label">SENT</string>
     <string name="quick_connect">QUICK CONNECT</string>
     <string name="disconnect_caps">DISCONNECT</string>
-    <string name="ton_vpn_title">CARNELIA VPN</string>
+    <string name="ton_vpn_title">ChimeraWire</string>
     <string name="voks_vpn_title">VOKS VPN</string>
-    <string name="carnelia_vpn_title">CARNELIA VPN</string>
+    <string name="carnelia_vpn_title">ChimeraWire</string>
     <string name="status_active">● ACTIVE</string>
     <string name="status_inactive">● INACTIVE</string>
     <string name="status_error">● ERROR</string>
@@ -168,8 +168,8 @@
     <string name="allow_lan_title">Allow LAN Connections</string>
     <string name="allow_lan_summary">Share VPN connection with other devices on local network.</string>
     <string name="auto_start_title">App Auto-Start</string>
-    <string name="auto_start_summary">Launch Carnelia VPN on device boot.</string>
-    <string name="auto_start_summary_desc">Launch Carnelia VPN on device boot.</string>
+    <string name="auto_start_summary">Launch ChimeraWire on device boot.</string>
+    <string name="auto_start_summary_desc">Launch ChimeraWire on device boot.</string>
 
     <!-- Auto Connect Feature -->
     <string name="smart_auto_connect_title">Smart Auto-Connect</string>
@@ -207,7 +207,7 @@
 
     <!-- New Social & Report -->
     <string name="telegram_news_channel">News Channel</string>
-    <string name="bug_report_subject">Carnelia VPN Bug Report</string>
+    <string name="bug_report_subject">ChimeraWire Bug Report</string>
     <string name="bug_report_body_template">
 Describe the problem here:
 
@@ -274,7 +274,7 @@ Last Error: %5$s
     <string name="theme_dark_amoled">Dark — AMOLED</string>
     
     <!-- Games -->
-    <string name="game_miner_title">Carnelia Miner</string>
+    <string name="game_miner_title">ChimeraWire Miner</string>
     <string name="game_miner_score">Balance: %1$d</string>
     <string name="game_miner_tap">TAP TO MINE</string>
 
@@ -283,7 +283,7 @@ Last Error: %5$s
     <string name="donate_dev_title">Support Developer</string>
     <string name="donate_dev_desc">Donate &amp; Support</string>
     <string name="app_theme_title">App Theme</string>
-    <string name="donate_page_header">Support Carnelia VPN</string>
+    <string name="donate_page_header">Support ChimeraWire</string>
     <string name="donate_page_body">The app is completely free and ad-free.\nServers are paid from my own pocket.\nIf you like the service, you can support the project with any amount.</string>
     <string name="donate_ton_title">Crypto</string>
     <string name="address_copied_toast">Address copied!</string>
@@ -397,7 +397,7 @@ Last Error: %5$s
     <!-- v2.4.0: Biometric Lock -->
     <string name="biometric_lock_title">Biometric / PIN Lock</string>
     <string name="biometric_lock_desc">Require fingerprint or PIN to open the app</string>
-    <string name="biometric_prompt_title">Carnelia VPN</string>
+    <string name="biometric_prompt_title">ChimeraWire</string>
     <string name="biometric_prompt_subtitle">Authenticate to continue</string>
 
     <!-- v2.4.0: VPN Schedule -->

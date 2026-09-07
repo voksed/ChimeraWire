@@ -427,7 +427,7 @@ class CarheliaVpnService : VpnService() {
             }
             try { builder.addDnsServer("8.8.8.8") } catch (_: Exception) {}
             
-            builder.setSession("Carnelia VPN")
+            builder.setSession("ChimeraWire")
             
             // Kill Switch Implementation (Soft)
             // Setting metered can prevent some background syncs on expensive roaming, but for killswitch
@@ -536,7 +536,7 @@ class CarheliaVpnService : VpnService() {
             builder.addAddress("10.255.255.1", 32)
             try { builder.addRoute("0.0.0.0", 0) } catch (e: Exception) { AppLogger.error("Service: lockdown addRoute v4 failed", e) }
             try { builder.addRoute("::", 0) } catch (e: Exception) { AppLogger.error("Service: lockdown addRoute v6 failed", e) }
-            builder.setSession("Carnelia Protection Mode")
+            builder.setSession("ChimeraWire Protection Mode")
             builder.setBlocking(true)
             currentInterface = builder.establish()
             AppLogger.log("Service: Lockdown-интерфейс поднят — трафик устройства заблокирован")

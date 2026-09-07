@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Carnelia VPN</string>
+    <string name="app_name">ChimeraWire</string>
     <string name="connect_button">连接</string>
     <string name="disconnect_button">断开</string>
     <string name="connected_status">已连接</string>
@@ -45,9 +45,9 @@
     <string name="sent_label">已发送</string>
     <string name="quick_connect">快速连接</string>
     <string name="disconnect_caps">断开</string>
-    <string name="ton_vpn_title">CARNELIA VPN</string>
+    <string name="ton_vpn_title">ChimeraWire</string>
     <string name="voks_vpn_title">VOKS VPN</string>
-    <string name="carnelia_vpn_title">CARNELIA VPN</string>
+    <string name="carnelia_vpn_title">ChimeraWire</string>
     <string name="status_active">● 活动</string>
     <string name="status_inactive">● 未活动</string>
     <string name="status_error">● 错误</string>
@@ -168,8 +168,8 @@
     <string name="allow_lan_title">允许 LAN 连接</string>
     <string name="allow_lan_summary">与局域网内的其他设备共享 VPN 连接。</string>
     <string name="auto_start_title">应用自启动</string>
-    <string name="auto_start_summary">设备开机时启动 Carnelia VPN。</string>
-    <string name="auto_start_summary_desc">设备开机时启动 Carnelia VPN。</string>
+    <string name="auto_start_summary">设备开机时启动 ChimeraWire。</string>
+    <string name="auto_start_summary_desc">设备开机时启动 ChimeraWire。</string>
 
     <!-- Auto Connect Feature -->
     <string name="smart_auto_connect_title">智能自动连接</string>
@@ -207,7 +207,7 @@
 
     <!-- New Social & Report -->
     <string name="telegram_news_channel">新闻频道</string>
-    <string name="bug_report_subject">Carnelia VPN 问题报告</string>
+    <string name="bug_report_subject">ChimeraWire 问题报告</string>
     <string name="bug_report_body_template">
 请在此描述问题：
 
@@ -274,7 +274,7 @@ Android：%2$s
     <string name="theme_dark_amoled">深色 — AMOLED</string>
 
     <!-- Games -->
-    <string name="game_miner_title">Carnelia Miner</string>
+    <string name="game_miner_title">ChimeraWire Miner</string>
     <string name="game_miner_score">余额：%1$d</string>
     <string name="game_miner_tap">点击挖矿</string>
 
@@ -283,7 +283,7 @@ Android：%2$s
     <string name="donate_dev_title">支持开发者</string>
     <string name="donate_dev_desc">捐赠与支持</string>
     <string name="app_theme_title">应用主题</string>
-    <string name="donate_page_header">支持 Carnelia VPN</string>
+    <string name="donate_page_header">支持 ChimeraWire</string>
     <string name="donate_page_body">本应用完全免费且无广告。\n服务器由我个人出资。\n如果你喜欢这项服务，可以用任意金额支持本项目。</string>
     <string name="donate_ton_title">加密货币</string>
     <string name="address_copied_toast">地址已复制！</string>
@@ -397,7 +397,7 @@ Android：%2$s
     <!-- v2.4.0: Biometric Lock -->
     <string name="biometric_lock_title">生物识别 / PIN 锁</string>
     <string name="biometric_lock_desc">打开应用需要指纹或 PIN</string>
-    <string name="biometric_prompt_title">Carnelia VPN</string>
+    <string name="biometric_prompt_title">ChimeraWire</string>
     <string name="biometric_prompt_subtitle">请验证以继续</string>
 
     <!-- v2.4.0: VPN Schedule -->

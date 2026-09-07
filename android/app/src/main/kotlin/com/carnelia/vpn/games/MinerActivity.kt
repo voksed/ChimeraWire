@@ -69,7 +69,7 @@ fun MinerGameScreen() {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Carnelia Miner",
+                text = "ChimeraWire Miner",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold

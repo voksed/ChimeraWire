@@ -176,7 +176,7 @@ class GeoSpoofService : Service() {
                 AppLogger.log("GeoSpoof: registered provider '$provider'")
             } catch (e: SecurityException) {
                 AppLogger.log("GeoSpoof: SecurityException on '$provider' — " +
-                    "enable Developer Options → Mock location app → CarneliaVPN")
+                    "enable Developer Options → Mock location app → ChimeraWire")
             } catch (e: Exception) {
                 AppLogger.log("GeoSpoof: register '$provider' failed: ${e.message}")
             }

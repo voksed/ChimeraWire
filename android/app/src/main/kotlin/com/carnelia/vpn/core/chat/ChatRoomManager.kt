@@ -51,7 +51,7 @@ class ChatRoomManager(private val context: Context, val config: VpnServerConfig)
     private val roomKey = ChatCrypto.roomKey(roomSecret)
     val roomId: String = roomInfohash.toHex()
 
-    val nickname: String = Build.MODEL ?: "Carnelia"
+    val nickname: String = Build.MODEL ?: "ChimeraWire"
 
     private val dht = DhtClient()
     private var socket: DatagramSocket? = null

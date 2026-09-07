@@ -63,7 +63,7 @@ class VpnTileService : TileService() {
             }
             else -> {
                 tile.state = Tile.STATE_INACTIVE
-                tile.label = "Carnelia VPN"
+                tile.label = "ChimeraWire"
                 tile.icon = android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_lock_idle_lock) // Or custom icon
             }
         }

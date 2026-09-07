@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Carnelia VPN</string>
+    <string name="app_name">ChimeraWire</string>
     <string name="connect_button">اتصال</string>
     <string name="disconnect_button">قطع الاتصال</string>
     <string name="connected_status">متصل</string>
@@ -45,9 +45,9 @@
     <string name="sent_label">مُرسَل</string>
     <string name="quick_connect">اتصال سريع</string>
     <string name="disconnect_caps">قطع الاتصال</string>
-    <string name="ton_vpn_title">CARNELIA VPN</string>
+    <string name="ton_vpn_title">ChimeraWire</string>
     <string name="voks_vpn_title">VOKS VPN</string>
-    <string name="carnelia_vpn_title">CARNELIA VPN</string>
+    <string name="carnelia_vpn_title">ChimeraWire</string>
     <string name="status_active">● نشط</string>
     <string name="status_inactive">● غير نشط</string>
     <string name="status_error">● خطأ</string>
@@ -168,8 +168,8 @@
     <string name="allow_lan_title">السماح باتصالات LAN</string>
     <string name="allow_lan_summary">مشاركة اتصال VPN مع أجهزة أخرى على الشبكة المحلية.</string>
     <string name="auto_start_title">تشغيل التطبيق تلقائيًا</string>
-    <string name="auto_start_summary">تشغيل Carnelia VPN عند إقلاع الجهاز.</string>
-    <string name="auto_start_summary_desc">تشغيل Carnelia VPN عند إقلاع الجهاز.</string>
+    <string name="auto_start_summary">تشغيل ChimeraWire عند إقلاع الجهاز.</string>
+    <string name="auto_start_summary_desc">تشغيل ChimeraWire عند إقلاع الجهاز.</string>
 
     <!-- Auto Connect Feature -->
     <string name="smart_auto_connect_title">اتصال تلقائي ذكي</string>
@@ -207,7 +207,7 @@
 
     <!-- New Social & Report -->
     <string name="telegram_news_channel">قناة الأخبار</string>
-    <string name="bug_report_subject">تقرير خلل Carnelia VPN</string>
+    <string name="bug_report_subject">تقرير خلل ChimeraWire</string>
     <string name="bug_report_body_template">
 صف المشكلة هنا:
 
@@ -274,7 +274,7 @@ Android: %2$s
     <string name="theme_dark_amoled">داكن — AMOLED</string>
 
     <!-- Games -->
-    <string name="game_miner_title">Carnelia Miner</string>
+    <string name="game_miner_title">ChimeraWire Miner</string>
     <string name="game_miner_score">الرصيد: %1$d</string>
     <string name="game_miner_tap">اضغط للتعدين</string>
 
@@ -283,7 +283,7 @@ Android: %2$s
     <string name="donate_dev_title">ادعم المطوّر</string>
     <string name="donate_dev_desc">تبرّع وادعم</string>
     <string name="app_theme_title">مظهر التطبيق</string>
-    <string name="donate_page_header">ادعم Carnelia VPN</string>
+    <string name="donate_page_header">ادعم ChimeraWire</string>
     <string name="donate_page_body">التطبيق مجاني تمامًا وبلا إعلانات.\nالخوادم مدفوعة من جيبي الخاص.\nإذا أعجبتك الخدمة، يمكنك دعم المشروع بأي مبلغ.</string>
     <string name="donate_ton_title">عملة رقمية</string>
     <string name="address_copied_toast">تم نسخ العنوان!</string>
@@ -397,7 +397,7 @@ Android: %2$s
     <!-- v2.4.0: Biometric Lock -->
     <string name="biometric_lock_title">قفل بصمة / PIN</string>
     <string name="biometric_lock_desc">طلب بصمة أو PIN لفتح التطبيق</string>
-    <string name="biometric_prompt_title">Carnelia VPN</string>
+    <string name="biometric_prompt_title">ChimeraWire</string>
     <string name="biometric_prompt_subtitle">تحقّق للمتابعة</string>
 
     <!-- v2.4.0: VPN Schedule -->

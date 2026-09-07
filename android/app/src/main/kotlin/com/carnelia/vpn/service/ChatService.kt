@@ -83,7 +83,7 @@ class ChatService : Service() {
 
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_send)
-            .setContentTitle("Carnelia: чат активен")
+            .setContentTitle("ChimeraWire: чат активен")
             .setContentText("Ищу собеседников через DHT и слушаю сообщения")
             .setContentIntent(openPi)
             .setOngoing(true)
