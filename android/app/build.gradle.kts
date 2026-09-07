@@ -23,8 +23,8 @@ android {
         applicationId = "com.carnelia.vpn"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.1.0"
         // app_name берётся из strings.xml ("Carnelia VPN")
     }
 
