@@ -23,6 +23,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -762,7 +764,17 @@ fun UpdateDialog(info: UpdateManager.UpdateInfo, onDismiss: () -> Unit) {
                 Text(stringResource(R.string.update_current_version, BuildConfig.VERSION_NAME), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 if (info.changelog.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(info.changelog, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, maxLines = 8)
+                    // Full release notes in a scrollable region so long changelogs fit
+                    // without being truncated or overflowing the dialog.
+                    Text(
+                        info.changelog,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        modifier = Modifier
+                            .heightIn(max = 340.dp)
+                            .verticalScroll(rememberScrollState())
+                    )
                 }
                 if (downloading) {
                     Spacer(Modifier.height(12.dp))

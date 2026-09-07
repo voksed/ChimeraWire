@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit
 object UpdateManager {
 
     // Публичный API GitHub Releases — работает без токена на публичном репозитории.
-    private const val RELEASES_API = "https://api.github.com/repos/voksed/carnelia-vpn/releases/latest"
+    // После ребрендинга обновления берутся из нового репозитория ChimeraWire.
+    private const val RELEASES_API = "https://api.github.com/repos/voksed/ChimeraWire/releases/latest"
     private val CURRENT_VERSION = BuildConfig.VERSION_NAME
 
     data class UpdateInfo(
@@ -70,7 +71,7 @@ object UpdateManager {
             UpdateInfo(
                 version = latest,
                 downloadUrl = apkUrl,
-                changelog = json.optString("body", "").take(600)
+                changelog = localizeChangelog(json.optString("body", ""))
             )
         } catch (e: Exception) {
             AppLogger.log("UpdateManager: check failed — ${e.message}")
@@ -137,6 +138,27 @@ object UpdateManager {
         } catch (e: Exception) {
             AppLogger.error("UpdateManager: cannot open URL", e)
         }
+    }
+
+    /**
+     * Picks the release-notes section for the device language. A release body may bundle
+     * several languages, each led by a line marker like `[[en]]`, `[[ru]]`, `[[es]]`
+     * (2-letter code). Falls back to English, then to the whole body if unmarked.
+     */
+    private fun localizeChangelog(body: String): String {
+        if (body.isBlank()) return ""
+        val marker = Regex("(?m)^[ \\t]*\\[\\[([A-Za-z]{2})\\]\\][ \\t]*$")
+        val matches = marker.findAll(body).toList()
+        if (matches.isEmpty()) return body.trim()
+        val sections = LinkedHashMap<String, String>()
+        for (i in matches.indices) {
+            val lang = matches[i].groupValues[1].lowercase()
+            val start = matches[i].range.last + 1
+            val end = if (i + 1 < matches.size) matches[i + 1].range.first else body.length
+            sections[lang] = body.substring(start, end).trim()
+        }
+        val lang = java.util.Locale.getDefault().language.lowercase()
+        return sections[lang] ?: sections["en"] ?: sections.values.firstOrNull() ?: body.trim()
     }
 
     private fun isNewerVersion(latest: String, current: String): Boolean {
