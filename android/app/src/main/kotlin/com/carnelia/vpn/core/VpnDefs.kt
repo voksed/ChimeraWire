@@ -21,7 +21,8 @@ enum class VpnProtocol {
     CLOAK,
     HYSTERIA2,
     TUIC,
-    WARP
+    WARP,
+    FREEDOM
 }
 
 /**

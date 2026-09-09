@@ -1,11 +1,16 @@
 package com.carnelia.vpn
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.net.VpnService
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +32,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.core.BlackWallEngine
 import com.carnelia.vpn.core.BlackWallEngine.StealthLevel
+import com.carnelia.vpn.core.ConnectionState
+import com.carnelia.vpn.core.VpnGlobalState
+import com.carnelia.vpn.core.VpnProtocol
+import com.carnelia.vpn.core.VpnServerConfig
+import com.carnelia.vpn.service.CarheliaVpnService
 import com.carnelia.vpn.ui.theme.CarheliaTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +61,42 @@ fun BlackWallScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(BlackWallEngine.isEnabled(context)) }
     var level   by remember { mutableStateOf(BlackWallEngine.getLevel(context)) }
+
+    // Serverless bypass: a direct connection with TLS fragmentation, no upstream server.
+    val connState by VpnGlobalState.connectionState.collectAsState()
+    val bypassRunning = connState == ConnectionState.CONNECTED ||
+        connState == ConnectionState.CONNECTING ||
+        connState == ConnectionState.RECONNECTING
+    val freedomConfig = remember {
+        VpnServerConfig(
+            id = "blackwall-direct",
+            name = "Black Wall (без сервера)",
+            protocol = VpnProtocol.FREEDOM,
+            host = "direct",
+            port = 443,
+            config = emptyMap()
+        )
+    }
+    fun startBypass() {
+        context.startService(Intent(context, CarheliaVpnService::class.java).apply {
+            action = CarheliaVpnService.ACTION_CONNECT
+            putExtra(CarheliaVpnService.EXTRA_CONFIG, freedomConfig)
+        })
+    }
+    val vpnConsentLauncher = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) startBypass()
+        else Toast.makeText(context, "Нужно разрешение VPN", Toast.LENGTH_SHORT).show()
+    }
+    fun toggleBypass() {
+        if (bypassRunning) {
+            context.startService(Intent(context, CarheliaVpnService::class.java).apply {
+                action = CarheliaVpnService.ACTION_DISCONNECT
+            })
+        } else {
+            val prep = VpnService.prepare(context)
+            if (prep != null) vpnConsentLauncher.launch(prep) else startBypass()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -204,6 +250,29 @@ fun BlackWallScreen(onBack: () -> Unit) {
                                 lineHeight = 16.sp
                             )
                         }
+
+                        Spacer(Modifier.height(14.dp))
+                        Button(
+                            onClick = { toggleBypass() },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (bypassRunning) MaterialTheme.colorScheme.errorContainer
+                                                 else MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text(
+                                if (bypassRunning) "Остановить" else "Запустить без сервера",
+                                color = if (bypassRunning) MaterialTheme.colorScheme.onErrorContainer
+                                        else MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                        Text(
+                            "Прямое подключение с фрагментацией TLS — обход DPI без VPN-сервера.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 15.sp,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
                     }
                 }
             }

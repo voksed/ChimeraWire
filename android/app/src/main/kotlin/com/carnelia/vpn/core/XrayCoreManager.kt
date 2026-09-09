@@ -374,6 +374,7 @@ object XrayCoreManager {
      * по отдельности не видят одновременно настоящий IP клиента и конечный адрес назначения.
      */
     private fun buildMultiHopEntryOutbound(context: Context, exitConfig: VpnServerConfig): JSONObject? {
+        if (exitConfig.protocol == VpnProtocol.FREEDOM) return null // no upstream to chain
         if (!PrefsManager.isMultiHopEnabled(context)) return null
         val entryId = PrefsManager.getMultiHopEntryServerId(context) ?: return null
         if (entryId == exitConfig.id) return null
@@ -430,11 +431,17 @@ object XrayCoreManager {
             mux.put("concurrency", PrefsManager.getMuxTcpConcurrency(context))
             realOutbound.put("mux", mux)
         }
-        configureProtocol(realOutbound, vpnConfig)
-        applySockOpt(context, realOutbound)
-        // Black Wall: apply after protocol config so streamSettings exists
-        if (BlackWallEngine.isEnabled(context)) {
-            BlackWallEngine.applyToXrayOutbound(context, realOutbound, vpnConfig)
+        if (vpnConfig.protocol == VpnProtocol.FREEDOM) {
+            // Serverless Black Wall: dial destinations directly and fragment the TLS
+            // ClientHello, so DPI cannot read the SNI. No upstream server involved.
+            configureFreedom(context, realOutbound)
+        } else {
+            configureProtocol(realOutbound, vpnConfig)
+            applySockOpt(context, realOutbound)
+            // Black Wall: apply after protocol config so streamSettings exists
+            if (BlackWallEngine.isEnabled(context)) {
+                BlackWallEngine.applyToXrayOutbound(context, realOutbound, vpnConfig)
+            }
         }
 
         // Мульти-хоп: если настроен, exit-outbound дозванивается ЧЕРЕЗ entry-outbound
@@ -551,6 +558,30 @@ object XrayCoreManager {
             VpnProtocol.HTTP -> configureInternalHttp(outbound, config)
             else -> throw Exception("Unsupported protocol: ${config.protocol}")
         }
+    }
+
+    /**
+     * Serverless bypass outbound: a direct (freedom) connection whose TLS ClientHello is
+     * fragmented so DPI cannot match on the SNI. Fragment aggressiveness follows the Black
+     * Wall level and is always applied here, since fragmentation is the mode's only purpose.
+     */
+    private fun configureFreedom(context: Context, outbound: JSONObject) {
+        outbound.put("protocol", "freedom")
+        outbound.put("settings", JSONObject().put("domainStrategy", "UseIP"))
+
+        val length = when (BlackWallEngine.getLevel(context)) {
+            BlackWallEngine.StealthLevel.PHANTOM -> "1-3"
+            BlackWallEngine.StealthLevel.WRAITH  -> "1-2"
+            else -> "1-5"
+        }
+        val fragment = JSONObject()
+            .put("packets", "tlshello")
+            .put("length", length)
+            .put("interval", "10-20")
+        val sockopt = JSONObject()
+            .put("fragment", fragment)
+            .put("tcpKeepAliveInterval", 300)
+        outbound.put("streamSettings", JSONObject().put("sockopt", sockopt))
     }
 
     // Protocol Implementations (Keep existing logic minimal touch, just reformat if needed)
@@ -881,6 +912,8 @@ object XrayCoreManager {
     
     // Validates critical fields
     private fun validateConfig(config: VpnServerConfig) {
+        // Serverless bypass has no upstream host/port — it dials destinations directly.
+        if (config.protocol == VpnProtocol.FREEDOM) return
         if (config.host.isBlank()) throw Exception("Адрес сервера не указан")
         if (config.port <= 0 || config.port > 65535) throw Exception("Неверный порт: ${config.port}")
 
