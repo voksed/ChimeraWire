@@ -23,9 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carnelia.vpn.R
 import com.carnelia.vpn.core.VpnServerConfig
 import com.carnelia.vpn.core.chat.ChatMessage
 import com.carnelia.vpn.core.chat.ChatRoomRegistry
@@ -70,7 +72,7 @@ private fun RoomListScreen(onBack: () -> Unit, onOpenRoom: (VpnServerConfig) -> 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Чат", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
+                title = { Text(stringResource(R.string.xchat_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
@@ -83,14 +85,13 @@ private fun RoomListScreen(onBack: () -> Unit, onOpenRoom: (VpnServerConfig) -> 
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             Text(
-                "Комната — это все, у кого есть тот же серверный конфиг. Общий VLESS/пароль/ключ служит секретом, " +
-                    "по которому телефоны находят друг друга через публичную DHT-сеть — сторонних серверов нет.",
+                stringResource(R.string.xchat_room_explainer),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             if (servers.isEmpty()) {
-                Text("Нет сохранённых серверов — сначала добавь хотя бы один", color = Color(0xFF444444), fontSize = 13.sp)
+                Text(stringResource(R.string.xchat_no_servers), color = Color(0xFF444444), fontSize = 13.sp)
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(servers, key = { it.id }) { server ->
@@ -155,7 +156,7 @@ private fun RoomScreen(config: VpnServerConfig, onBack: () -> Unit) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.People, null, tint = Color(0xFF888888), modifier = Modifier.size(12.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("${peers.size} в сети", fontSize = 11.sp, color = Color(0xFF888888))
+                            Text(stringResource(R.string.xchat_peers_online, peers.size), fontSize = 11.sp, color = Color(0xFF888888))
                         }
                     }
                 },
@@ -181,7 +182,7 @@ private fun RoomScreen(config: VpnServerConfig, onBack: () -> Unit) {
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (!isRunning) {
                 Text(
-                    "Комната выключена — нажми ▶ сверху, чтобы начать поиск собеседников",
+                    stringResource(R.string.xchat_room_off),
                     fontSize = 12.sp,
                     color = Color(0xFFFFAA00),
                     modifier = Modifier.padding(12.dp)
@@ -203,7 +204,7 @@ private fun RoomScreen(config: VpnServerConfig, onBack: () -> Unit) {
                     value = input,
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Сообщение…", color = Color.Gray) },
+                    placeholder = { Text(stringResource(R.string.xchat_message_placeholder), color = Color.Gray) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onBackground,

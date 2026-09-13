@@ -134,7 +134,7 @@ fun StandaloneToolsScreen(activity: StandaloneToolsActivity) {
             // ══════════════════════════════════════════════════════
             //  0. App traffic analyzer + per-app blocker
             // ══════════════════════════════════════════════════════
-            SectionLabel("ТРАФИК ПРИЛОЖЕНИЙ")
+            SectionLabel(stringResource(R.string.xstd_app_traffic_section))
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -154,8 +154,8 @@ fun StandaloneToolsScreen(activity: StandaloneToolsActivity) {
                     ) { Icon(Icons.Default.Block, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp)) }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Блокатор и анализатор трафика", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                        Text("Расход по приложениям + блокировка интернета без VPN", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.xstd_blocker_analyzer), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.xstd_blocker_analyzer_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -233,9 +233,9 @@ fun StandaloneToolsScreen(activity: StandaloneToolsActivity) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text("Шифровать запросы (DoH)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(stringResource(R.string.xstd_encrypt_doh), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                             Text(
-                                if (dohSupported) "DNS поверх HTTPS — обходит подмену DNS без VPN" else "Недоступно для своего IP",
+                                if (dohSupported) stringResource(R.string.xstd_doh_supported) else stringResource(R.string.xstd_doh_unsupported),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

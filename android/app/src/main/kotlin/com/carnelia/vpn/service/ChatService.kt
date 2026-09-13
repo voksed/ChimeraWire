@@ -1,5 +1,7 @@
 package com.carnelia.vpn.service
 
+import com.carnelia.vpn.R
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -72,7 +74,7 @@ class ChatService : Service() {
     private fun buildNotification(): Notification {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Чат", NotificationManager.IMPORTANCE_LOW))
+            nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, getString(R.string.xchatsvc_channel), NotificationManager.IMPORTANCE_LOW))
         }
 
         val stopIntent = Intent(this, ChatService::class.java).apply { action = ACTION_STOP_ALL }
@@ -83,14 +85,14 @@ class ChatService : Service() {
 
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_send)
-            .setContentTitle("ChimeraWire: чат активен")
-            .setContentText("Ищу собеседников через DHT и слушаю сообщения")
+            .setContentTitle(getString(R.string.xchatsvc_title))
+            .setContentText(getString(R.string.xchatsvc_text))
             .setContentIntent(openPi)
             .setOngoing(true)
             .addAction(
                 Notification.Action.Builder(
                     android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
-                    "Остановить",
+                    getString(R.string.xchatsvc_stop),
                     stopPi
                 ).build()
             )

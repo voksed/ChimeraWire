@@ -1,5 +1,7 @@
 package com.carnelia.vpn.service
 
+import com.carnelia.vpn.R
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -177,14 +179,14 @@ class LocalFirewallService : VpnService() {
         )
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_lock)
-            .setContentTitle("Блокатор трафика активен")
-            .setContentText("Заблокировано приложений: $count")
+            .setContentTitle(getString(R.string.xfw_title))
+            .setContentText(getString(R.string.xfw_blocked_count, count))
             .setContentIntent(openPi)
             .setOngoing(true)
             .addAction(
                 Notification.Action.Builder(
                     Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
-                    "Стоп", stopPi
+                    getString(R.string.xfw_stop), stopPi
                 ).build()
             )
             .build()

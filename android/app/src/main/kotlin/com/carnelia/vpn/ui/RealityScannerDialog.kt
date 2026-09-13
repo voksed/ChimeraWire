@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,10 +45,11 @@ fun RealityScannerDialog(
     val strCheckingPort = stringResource(R.string.reality_scanner_checking_port)
     val strDone = stringResource(R.string.ok_button)
 
+    val scanCtx = LocalContext.current
     LaunchedEffect(Unit) {
         progress = strStarting
         scope.launch {
-            result = RealityScannerManager.scan(server.host, server.port) { msg ->
+            result = RealityScannerManager.scan(scanCtx, server.host, server.port) { msg ->
                 progress = msg
             }
             isScanning = false

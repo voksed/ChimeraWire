@@ -1,5 +1,7 @@
 package com.carnelia.vpn.core
 
+import com.carnelia.vpn.R
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -65,13 +67,13 @@ object NetworkChangeWatcher {
         } else {
             context.startService(intent)
         }
-        notify(context, "Сеть изменилась — переподключение")
+        notify(context, context.getString(R.string.xncw_net_changed))
     }
 
     private fun notify(context: Context, text: String) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Смена сети", NotificationManager.IMPORTANCE_LOW))
+            nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, context.getString(R.string.xncw_channel), NotificationManager.IMPORTANCE_LOW))
         }
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_warning)

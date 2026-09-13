@@ -27,9 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carnelia.vpn.R
 import com.carnelia.vpn.core.BlackWallEngine
 import com.carnelia.vpn.core.BlackWallEngine.StealthLevel
 import com.carnelia.vpn.core.ConnectionState
@@ -70,7 +72,7 @@ fun BlackWallScreen(onBack: () -> Unit) {
     val freedomConfig = remember {
         VpnServerConfig(
             id = "blackwall-direct",
-            name = "Black Wall (без сервера)",
+            name = context.getString(R.string.xbw_direct_name),
             protocol = VpnProtocol.FREEDOM,
             host = "direct",
             port = 443,
@@ -85,7 +87,7 @@ fun BlackWallScreen(onBack: () -> Unit) {
     }
     val vpnConsentLauncher = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) startBypass()
-        else Toast.makeText(context, "Нужно разрешение VPN", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(context, context.getString(R.string.xbw_vpn_permission_needed), Toast.LENGTH_SHORT).show()
     }
     fun toggleBypass() {
         if (bypassRunning) {
@@ -174,7 +176,7 @@ fun BlackWallScreen(onBack: () -> Unit) {
                         Spacer(Modifier.height(12.dp))
 
                         Text(
-                            "Уровень защиты",
+                            stringResource(R.string.xbw_protection_level),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -214,7 +216,7 @@ fun BlackWallScreen(onBack: () -> Unit) {
                                                     MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                lvl.description,
+                                                stringResource(lvl.descRes),
                                                 fontSize = 11.sp,
                                                 color = if (selected)
                                                     MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -237,12 +239,9 @@ fun BlackWallScreen(onBack: () -> Unit) {
                         if (enabled && level != StealthLevel.OFF) {
                             Text(
                                 text = when (level) {
-                                    StealthLevel.GHOST ->
-                                        "• Фрагментация TLS ClientHello (1-5 байт)\n• Маскировка SNI под CDN-домен"
-                                    StealthLevel.PHANTOM ->
-                                        "• Фрагментация TLS (1-3 байт)\n• SNI-маскировка\n• Рандомный uTLS fingerprint"
-                                    StealthLevel.WRAITH ->
-                                        "• Максимальная фрагментация (1-2 байт)\n• SNI-маскировка + uTLS\n• Шумовой трафик (имитация браузера)"
+                                    StealthLevel.GHOST   -> stringResource(R.string.xbw_ghost_details)
+                                    StealthLevel.PHANTOM -> stringResource(R.string.xbw_phantom_details)
+                                    StealthLevel.WRAITH  -> stringResource(R.string.xbw_wraith_details)
                                     else -> ""
                                 },
                                 fontSize = 11.sp,
@@ -261,13 +260,14 @@ fun BlackWallScreen(onBack: () -> Unit) {
                             )
                         ) {
                             Text(
-                                if (bypassRunning) "Остановить" else "Запустить без сервера",
+                                if (bypassRunning) stringResource(R.string.xbw_stop)
+                                else stringResource(R.string.xbw_start_serverless),
                                 color = if (bypassRunning) MaterialTheme.colorScheme.onErrorContainer
                                         else MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         Text(
-                            "Прямое подключение с фрагментацией TLS — обход DPI без VPN-сервера.",
+                            stringResource(R.string.xbw_direct_desc),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 15.sp,
@@ -286,23 +286,18 @@ fun BlackWallScreen(onBack: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Как работает",
+                        stringResource(R.string.xbw_how_it_works),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "Ghost — обходит базовую DPI-фильтрацию через разбивку TLS-рукопожатия " +
-                        "и подмену SNI на доверенный CDN-домен.\n\n" +
-                        "Phantom — добавляет рандомный отпечаток браузера (uTLS), " +
-                        "защищает от сигнатурного анализа.\n\n" +
-                        "Wraith — максимальная маскировка: шумовые HTTPS-запросы делают " +
-                        "трафик неотличимым от обычного браузера.",
+                        stringResource(R.string.xbw_how_details),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
                     )
                     Text(
-                        "Настройки применяются при следующем подключении VPN.",
+                        stringResource(R.string.xbw_settings_apply_note),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

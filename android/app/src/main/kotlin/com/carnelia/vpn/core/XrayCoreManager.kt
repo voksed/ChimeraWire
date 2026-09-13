@@ -1,6 +1,7 @@
 package com.carnelia.vpn.core
 
 import android.content.Context
+import com.carnelia.vpn.R
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
@@ -65,14 +66,14 @@ object XrayCoreManager {
         if (now - lastRealityWarnAt < 15000) return
         lastRealityWarnAt = now
 
+        val app = com.carnelia.vpn.CarheliaApplication.instance
         val message = when {
-            noTls13 -> "REALITY: fingerprint без TLS 1.3. Смени fp на chrome в параметрах сервера."
-            realCert -> "REALITY: сервер отдаёт реальный сертификат — ключ (pbk/sid) не совпадает с сервером. Проверь ключ."
-            else -> "REALITY: рукопожатие отклонено сервером. Проверь параметры ключа."
+            noTls13 -> app.getString(R.string.xcore_reality_no_tls13)
+            realCert -> app.getString(R.string.xcore_reality_real_cert)
+            else -> app.getString(R.string.xcore_reality_rejected)
         }
         VpnGlobalState.setError(message)
         try {
-            val app = com.carnelia.vpn.CarheliaApplication.instance
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 android.widget.Toast.makeText(app, message, android.widget.Toast.LENGTH_LONG).show()
             }
@@ -922,8 +923,7 @@ object XrayCoreManager {
             val pbk = (config.config["pbk"] ?: config.config["publicKey"] ?: "").trim()
             if (pbk.isBlank() || !isValidRealityPublicKey(pbk)) {
                 throw Exception(
-                    "VLESS REALITY: публичный ключ недействителен ($pbk). " +
-                    "Удалите сервер и добавьте его снова через кнопку \"Добавить сервер\""
+                    com.carnelia.vpn.CarheliaApplication.instance.getString(R.string.xcore_reality_invalid_pbk, pbk)
                 )
             }
         }

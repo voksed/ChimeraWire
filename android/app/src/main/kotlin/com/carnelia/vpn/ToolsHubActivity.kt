@@ -50,7 +50,7 @@ private data class ToolEntry(
 @Composable
 private fun ToolsHubScreen(onBack: () -> Unit, onTool: (Class<*>) -> Unit) {
     val tools = listOf(
-        ToolEntry(Icons.Default.Https,        "DNS без VPN (DoH)",                                 "Шифрованный DNS и сетевые инструменты без туннеля", StandaloneToolsActivity::class.java),
+        ToolEntry(Icons.Default.Https,        stringResource(R.string.xhub_doh_name),             stringResource(R.string.xhub_doh_desc), StandaloneToolsActivity::class.java),
         ToolEntry(Icons.Default.Security,     stringResource(R.string.tool_leak_test_name),       stringResource(R.string.tool_leak_test_desc),       LeakTestActivity::class.java),
         ToolEntry(Icons.Default.Fingerprint,  stringResource(R.string.tool_fingerprint_name),    stringResource(R.string.tool_fingerprint_desc),    FingerprintCheckActivity::class.java),
         ToolEntry(Icons.Default.Dns,          stringResource(R.string.tool_dns_audit_name),      stringResource(R.string.tool_dns_audit_desc),      DnsAuditActivity::class.java),
@@ -66,7 +66,7 @@ private fun ToolsHubScreen(onBack: () -> Unit, onTool: (Class<*>) -> Unit) {
             TopAppBar(
                 title = {
                     Text(
-                        "Инструменты",
+                        stringResource(R.string.xhub_tools_title),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground,
                         letterSpacing = 1.sp

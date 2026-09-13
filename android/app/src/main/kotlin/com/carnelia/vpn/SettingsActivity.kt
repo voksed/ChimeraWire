@@ -1220,7 +1220,7 @@ fun CensorshipBypassSettings(context: Context) {
                                                                    else androidx.compose.ui.text.font.FontWeight.Normal,
                                         color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                                                 else MaterialTheme.colorScheme.onSurface)
-                                    Text(level.description, fontSize = 11.sp,
+                                    Text(stringResource(level.descRes), fontSize = 11.sp,
                                         color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                                 else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }

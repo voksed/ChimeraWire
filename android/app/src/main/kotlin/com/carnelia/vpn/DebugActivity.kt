@@ -183,7 +183,7 @@ fun DebugScreen(onBack: () -> Unit) {
                     IconButton(onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         clipboard.setPrimaryClip(ClipData.newPlainText("CarneliaVPN logs", AppLogger.getLogsAsString()))
-                        Toast.makeText(context, "Логи скопированы", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.xdbg_logs_copied), Toast.LENGTH_SHORT).show()
                     }) {
                         Text("CP", color = Color(0xFF888888), fontSize = 12.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
                     }
@@ -191,7 +191,7 @@ fun DebugScreen(onBack: () -> Unit) {
                         val saved = saveLogsToDownloads(context)
                         Toast.makeText(
                             context,
-                            if (saved != null) "Сохранено: Downloads/$saved" else "Не удалось сохранить",
+                            if (saved != null) context.getString(R.string.xdbg_saved_to, saved) else context.getString(R.string.xdbg_save_failed),
                             Toast.LENGTH_LONG
                         ).show()
                     }) {
@@ -203,7 +203,7 @@ fun DebugScreen(onBack: () -> Unit) {
                             putExtra(Intent.EXTRA_SUBJECT, "CarneliaVPN debug log")
                             putExtra(Intent.EXTRA_TEXT, AppLogger.getLogsAsString())
                         }
-                        context.startActivity(Intent.createChooser(send, "Отправить логи"))
+                        context.startActivity(Intent.createChooser(send, context.getString(R.string.xdbg_send_logs)))
                     }) {
                         Icon(Icons.Default.Share, null, tint = Color(0xFF888888))
                     }

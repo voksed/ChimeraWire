@@ -1,5 +1,7 @@
 package com.carnelia.vpn.core
 
+import com.carnelia.vpn.R
+
 import android.content.Context
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
@@ -29,11 +31,11 @@ object BlackWallEngine {
     private const val PREF_ENABLED = "black_wall_enabled"
     private const val PREF_LEVEL = "black_wall_level"
 
-    enum class StealthLevel(val label: String, val description: String) {
-        OFF("Выкл", "Обычный режим"),
-        GHOST("Ghost", "Фрагментация TLS + маскировка SNI"),
-        PHANTOM("Phantom", "Ghost + рандомизация пакетов"),
-        WRAITH("Wraith", "Phantom + шумовой трафик")
+    enum class StealthLevel(val label: String, val descRes: Int) {
+        OFF("Off", R.string.xbwe_off_desc),
+        GHOST("Ghost", R.string.xbwe_ghost_desc),
+        PHANTOM("Phantom", R.string.xbwe_phantom_desc),
+        WRAITH("Wraith", R.string.xbwe_wraith_desc)
     }
 
     // Whitelisted SNI domains that are not blocked anywhere

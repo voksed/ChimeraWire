@@ -1,5 +1,7 @@
 package com.carnelia.vpn.core
 
+import android.content.Context
+import com.carnelia.vpn.R
 import com.carnelia.vpn.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -32,11 +34,12 @@ object RealityScannerManager {
     data class PortResult(val port: Int, val pingMs: Int?)
 
     suspend fun scan(
+        context: Context,
         host: String,
         port: Int,
         onProgress: (String) -> Unit = {}
     ): ScanResult = withContext(Dispatchers.IO) {
-        onProgress("TCP-пинг $host:$port...")
+        onProgress(context.getString(R.string.xrsm_tcp_ping, host, port))
         val basePing = tcpPing(host, port, 3000)
         AppLogger.log("RealityScanner: base ping $host:$port = ${basePing}ms")
 
@@ -45,7 +48,7 @@ object RealityScannerManager {
         val portsToTest = (listOf(port) + COMMON_PORTS).distinct()
         for (p in portsToTest) {
             if (!isActive) break
-            onProgress("Проверяю порт $p...")
+            onProgress(context.getString(R.string.xrsm_checking_port, p))
             val ping = tcpPing(host, p, 2500)
             portResults.add(PortResult(p, ping))
             AppLogger.log("RealityScanner: port $p = ${ping}ms")
@@ -56,7 +59,7 @@ object RealityScannerManager {
             .minByOrNull { it.pingMs!! }?.port ?: port
 
         // Recommend fingerprint based on ping stability (we run 3 pings to best port)
-        onProgress("Анализирую стабильность соединения...")
+        onProgress(context.getString(R.string.xrsm_analyzing))
         val fpScores = mutableMapOf<String, Int>()
         val targetPort = bestPort
         for (fp in FINGERPRINTS.take(5)) {
@@ -69,7 +72,7 @@ object RealityScannerManager {
         }
 
         val bestFp = fpScores.minByOrNull { it.value }?.key ?: "chrome"
-        onProgress("Готово")
+        onProgress(context.getString(R.string.xrsm_done))
 
         ScanResult(
             host = host,
