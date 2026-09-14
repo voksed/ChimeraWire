@@ -97,39 +97,39 @@ class GeoSpoofActivity : AppCompatActivity() {
 }
 
 // ============ Presets: popular cities ============
-data class GeoPreset(val name: String, val flag: String, val lat: Double, val lon: Double)
+data class GeoPreset(val nameRes: Int, val flag: String, val lat: Double, val lon: Double)
 
 val GEO_PRESETS = listOf(
-    GeoPreset("Нью-Йорк",     "🇺🇸", 40.7128, -74.0060),
-    GeoPreset("Лондон",       "🇬🇧", 51.5074,  -0.1278),
-    GeoPreset("Берлин",       "🇩🇪", 52.5200,  13.4050),
-    GeoPreset("Париж",        "🇫🇷", 48.8566,   2.3522),
-    GeoPreset("Токио",        "🇯🇵", 35.6762, 139.6503),
-    GeoPreset("Дубай",        "🇦🇪", 25.2048,  55.2708),
-    GeoPreset("Сингапур",    "🇸🇬",  1.3521, 103.8198),
-    GeoPreset("Амстердам",    "🇳🇱", 52.3676,   4.9041),
-    GeoPreset("Цюрих",       "🇨🇭", 47.3769,   8.5417),
-    GeoPreset("Хельсинки",     "🇫🇮", 60.1699,  24.9384),
-    GeoPreset("Тбилиси",      "🇬🇪", 41.6938,  44.8015),
-    GeoPreset("Стамбул",     "🇹🇷", 41.0082,  28.9784),
-    GeoPreset("Варшава",       "🇵🇱", 52.2297,  21.0122),
+    GeoPreset(R.string.xgeo_city_ny,        "🇺🇸", 40.7128, -74.0060),
+    GeoPreset(R.string.xgeo_city_london,    "🇬🇧", 51.5074,  -0.1278),
+    GeoPreset(R.string.xgeo_city_berlin,    "🇩🇪", 52.5200,  13.4050),
+    GeoPreset(R.string.xgeo_city_paris,     "🇫🇷", 48.8566,   2.3522),
+    GeoPreset(R.string.xgeo_city_tokyo,     "🇯🇵", 35.6762, 139.6503),
+    GeoPreset(R.string.xgeo_city_dubai,     "🇦🇪", 25.2048,  55.2708),
+    GeoPreset(R.string.xgeo_city_singapore, "🇸🇬",  1.3521, 103.8198),
+    GeoPreset(R.string.xgeo_city_amsterdam, "🇳🇱", 52.3676,   4.9041),
+    GeoPreset(R.string.xgeo_city_zurich,    "🇨🇭", 47.3769,   8.5417),
+    GeoPreset(R.string.xgeo_city_helsinki,  "🇫🇮", 60.1699,  24.9384),
+    GeoPreset(R.string.xgeo_city_tbilisi,   "🇬🇪", 41.6938,  44.8015),
+    GeoPreset(R.string.xgeo_city_istanbul,  "🇹🇷", 41.0082,  28.9784),
+    GeoPreset(R.string.xgeo_city_warsaw,    "🇵🇱", 52.2297,  21.0122),
 )
 
 // ============ Speed presets ============
-data class SpeedPreset(val label: String, val ms: Float)
+data class SpeedPreset(val labelRes: Int, val ms: Float)
 val SPEED_PRESETS = listOf(
-    SpeedPreset("На месте", 0f),
-    SpeedPreset("Шаг 5 км/ч", 1.4f),
-    SpeedPreset("Бег 10 км/ч", 2.8f),
-    SpeedPreset("Авто 30 км/ч", 8.3f),
-    SpeedPreset("Авто 60 км/ч", 16.7f),
-    SpeedPreset("Авто 100 км/ч", 27.8f),
+    SpeedPreset(R.string.xgeo_speed_still, 0f),
+    SpeedPreset(R.string.xgeo_speed_walk, 1.4f),
+    SpeedPreset(R.string.xgeo_speed_run, 2.8f),
+    SpeedPreset(R.string.xgeo_speed_car30, 8.3f),
+    SpeedPreset(R.string.xgeo_speed_car60, 16.7f),
+    SpeedPreset(R.string.xgeo_speed_car100, 27.8f),
 )
 
-private enum class MapLayer(val title: String) {
-    STANDARD("Стандарт"),
-    SATELLITE("Спутник"),
-    TOPO("Рельеф")
+private enum class MapLayer(val titleRes: Int) {
+    STANDARD(R.string.xgeo_layer_standard),
+    SATELLITE(R.string.xgeo_layer_satellite),
+    TOPO(R.string.xgeo_layer_topo)
 }
 
 // ============ Geocoding (поиск места по названию) ============
@@ -237,7 +237,7 @@ fun GeoSpoofScreen(
         
         val hasLoc = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         if (!hasLoc) {
-            onShowToast("Для работы спуфинга нужно разрешение на геолокацию на устройстве!")
+            onShowToast(context.getString(R.string.xgeo_need_location_perm))
             try {
                ActivityCompat.requestPermissions((context as android.app.Activity), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1)
             } catch (e: Exception) {}
@@ -318,7 +318,7 @@ fun GeoSpoofScreen(
                     FilterChip(
                         selected = mapLayer == layer,
                         onClick = { mapLayer = layer },
-                        label = { Text(layer.title, fontSize = 11.sp) }
+                        label = { Text(stringResource(layer.titleRes), fontSize = 11.sp) }
                     )
                 }
             }
@@ -326,7 +326,7 @@ fun GeoSpoofScreen(
             OutlinedButton(
                 onClick = { showFullMapPicker = true },
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("Установить метку (полный экран)") }
+            ) { Text(stringResource(R.string.xgeo_set_marker_fullscreen)) }
             Spacer(Modifier.height(8.dp))
             OSMTileMap(
                 latitude = currentLat,
@@ -349,7 +349,7 @@ fun GeoSpoofScreen(
                 modifier = if (mapModifier == Modifier) Modifier.height(300.dp) else mapModifier
             )
             Spacer(Modifier.height(12.dp))
-            Text("Джойстик: удерживайте, чтобы двигать точку",
+            Text(stringResource(R.string.xgeo_joystick_hint),
                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             LocationJoystick(
@@ -375,7 +375,7 @@ fun GeoSpoofScreen(
             }
             Spacer(Modifier.height(16.dp))
             // Поиск места по названию / адресу
-            SpoofCard(title = "🔍 Поиск места") {
+            SpoofCard(title = stringResource(R.string.xgeo_search_place)) {
                 fun runSearch() {
                     if (searchQuery.isBlank() || isSearching) return
                     isSearching = true
@@ -384,13 +384,13 @@ fun GeoSpoofScreen(
                         val res = geocodePlace(searchQuery)
                         searchResults = res
                         isSearching = false
-                        if (res.isEmpty()) onShowToast("Ничего не найдено")
+                        if (res.isEmpty()) onShowToast(context.getString(R.string.xgeo_nothing_found))
                     }
                 }
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("Город, адрес, место") },
+                    label = { Text(stringResource(R.string.xgeo_city_address)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
                     keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { runSearch() }),
@@ -399,7 +399,7 @@ fun GeoSpoofScreen(
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
                             IconButton(onClick = { runSearch() }) {
-                                Icon(Icons.Default.Search, contentDescription = "Найти",
+                                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.xgeo_find),
                                     tint = MaterialTheme.colorScheme.primary)
                             }
                         }
@@ -447,12 +447,12 @@ fun GeoSpoofScreen(
             }
             Spacer(Modifier.height(16.dp))
             // Coordinates
-            SpoofCard(title = "📍 Координаты") {
+            SpoofCard(title = stringResource(R.string.xgeo_coordinates)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = latText,
                         onValueChange = { latText = it },
-                        label = { Text("Широта") },
+                        label = { Text(stringResource(R.string.xgeo_latitude)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -465,7 +465,7 @@ fun GeoSpoofScreen(
                     OutlinedTextField(
                         value = lonText,
                         onValueChange = { lonText = it },
-                        label = { Text("Долгота") },
+                        label = { Text(stringResource(R.string.xgeo_longitude)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -478,7 +478,7 @@ fun GeoSpoofScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = { applyPoint() }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Применить координаты")
+                    Text(stringResource(R.string.xgeo_apply_coords))
                 }
             }
         }
@@ -500,7 +500,7 @@ fun GeoSpoofScreen(
                 ) {
                     ControlsContent()
                     // City presets (compact in landscape)
-                    SpoofCard(title = "🌍 Пресеты") {
+                    SpoofCard(title = stringResource(R.string.xgeo_presets)) {
                         GEO_PRESETS.chunked(if (windowSize.isLargeTablet) 4 else 3).forEach { row ->
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
                                 row.forEach { preset ->
@@ -518,9 +518,9 @@ fun GeoSpoofScreen(
                                                 }
                                                 context.startService(intent)
                                             }
-                                            onShowToast("${preset.flag} ${preset.name}")
+                                            onShowToast("${preset.flag} ${context.getString(preset.nameRes)}")
                                         },
-                                        label = { Text("${preset.flag} ${preset.name}", fontSize = 10.sp) },
+                                        label = { Text("${preset.flag} ${stringResource(preset.nameRes)}", fontSize = 10.sp) },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -541,7 +541,7 @@ fun GeoSpoofScreen(
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
-                    SpoofCard(title = "🗺️ OSM Карта и Джойстик",
+                    SpoofCard(title = stringResource(R.string.xgeo_osm_map),
                         modifier = Modifier.weight(1f)) {
                         MapAndJoystickContent(
                             mapModifier = Modifier.fillMaxWidth().weight(1f).heightIn(min = 160.dp)
@@ -562,12 +562,12 @@ fun GeoSpoofScreen(
                 ControlsContent()
 
                 // Map + joystick
-                SpoofCard(title = "🗺️ OSM Карта и Джойстик") {
+                SpoofCard(title = stringResource(R.string.xgeo_osm_map)) {
                     MapAndJoystickContent()
                 }
 
                 // ---- City presets ----
-                SpoofCard(title = "🌍 Быстрые пресеты") {
+                SpoofCard(title = stringResource(R.string.xgeo_quick_presets)) {
                     GEO_PRESETS.chunked(3).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                             row.forEach { preset ->
@@ -585,9 +585,9 @@ fun GeoSpoofScreen(
                                             }
                                             context.startService(intent)
                                         }
-                                        onShowToast("${preset.flag} ${preset.name}")
+                                        onShowToast("${preset.flag} ${context.getString(preset.nameRes)}")
                                     },
-                                    label = { Text("${preset.flag} ${preset.name}", fontSize = 11.sp) },
+                                    label = { Text("${preset.flag} ${stringResource(preset.nameRes)}", fontSize = 11.sp) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -598,18 +598,18 @@ fun GeoSpoofScreen(
                 }
 
                 // ---- Movement ----
-                SpoofCard(title = "🚶 Симуляция движения") {
+                SpoofCard(title = stringResource(R.string.xgeo_movement_sim)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Симуляция движения", modifier = Modifier.weight(1f),
+                        Text(stringResource(R.string.xgeo_movement_sim_label), modifier = Modifier.weight(1f),
                             color = MaterialTheme.colorScheme.onSurface)
                         Switch(checked = moveEnabled, onCheckedChange = { moveEnabled = it; applyMovement() })
                     }
                     if (moveEnabled) {
                         Spacer(Modifier.height(8.dp))
-                        Text("Скорость", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.xgeo_speed), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(4.dp))
                         SPEED_PRESETS.forEach { preset ->
                             val selected = speed == preset.ms
@@ -624,12 +624,12 @@ fun GeoSpoofScreen(
                                     if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                                 )
                             ) {
-                                Text(preset.label,
+                                Text(stringResource(preset.labelRes),
                                     color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                             }
                         }
                         Spacer(Modifier.height(12.dp))
-                        Text("Направление (азимут: ${bearing.toInt()}°)", fontSize = 12.sp,
+                        Text(stringResource(R.string.xgeo_direction_azimuth, bearing.toInt()), fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(8.dp))
                         CompassControl(bearing = bearing, onBearingChange = { bearing = it; applyMovement() })
@@ -655,13 +655,13 @@ fun GeoSpoofScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Выбор метки", style = MaterialTheme.typography.titleLarge)
-                            TextButton(onClick = { showFullMapPicker = false }) { Text("Закрыть") }
+                            Text(stringResource(R.string.xgeo_pick_marker), style = MaterialTheme.typography.titleLarge)
+                            TextButton(onClick = { showFullMapPicker = false }) { Text(stringResource(R.string.xgeo_close)) }
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             MapLayer.entries.forEach { layer ->
                                 FilterChip(selected = mapLayer == layer, onClick = { mapLayer = layer },
-                                    label = { Text(layer.title, fontSize = 11.sp) })
+                                    label = { Text(stringResource(layer.titleRes), fontSize = 11.sp) })
                             }
                         }
                         Spacer(Modifier.height(8.dp))
@@ -682,7 +682,7 @@ fun GeoSpoofScreen(
                                 showFullMapPicker = false
                             },
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text("Установить метку") }
+                        ) { Text(stringResource(R.string.xgeo_set_marker)) }
                     }
                 }
             }
@@ -708,15 +708,15 @@ private fun StatusCard(isRunning: Boolean, onToggle: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    if (isRunning) "Подмена GPS АКТИВНА" else "Подмена GPS ВЫКЛЮЧЕНА",
+                    if (isRunning) stringResource(R.string.xgeo_gps_active) else stringResource(R.string.xgeo_gps_off),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = if (isRunning) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    if (isRunning) "Ваше местоположение GPS подменяется"
-                    else "Используется реальное местоположение GPS",
+                    if (isRunning) stringResource(R.string.xgeo_gps_spoofed)
+                    else stringResource(R.string.xgeo_gps_real),
                     fontSize = 12.sp,
                     color = if (isRunning) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
@@ -730,7 +730,7 @@ private fun StatusCard(isRunning: Boolean, onToggle: () -> Unit) {
                     else MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(if (isRunning) "Стоп" else "Старт")
+                Text(if (isRunning) stringResource(R.string.xgeo_stop) else stringResource(R.string.xgeo_start))
             }
         }
     }
@@ -746,13 +746,13 @@ private fun MockWarningCard() {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                "⚠️ Фиктивные местоположения не включены",
+                stringResource(R.string.xgeo_mock_off_title),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Перейдите в Настройки → Для разработчиков → Выбрать приложение для фиктивных местоположений → выберите ChimeraWire",
+                stringResource(R.string.xgeo_mock_off_steps),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -765,7 +765,7 @@ private fun MockWarningCard() {
                 },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onErrorContainer)
             ) {
-                Text("Открыть настройки разработчика")
+                Text(stringResource(R.string.xgeo_open_dev_settings))
             }
         }
     }
@@ -927,7 +927,7 @@ private fun OSMTileMap(
         Marker(mapView).apply {
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             isDraggable = true
-            title = "Точка спуфинга"
+            title = context.getString(R.string.xgeo_spoof_point)
         }
     }
 
@@ -1023,7 +1023,7 @@ private fun OSMTileMap(
     }
 
     Text(
-        text = "Тап/долгий тап или перетаскивание маркера меняют координаты",
+        text = stringResource(R.string.xgeo_map_hint),
         fontSize = 12.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(top = 8.dp)
