@@ -1,5 +1,7 @@
 package com.carnelia.vpn
 
+import androidx.compose.ui.res.stringResource
+
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -90,7 +92,7 @@ fun AppSelectionScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Выберите приложения", color = MaterialTheme.colorScheme.onSurface) },
+                title = { Text(stringResource(R.string.xas_title), color = MaterialTheme.colorScheme.onSurface) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                 navigationIcon = {
                     IconButton(onClick = { (context as? android.app.Activity)?.finish() }) {
@@ -113,7 +115,7 @@ fun AppSelectionScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    placeholder = { Text("Поиск приложений...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    placeholder = { Text(stringResource(R.string.xas_search), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(

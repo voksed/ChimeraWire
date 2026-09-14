@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -108,7 +109,7 @@ private fun AppFirewallScreen(activity: AppFirewallActivity) {
 
     val vpnPermLauncher = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) startFirewall(context).also { firewallOn = true }
-        else Toast.makeText(context, "Нужно разрешение VPN для локального блокатора", Toast.LENGTH_LONG).show()
+        else Toast.makeText(context, context.getString(R.string.xfwa_vpn_permission), Toast.LENGTH_LONG).show()
     }
 
     fun applyRunningState() {
@@ -125,7 +126,7 @@ private fun AppFirewallScreen(activity: AppFirewallActivity) {
 
     fun enableFirewall() {
         if (blocked.none { it != context.packageName }) {
-            Toast.makeText(context, "Отметь приложения для блокировки", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.xfwa_select_apps), Toast.LENGTH_SHORT).show()
             return
         }
         val prep = VpnService.prepare(context)
@@ -149,7 +150,7 @@ private fun AppFirewallScreen(activity: AppFirewallActivity) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Блокатор и трафик", color = MaterialTheme.colorScheme.onSurface) },
+                title = { Text(stringResource(R.string.xfwa_title), color = MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     IconButton(onClick = { activity.finish() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onSurface)
@@ -176,10 +177,10 @@ private fun AppFirewallScreen(activity: AppFirewallActivity) {
                     ) { Icon(Icons.Default.Block, null, tint = accent, modifier = Modifier.size(24.dp)) }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Локальный блокатор", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(stringResource(R.string.xfwa_local_blocker), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                         Text(
-                            if (firewallOn) "Активен · заблокировано ${LocalFirewallService.blockedCount}"
-                            else "Блокирует интернет выбранным приложениям без VPN-сервера",
+                            if (firewallOn) stringResource(R.string.xfwa_active_blocked, LocalFirewallService.blockedCount)
+                            else stringResource(R.string.xfwa_blocks_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -200,7 +201,7 @@ private fun AppFirewallScreen(activity: AppFirewallActivity) {
                 value = query,
                 onValueChange = { query = it },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
-                placeholder = { Text("Поиск приложения") },
+                placeholder = { Text(stringResource(R.string.xfwa_search)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
@@ -236,15 +237,15 @@ private fun UsageAccessBanner(context: Context) {
     ) {
         Column(Modifier.padding(14.dp)) {
             Text(
-                "Чтобы видеть расход трафика по приложениям, дай доступ к статистике использования.",
+                stringResource(R.string.xfwa_usage_access_prompt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = {
                 try { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-                catch (_: Exception) { Toast.makeText(context, "Не удалось открыть настройки", Toast.LENGTH_SHORT).show() }
-            }) { Text("Открыть настройки доступа") }
+                catch (_: Exception) { Toast.makeText(context, context.getString(R.string.xfwa_cant_open_settings), Toast.LENGTH_SHORT).show() }
+            }) { Text(stringResource(R.string.xfwa_open_access_settings)) }
         }
     }
 }
@@ -352,9 +353,9 @@ private fun queryUsageByUid(context: Context): Map<Int, Pair<Long, Long>> {
 }
 
 private fun formatTraffic(b: Long): String = when {
-    b <= 0 -> "0 Б"
-    b < 1024 -> "$b Б"
-    b < 1024 * 1024 -> "%.0f КБ".format(b / 1024.0)
-    b < 1024L * 1024 * 1024 -> "%.1f МБ".format(b / 1024.0 / 1024.0)
-    else -> "%.2f ГБ".format(b / 1024.0 / 1024.0 / 1024.0)
+    b <= 0 -> "0 B"
+    b < 1024 -> "$b B"
+    b < 1024 * 1024 -> "%.0f KB".format(b / 1024.0)
+    b < 1024L * 1024 * 1024 -> "%.1f MB".format(b / 1024.0 / 1024.0)
+    else -> "%.2f GB".format(b / 1024.0 / 1024.0 / 1024.0)
 }

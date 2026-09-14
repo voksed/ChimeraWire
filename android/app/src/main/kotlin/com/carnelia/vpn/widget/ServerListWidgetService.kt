@@ -41,7 +41,7 @@ class ServerListRemoteViewsFactory(private val context: Context) : RemoteViewsSe
         if (position < 0 || position >= servers.size) return null
         val server = servers[position]
         val views = RemoteViews(context.packageName, R.layout.widget_server_list_item)
-        views.setTextViewText(R.id.widget_server_name, server.name ?: "Без имени")
+        views.setTextViewText(R.id.widget_server_name, server.name ?: context.getString(R.string.xwid_no_name))
 
         // PendingIntent для выбора сервера
         val fillInIntent = Intent()

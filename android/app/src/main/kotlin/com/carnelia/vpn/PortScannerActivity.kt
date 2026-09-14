@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -103,7 +104,7 @@ fun PortScannerScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Сканер портов", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
+                title = { Text(stringResource(R.string.xps_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = MaterialTheme.colorScheme.onBackground)
@@ -121,7 +122,7 @@ fun PortScannerScreen(onBack: () -> Unit) {
             OutlinedTextField(
                 value = targetHost,
                 onValueChange = { targetHost = it },
-                label = { Text("Хост или IP", color = Color.Gray) },
+                label = { Text(stringResource(R.string.xps_host_or_ip), color = Color.Gray) },
                 singleLine = true,
                 enabled = !isScanning,
                 modifier = Modifier.fillMaxWidth(),
@@ -137,13 +138,13 @@ fun PortScannerScreen(onBack: () -> Unit) {
                 FilterChip(
                     selected = !useCustomRange,
                     onClick = { useCustomRange = false },
-                    label = { Text("Частые порты") },
+                    label = { Text(stringResource(R.string.xps_common_ports)) },
                     enabled = !isScanning
                 )
                 FilterChip(
                     selected = useCustomRange,
                     onClick = { useCustomRange = true },
-                    label = { Text("Диапазон") },
+                    label = { Text(stringResource(R.string.xps_range)) },
                     enabled = !isScanning
                 )
             }
@@ -152,7 +153,7 @@ fun PortScannerScreen(onBack: () -> Unit) {
                 OutlinedTextField(
                     value = customRange,
                     onValueChange = { customRange = it },
-                    label = { Text("Например: 1-1024", color = Color.Gray) },
+                    label = { Text(stringResource(R.string.xps_range_example), color = Color.Gray) },
                     singleLine = true,
                     enabled = !isScanning,
                     modifier = Modifier.fillMaxWidth(),
@@ -174,7 +175,7 @@ fun PortScannerScreen(onBack: () -> Unit) {
                 if (isScanning) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
                 } else {
-                    Text("Сканировать", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.xps_scan), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -188,9 +189,9 @@ fun PortScannerScreen(onBack: () -> Unit) {
             }
 
             if (results.isEmpty() && !isScanning) {
-                Text("Открытых портов пока не найдено", color = Color(0xFF444444), fontSize = 13.sp)
+                Text(stringResource(R.string.xps_no_open), color = Color(0xFF444444), fontSize = 13.sp)
             } else {
-                Text("Открыто: ${results.size}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.xps_open_count, results.size), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     items(results, key = { it.port }) { r ->
                         Row(

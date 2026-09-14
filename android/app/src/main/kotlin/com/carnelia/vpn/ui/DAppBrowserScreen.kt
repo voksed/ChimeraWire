@@ -1,5 +1,8 @@
 package com.carnelia.vpn.ui
 
+import androidx.compose.ui.res.stringResource
+import com.carnelia.vpn.R
+
 import android.annotation.SuppressLint
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -61,7 +64,7 @@ fun DAppBrowserScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onDismiss, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.xdapp_close), tint = MaterialTheme.colorScheme.onSurface)
                     }
                     OutlinedTextField(
                         value = urlInputText,

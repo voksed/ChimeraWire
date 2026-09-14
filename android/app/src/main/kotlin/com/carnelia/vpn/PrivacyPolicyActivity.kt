@@ -1,5 +1,7 @@
 package com.carnelia.vpn
 
+import androidx.compose.ui.res.stringResource
+
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -58,7 +60,7 @@ fun PrivacyPolicyScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = {
                     Text(
-                        "Политика конфиденциальности",
+                        stringResource(R.string.privacy_policy_title),
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 16.sp
                     )
@@ -67,7 +69,7 @@ fun PrivacyPolicyScreen(onBack: () -> Unit) {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад",
+                            contentDescription = stringResource(R.string.xpp_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }

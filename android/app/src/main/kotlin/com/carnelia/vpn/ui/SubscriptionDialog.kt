@@ -13,9 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.carnelia.vpn.R
 import com.carnelia.vpn.data.Subscription
 import com.carnelia.vpn.data.SubscriptionManager
 import kotlinx.coroutines.launch
@@ -71,12 +73,12 @@ fun SubscriptionDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        "Подписки",
+                        stringResource(R.string.xsub_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     IconButton(onClick = { showAddDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Добавить подписку", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.xsub_add), tint = MaterialTheme.colorScheme.primary)
                     }
                 }
 
@@ -88,7 +90,7 @@ fun SubscriptionDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "Нет подписок. Нажмите + чтобы добавить.",
+                            stringResource(R.string.xsub_empty),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontSize = 14.sp
                         )
@@ -129,6 +131,7 @@ private fun SubscriptionRow(
     onRefresh: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val serversLabel = stringResource(R.string.xsub_servers_count, subscription.serverCount)
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -144,7 +147,7 @@ private fun SubscriptionRow(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 val detail = buildString {
-                    if (subscription.serverCount > 0) append("${subscription.serverCount} серверов")
+                    if (subscription.serverCount > 0) append(serversLabel)
                     if (subscription.lastUpdated > 0) {
                         if (isNotEmpty()) append(" · ")
                         val fmt = SimpleDateFormat("dd.MM HH:mm", Locale.getDefault())
@@ -166,7 +169,7 @@ private fun SubscriptionRow(
                 IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
                     Icon(
                         Icons.Default.Refresh,
-                        contentDescription = "Обновить",
+                        contentDescription = stringResource(R.string.xsub_refresh),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -176,7 +179,7 @@ private fun SubscriptionRow(
             IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Удалить",
+                    contentDescription = stringResource(R.string.xsub_delete),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.size(18.dp)
                 )
@@ -195,13 +198,13 @@ private fun AddSubscriptionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Добавить подписку", color = MaterialTheme.colorScheme.onSurface) },
+        title = { Text(stringResource(R.string.xsub_add_title), color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Название") },
+                    label = { Text(stringResource(R.string.xsub_name)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -213,7 +216,7 @@ private fun AddSubscriptionDialog(
                 OutlinedTextField(
                     value = url,
                     onValueChange = { url = it },
-                    label = { Text("URL подписки") },
+                    label = { Text(stringResource(R.string.xsub_url_label)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -228,11 +231,11 @@ private fun AddSubscriptionDialog(
             TextButton(
                 onClick = { if (name.isNotBlank() && url.isNotBlank()) onAdd(name.trim(), url.trim()) },
                 enabled = name.isNotBlank() && url.isNotBlank()
-            ) { Text("Добавить", color = MaterialTheme.colorScheme.primary) }
+            ) { Text(stringResource(R.string.xsub_add_button), color = MaterialTheme.colorScheme.primary) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(stringResource(R.string.xsub_cancel), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         },
         containerColor = MaterialTheme.colorScheme.surface

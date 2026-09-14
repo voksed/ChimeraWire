@@ -7,9 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carnelia.vpn.R
 import com.carnelia.vpn.core.VpnProtocol
 import com.carnelia.vpn.core.VpnServerConfig
 
@@ -74,7 +76,7 @@ fun AwgSettingsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                if (isAmnezia) "Настройки AmneziaWG" else "Настройки WireGuard",
+                if (isAmnezia) stringResource(R.string.xawg_title_amnezia) else stringResource(R.string.xawg_title_wg),
                 color = scheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
@@ -109,13 +111,13 @@ fun AwgSettingsDialog(
                 }
 
                 Text(
-                    "Настройки сервера",
+                    stringResource(R.string.xawg_server_settings),
                     color = scheme.onSurface,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                Field(port, { port = it }, "Порт", numeric = true)
+                Field(port, { port = it }, stringResource(R.string.xawg_port), numeric = true)
             }
         },
         confirmButton = {
@@ -140,10 +142,10 @@ fun AwgSettingsDialog(
                     cfg["endpoint"] = if (host.contains(":")) "[$host]:$newPort" else "$host:$newPort"
                 }
                 onSave(server.copy(port = newPort, config = cfg))
-            }) { Text("Сохранить", color = accentColor) }
+            }) { Text(stringResource(R.string.xawg_save), color = accentColor) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена", color = scheme.onSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.xawg_cancel), color = scheme.onSurfaceVariant) }
         },
         containerColor = scheme.surface
     )

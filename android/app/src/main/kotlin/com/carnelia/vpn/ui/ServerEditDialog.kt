@@ -1,5 +1,6 @@
 package com.carnelia.vpn.ui
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -7,9 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carnelia.vpn.R
 import com.carnelia.vpn.core.VpnServerConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +34,7 @@ fun ServerEditDialog(
 ) {
     val isReality = server.config["security"] == "reality"
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
 
     var host by remember { mutableStateOf(server.host) }
     var port by remember { mutableStateOf(server.port.toString()) }
@@ -65,17 +70,19 @@ fun ServerEditDialog(
         )
     }
 
+    val sniChangedFmt = stringResource(R.string.xsed_sni_changed)
+
     fun runCheck() {
         if (checking) return
         checking = true
-        checkText = "Проверяю…"
+        checkText = ctx.getString(R.string.xsed_checking)
         checkColor = Color.Gray
         suggestedSni = null
         val h = host.trim()
         val p = port.toIntOrNull() ?: 443
         val currentSni = sni.trim()
         scope.launch {
-            val result = withContext(Dispatchers.IO) { probeServer(h, p, currentSni) }
+            val result = withContext(Dispatchers.IO) { probeServer(ctx, h, p, currentSni) }
             checking = false
             checkText = result.message
             checkColor = when (result.severity) {
@@ -93,7 +100,7 @@ fun ServerEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Параметры сервера", color = scheme.onSurface, fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.xsed_title), color = scheme.onSurface, fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier
@@ -101,8 +108,8 @@ fun ServerEditDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Field(host, { host = it }, "Адрес (host)")
-                Field(port, { port = it }, "Порт", numeric = true)
+                Field(host, { host = it }, stringResource(R.string.xsed_host))
+                Field(port, { port = it }, stringResource(R.string.xsed_port), numeric = true)
                 Field(sni, { sni = it }, "SNI / serverName")
 
                 if (isReality) {
@@ -118,17 +125,17 @@ fun ServerEditDialog(
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                 ) {
                     if (checking) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    else Text("Проверить доступность")
+                    else Text(stringResource(R.string.xsed_check_availability))
                 }
 
                 checkText?.let { Text(it, color = checkColor, fontSize = 12.sp) }
 
                 suggestedSni?.let { cn ->
                     OutlinedButton(
-                        onClick = { sni = cn; suggestedSni = null; checkText = "SNI изменён на $cn — сохрани и переподключись"; checkColor = Color(0xFF44DD66) },
+                        onClick = { sni = cn; suggestedSni = null; checkText = String.format(sniChangedFmt, cn); checkColor = Color(0xFF44DD66) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Применить SNI: $cn", color = accentColor, fontSize = 13.sp)
+                        Text(stringResource(R.string.xsed_apply_sni, cn), color = accentColor, fontSize = 13.sp)
                     }
                 }
             }
@@ -146,10 +153,10 @@ fun ServerEditDialog(
                     put("pbk", pbk); put("sid", sid); put("fp", fp)
                 }
                 onSave(server.copy(host = host.trim().ifBlank { server.host }, port = newPort, config = cfg))
-            }) { Text("Сохранить", color = accentColor) }
+            }) { Text(stringResource(R.string.xsed_save), color = accentColor) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена", color = scheme.onSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.xsed_cancel), color = scheme.onSurfaceVariant) }
         },
         containerColor = scheme.surface
     )
@@ -163,16 +170,16 @@ private class ProbeResult(val severity: CheckSeverity, val message: String, val 
  * the certificate the server actually presents. For a REALITY endpoint this reveals the
  * masqueraded destination, so a wrong SNI in the saved key can be detected and fixed.
  */
-private fun probeServer(host: String, port: Int, sni: String): ProbeResult {
-    if (host.isBlank()) return ProbeResult(CheckSeverity.ERROR, "Пустой адрес сервера", null)
+private fun probeServer(context: Context, host: String, port: Int, sni: String): ProbeResult {
+    if (host.isBlank()) return ProbeResult(CheckSeverity.ERROR, context.getString(R.string.xsed_empty_host), null)
     // 1) TCP reachability + latency
     val start = System.currentTimeMillis()
     try {
         java.net.Socket().use { it.connect(java.net.InetSocketAddress(host, port), 6000) }
     } catch (e: Exception) {
-        return ProbeResult(CheckSeverity.ERROR, "✗ Сервер недоступен ($host:$port): ${e.message}", null)
+        return ProbeResult(CheckSeverity.ERROR, context.getString(R.string.xsed_unreachable, host, port, e.message ?: ""), null)
     }
-    val tcpMs = System.currentTimeMillis() - start
+    val tcpMs = (System.currentTimeMillis() - start).toInt()
 
     // 2) TLS probe (trust-all) to read the presented certificate
     return try {
@@ -199,13 +206,13 @@ private fun probeServer(host: String, port: Int, sni: String): ProbeResult {
             ?.firstOrNull { it.trim().startsWith("CN=", ignoreCase = true) }
             ?.substringAfter("=")?.trim()
         if (cn == null) {
-            ProbeResult(CheckSeverity.WARN, "✓ TCP $tcpMs мс, но сертификат не прочитан", null)
+            ProbeResult(CheckSeverity.WARN, context.getString(R.string.xsed_tcp_no_cert, tcpMs), null)
         } else if (sni.isNotBlank() && cn.equals(sni, ignoreCase = true)) {
-            ProbeResult(CheckSeverity.OK, "✓ Доступен ($tcpMs мс). SNI совпадает с сертификатом ($cn)", cn)
+            ProbeResult(CheckSeverity.OK, context.getString(R.string.xsed_ok_sni_match, tcpMs, cn), cn)
         } else {
-            ProbeResult(CheckSeverity.WARN, "⚠ TCP $tcpMs мс. Сервер отдаёт сертификат «$cn», а SNI = «$sni» — не совпадает. Это ломает REALITY.", cn)
+            ProbeResult(CheckSeverity.WARN, context.getString(R.string.xsed_cert_mismatch, tcpMs, cn, sni), cn)
         }
     } catch (e: Exception) {
-        ProbeResult(CheckSeverity.WARN, "✓ TCP $tcpMs мс, но TLS-проба не удалась: ${e.message}", null)
+        ProbeResult(CheckSeverity.WARN, context.getString(R.string.xsed_tls_probe_failed, tcpMs, e.message ?: ""), null)
     }
 }

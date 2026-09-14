@@ -2,6 +2,7 @@ package com.carnelia.vpn.data
 
 import android.content.Context
 import android.net.Uri
+import com.carnelia.vpn.R
 import com.carnelia.vpn.core.VpnServerConfig
 import com.carnelia.vpn.utils.AppLogger
 import com.google.gson.Gson
@@ -34,7 +35,7 @@ object SecureBackupManager {
     fun exportToUri(context: Context, uri: Uri, password: String): BackupResult {
         return try {
             val servers = ServerRepository(context).getServers()
-            if (servers.isEmpty()) return BackupResult(0, "Нет серверов для экспорта")
+            if (servers.isEmpty()) return BackupResult(0, context.getString(R.string.xbak_no_servers))
             val json = gson.toJson(servers)
             val plainBytes = json.toByteArray(Charsets.UTF_8)
 
@@ -57,23 +58,23 @@ object SecureBackupManager {
             BackupResult(servers.size)
         } catch (e: Exception) {
             AppLogger.error("SecureBackup: Export failed", e)
-            BackupResult(0, e.message ?: "Ошибка экспорта")
+            BackupResult(0, e.message ?: context.getString(R.string.xbak_export_error))
         }
     }
 
     fun importFromUri(context: Context, uri: Uri, password: String): BackupResult {
         return try {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: return BackupResult(0, "Не удалось открыть файл")
+                ?: return BackupResult(0, context.getString(R.string.xbak_cant_open))
 
             if (bytes.size < MAGIC.size + 1 + SALT_LEN + IV_LEN + 16)
-                return BackupResult(0, "Файл повреждён")
+                return BackupResult(0, context.getString(R.string.xbak_corrupt))
 
             var pos = 0
             val magic = bytes.sliceArray(pos until pos + 4); pos += 4
-            if (!magic.contentEquals(MAGIC)) return BackupResult(0, "Не .carnelia файл")
+            if (!magic.contentEquals(MAGIC)) return BackupResult(0, context.getString(R.string.xbak_not_carnelia))
             val version = bytes[pos]; pos++
-            if (version != VERSION) return BackupResult(0, "Неподдерживаемая версия бэкапа")
+            if (version != VERSION) return BackupResult(0, context.getString(R.string.xbak_unsupported_version))
 
             val salt = bytes.sliceArray(pos until pos + SALT_LEN); pos += SALT_LEN
             val iv = bytes.sliceArray(pos until pos + IV_LEN); pos += IV_LEN
@@ -85,13 +86,13 @@ object SecureBackupManager {
             val plain = try {
                 cipher.doFinal(cipherBytes)
             } catch (e: Exception) {
-                return BackupResult(0, "Неверный пароль")
+                return BackupResult(0, context.getString(R.string.xbak_wrong_password))
             }
 
             val json = String(plain, Charsets.UTF_8)
             val type = object : TypeToken<List<VpnServerConfig>>() {}.type
             val servers: List<VpnServerConfig> = gson.fromJson(json, type)
-                ?: return BackupResult(0, "Ошибка чтения данных")
+                ?: return BackupResult(0, context.getString(R.string.xbak_read_error))
 
             val repo = ServerRepository(context)
             servers.forEach { repo.addServer(it) }
@@ -99,7 +100,7 @@ object SecureBackupManager {
             BackupResult(servers.size)
         } catch (e: Exception) {
             AppLogger.error("SecureBackup: Import failed", e)
-            BackupResult(0, e.message ?: "Ошибка импорта")
+            BackupResult(0, e.message ?: context.getString(R.string.xbak_import_error))
         }
     }
 
