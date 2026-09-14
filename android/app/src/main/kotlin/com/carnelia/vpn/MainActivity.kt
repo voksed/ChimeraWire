@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
             val configs = com.carnelia.vpn.utils.ConfigImportExport.importFromJson(trimmed)
             if (configs.isNotEmpty()) {
                 configs.forEach { repository.addServer(it) }
-                Toast.makeText(this, "Импортировано серверов: ${configs.size}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.xmain_imported, configs.size), Toast.LENGTH_SHORT).show()
                 return
             }
         }
@@ -157,7 +157,7 @@ class MainActivity : ComponentActivity() {
             val imported = lines.mapNotNull { com.carnelia.vpn.utils.ConfigParser.parse(it) }
             if (imported.isNotEmpty()) {
                 imported.forEach { repository.addServer(it) }
-                Toast.makeText(this, "Импортировано серверов: ${imported.size}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.xmain_imported, imported.size), Toast.LENGTH_SHORT).show()
                 return
             }
         }
@@ -267,7 +267,7 @@ class MainActivity : ComponentActivity() {
             contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() }
         } catch (e: Exception) {
             com.carnelia.vpn.utils.AppLogger.error("MainActivity: readTextFromUri failed", e)
-            Toast.makeText(this, "Не удалось прочитать файл", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.xmain_read_file_failed), Toast.LENGTH_SHORT).show()
             null
         }
     }
@@ -469,7 +469,7 @@ fun CarheliaApp(
 
                 // Subscriptions
                 NavigationDrawerItem(
-                    label = { Text("Подписки") },
+                    label = { Text(stringResource(R.string.xmain_subscriptions)) },
                     selected = false,
                     onClick = {
                         showSubscriptionsDialog = true
@@ -501,7 +501,7 @@ fun CarheliaApp(
 
                 // App traffic blocker + analyzer (serverless local firewall)
                 NavigationDrawerItem(
-                    label = { Text("Блокатор трафика") },
+                    label = { Text(stringResource(R.string.xmain_traffic_blocker)) },
                     selected = false,
                     onClick = {
                         context.startActivity(Intent(context, AppFirewallActivity::class.java))
@@ -517,7 +517,7 @@ fun CarheliaApp(
 
                 // Tools Hub
                 NavigationDrawerItem(
-                    label = { Text("Инструменты") },
+                    label = { Text(stringResource(R.string.xmain_tools)) },
                     selected = false,
                     onClick = {
                         context.startActivity(Intent(context, ToolsHubActivity::class.java))
@@ -1094,16 +1094,20 @@ fun SubscriptionsDialog(
     var addError by remember { mutableStateOf<String?>(null) }
     var updatingId by remember { mutableStateOf<String?>(null) }
 
+    val errName = stringResource(R.string.xmain_enter_name)
+    val errUrl = stringResource(R.string.xmain_enter_url)
+    val errUrlFormat = stringResource(R.string.xmain_url_format)
+
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false; addError = null },
-            title = { Text("Добавить подписку", color = MaterialTheme.colorScheme.onSurface) },
+            title = { Text(stringResource(R.string.xmain_add_sub), color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = newSubName,
                         onValueChange = { newSubName = it; addError = null },
-                        label = { Text("Название", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        label = { Text(stringResource(R.string.xmain_name), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -1114,7 +1118,7 @@ fun SubscriptionsDialog(
                     OutlinedTextField(
                         value = newSubUrl,
                         onValueChange = { newSubUrl = it; addError = null },
-                        label = { Text("URL подписки", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        label = { Text(stringResource(R.string.xmain_sub_url), color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -1130,9 +1134,9 @@ fun SubscriptionsDialog(
                     val name = newSubName.trim()
                     val url = newSubUrl.trim()
                     when {
-                        name.isBlank() -> addError = "Введите название"
-                        url.isBlank() -> addError = "Введите URL"
-                        !url.startsWith("http") && !url.lowercase().startsWith("happ://") -> addError = "URL должен начинаться с http:// или happ://"
+                        name.isBlank() -> addError = errName
+                        url.isBlank() -> addError = errUrl
+                        !url.startsWith("http") && !url.lowercase().startsWith("happ://") -> addError = errUrlFormat
                         else -> {
                             subManager.addSubscription(name, url)
                             subscriptions = subManager.getSubscriptions()
@@ -1148,11 +1152,11 @@ fun SubscriptionsDialog(
                             showAddDialog = false; newSubName = ""; newSubUrl = ""
                         }
                     }
-                }) { Text("Добавить", color = accentColor) }
+                }) { Text(stringResource(R.string.xmain_add), color = accentColor) }
             },
             dismissButton = {
                 TextButton(onClick = { showAddDialog = false; addError = null }) {
-                    Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.xmain_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface
@@ -1171,7 +1175,7 @@ fun SubscriptionsDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Подписки", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Text(stringResource(R.string.xmain_subscriptions), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { showAddDialog = true }, modifier = Modifier.size(36.dp)) {
                             Icon(Icons.Default.Add, null, tint = accentColor)
@@ -1189,12 +1193,12 @@ fun SubscriptionsDialog(
                 if (subscriptions.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Нет подписок", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.xmain_no_subs), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(8.dp))
                             Button(
                                 onClick = { showAddDialog = true },
                                 colors = ButtonDefaults.buttonColors(containerColor = accentColor)
-                            ) { Text("Добавить подписку") }
+                            ) { Text(stringResource(R.string.xmain_add_sub)) }
                         }
                     }
                 } else {
@@ -1210,7 +1214,7 @@ fun SubscriptionsDialog(
                                         Text(sub.url, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, maxLines = 1)
                                         if (sub.lastUpdated > 0) {
                                             Text(
-                                                "${sdf.format(Date(sub.lastUpdated))} · ${sub.serverCount} серв.",
+                                                stringResource(R.string.xmain_sub_meta, sdf.format(Date(sub.lastUpdated)), sub.serverCount),
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp
                                             )
                                         }
@@ -1257,7 +1261,7 @@ fun SubscriptionsDialog(
                     ) {
                         Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Обновить все")
+                        Text(stringResource(R.string.xmain_update_all))
                     }
                 }
             }
@@ -1513,7 +1517,7 @@ fun ServerSelectionDialog(
                                 FilterChip(
                                     selected = selectedFilter == null,
                                     onClick = { selectedFilter = null },
-                                    label = { Text("Все (${servers.size})", fontSize = 12.sp) },
+                                    label = { Text(stringResource(R.string.xmain_all_count, servers.size), fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = accentColor,
                                         selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -1525,7 +1529,7 @@ fun ServerSelectionDialog(
                                     FilterChip(
                                         selected = selectedFilter == "",
                                         onClick = { selectedFilter = "" },
-                                        label = { Text("Ручные (${servers.count { it.subscriptionId.isNullOrBlank() }})", fontSize = 12.sp) },
+                                        label = { Text(stringResource(R.string.xmain_manual_count, servers.count { it.subscriptionId.isNullOrBlank() }), fontSize = 12.sp) },
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = accentColor,
                                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -1534,7 +1538,7 @@ fun ServerSelectionDialog(
                                 }
                             }
                             items(subIds) { subId ->
-                                val subName = subNameById[subId] ?: "Подписка"
+                                val subName = subNameById[subId] ?: stringResource(R.string.xmain_subscription)
                                 val cnt = servers.count { it.subscriptionId == subId }
                                 FilterChip(
                                     selected = selectedFilter == subId,
@@ -1638,7 +1642,7 @@ fun ServerSelectionDialog(
                                         ) {
                                             Icon(
                                                 Icons.Default.Settings,
-                                                contentDescription = "Параметры сервера",
+                                                contentDescription = stringResource(R.string.xmain_server_params),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                                 modifier = Modifier.size(20.dp)
                                             )

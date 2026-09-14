@@ -1,5 +1,7 @@
 package com.carnelia.vpn.service
 
+import com.carnelia.vpn.R
+
 import android.content.Context
 import android.content.Intent
 import android.net.VpnService
@@ -114,7 +116,7 @@ class CarheliaVpnService : VpnService() {
                             // Hard guard: reject invalid VLESS REALITY public keys
                             if (config.config["security"] == "reality" && !isValidRealityPbk(pbk)) {
                                 AppLogger.error("Service: REJECTED VLESS REALITY config — invalid pbk='$pbk'. Ignoring connect request.")
-                                VpnGlobalState.setError("Сервер VLESS REALITY содержит недействительный ключ ($pbk). Удалите сервер и добавьте заново.")
+                                VpnGlobalState.setError(getString(R.string.xsvc_reality_invalid, pbk))
                                 return@let
                             }
                         }
@@ -153,13 +155,13 @@ class CarheliaVpnService : VpnService() {
                     }
                 }
                 ACTION_LOCKDOWN -> {
-                    val reason = it.getStringExtra(EXTRA_LOCKDOWN_REASON) ?: "обнаружена угроза"
+                    val reason = it.getStringExtra(EXTRA_LOCKDOWN_REASON) ?: getString(R.string.xsvc_threat_detected)
                     scope.launch {
                         vpnManager.disconnect() // на случай если был активен обычный туннель
                         isLockdown = true
                         currentState = ConnectionState.LOCKDOWN
                         VpnGlobalState.updateState(ConnectionState.LOCKDOWN)
-                        startForeground(1, createNotification("Режим защиты: сеть заблокирована ($reason)"))
+                        startForeground(1, createNotification(getString(R.string.xsvc_lockdown, reason)))
                         establishLockdownInterface()
                         AppLogger.log("Service: LOCKDOWN активирован — $reason")
                     }
@@ -174,7 +176,7 @@ class CarheliaVpnService : VpnService() {
                         if (pbkInvalid) {
                             val pbk = (config.config["pbk"] ?: config.config["publicKey"] ?: "").trim()
                             AppLogger.error("Service: REJECTED RECONNECT — invalid pbk='$pbk'")
-                            VpnGlobalState.setError("Сервер VLESS REALITY содержит недействительный ключ ($pbk).")
+                            VpnGlobalState.setError(getString(R.string.xsvc_reality_invalid_short, pbk))
                         } else {
                             vpnManager.switchServer(config)
                             startForeground(1, createNotification("Switching to ${config.name}..."))
@@ -189,7 +191,7 @@ class CarheliaVpnService : VpnService() {
                     if (currentState == ConnectionState.CONNECTED && cfg != null) {
                         AppLogger.log("Service: ACTION_NETWORK_RECONNECT — смена сети, бесшовный reconnect")
                         VpnGlobalState.updateState(ConnectionState.RECONNECTING)
-                        startForeground(1, createNotification("Смена сети — переподключение…"))
+                        startForeground(1, createNotification(getString(R.string.xsvc_net_switch)))
                         scope.launch {
                             try {
                                 // перепривязка underlying-сетей к новой дефолтной
@@ -608,7 +610,7 @@ class CarheliaVpnService : VpnService() {
         
         val disconnectAction = android.app.Notification.Action.Builder(
             android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
-            "Отключить",
+            getString(R.string.xsvc_disconnect),
             disconnectPendingIntent
         ).build()
 

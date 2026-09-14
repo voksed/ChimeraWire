@@ -138,7 +138,7 @@ fun SettingsScreen(startPage: String? = null) {
                                 SettingsPage.LANGUAGE -> stringResource(R.string.language_title)
                                 SettingsPage.DONATION -> stringResource(R.string.donation_section_title)
                                 SettingsPage.SUBSCRIPTIONS -> stringResource(R.string.subscriptions_title)
-                                SettingsPage.PRIVACY_POLICY -> "Политика конфиденциальности"
+                                SettingsPage.PRIVACY_POLICY -> stringResource(R.string.privacy_policy_title)
                             },  
                             color = MaterialTheme.colorScheme.onSurface
                         ) 
@@ -214,7 +214,7 @@ fun SettingsScreen(startPage: String? = null) {
                             Triple(SettingsPage.DONATION,         Icons.Default.Favorite,  stringResource(R.string.donate_dev_title)),
                             Triple(SettingsPage.LANGUAGE,         Icons.Default.Language,  stringResource(R.string.language_title)),
                             Triple(SettingsPage.SUBSCRIPTIONS,    Icons.Default.Refresh,    stringResource(R.string.subscriptions_title)),
-                            Triple(SettingsPage.PRIVACY_POLICY,   Icons.Default.PrivacyTip, "Конфиденциальность"),
+                            Triple(SettingsPage.PRIVACY_POLICY,   Icons.Default.PrivacyTip, stringResource(R.string.xset_privacy)),
                         )
                         Spacer(Modifier.height(8.dp))
                         pages.forEach { (page, icon, label) ->
@@ -771,21 +771,21 @@ fun SecuritySettings(context: Context) {
 
         // ── Маскировка иконки/названия ────────────────────────────────
         Text(
-            "Маскировка",
+            stringResource(R.string.xset_disguise),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 4.dp)
         )
         Text(
-            "Как приложение выглядит на рабочем столе — иконка и название меняются сразу, без переустановки",
+            stringResource(R.string.xset_disguise_desc),
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 12.dp)
         )
         val disguiseOptions = listOf(
-            com.carnelia.vpn.core.DisguiseOption.REAL.label to com.carnelia.vpn.core.DisguiseOption.REAL.name,
-            com.carnelia.vpn.core.DisguiseOption.CALCULATOR.label to com.carnelia.vpn.core.DisguiseOption.CALCULATOR.name,
-            com.carnelia.vpn.core.DisguiseOption.NOTES.label to com.carnelia.vpn.core.DisguiseOption.NOTES.name
+            "ChimeraWire" to com.carnelia.vpn.core.DisguiseOption.REAL.name,
+            stringResource(R.string.xdisguise_calculator) to com.carnelia.vpn.core.DisguiseOption.CALCULATOR.name,
+            stringResource(R.string.xdisguise_notes) to com.carnelia.vpn.core.DisguiseOption.NOTES.name
         )
         val selectedDisguiseIdx = disguiseOptions.indexOfFirst { it.second == disguise.name }.coerceAtLeast(0)
         DropdownSettingItem(
@@ -805,13 +805,13 @@ fun SecuritySettings(context: Context) {
 
         // ── Экстренная очистка ────────────────────────────────
         Text(
-            "Экстренная очистка",
+            stringResource(R.string.xset_panic_wipe),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(bottom = 4.dp)
         )
         Text(
-            "Мгновенно рвёт VPN, чистит логи и историю подключений. Сохранённые серверы не трогает, если не включить отдельно.",
+            stringResource(R.string.xset_panic_wipe_desc),
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 12.dp)
@@ -823,17 +823,17 @@ fun SecuritySettings(context: Context) {
         ) {
             Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Экстренная очистка", color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.xset_panic_wipe), color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
         }
 
         if (showPanicDialog) {
             AlertDialog(
                 onDismissRequest = { showPanicDialog = false },
-                title = { Text("Экстренная очистка?", color = MaterialTheme.colorScheme.onSurface) },
+                title = { Text(stringResource(R.string.xset_panic_wipe_q), color = MaterialTheme.colorScheme.onSurface) },
                 text = {
                     Column {
                         Text(
-                            "VPN отключится немедленно, логи и история подключений сотрутся. Отменить нельзя.",
+                            stringResource(R.string.xset_panic_wipe_warn),
                             color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp
                         )
                         Spacer(Modifier.height(12.dp))
@@ -843,7 +843,7 @@ fun SecuritySettings(context: Context) {
                                 onCheckedChange = { wipeServersToo = it },
                                 colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.error)
                             )
-                            Text("Также стереть сохранённые серверы (навсегда)", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                            Text(stringResource(R.string.xset_wipe_servers), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                         }
                     }
                 },
@@ -852,10 +852,10 @@ fun SecuritySettings(context: Context) {
                         com.carnelia.vpn.core.PanicManager.trigger(context, wipeServersToo)
                         showPanicDialog = false
                         wipeServersToo = false
-                    }) { Text("Очистить", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                    }) { Text(stringResource(R.string.xset_wipe_btn), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showPanicDialog = false }) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    TextButton(onClick = { showPanicDialog = false }) { Text(stringResource(R.string.xset_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 },
                 containerColor = MaterialTheme.colorScheme.surface
             )
@@ -1196,7 +1196,7 @@ fun CensorshipBypassSettings(context: Context) {
                     HorizontalDivider()
                     Spacer(Modifier.height(12.dp))
 
-                    Text("Уровень защиты", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Text(stringResource(R.string.xset_protection_level), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp))
 
                     com.carnelia.vpn.core.BlackWallEngine.StealthLevel.entries
@@ -1235,11 +1235,11 @@ fun CensorshipBypassSettings(context: Context) {
                     Text(
                         when (blackWallLevel) {
                             com.carnelia.vpn.core.BlackWallEngine.StealthLevel.GHOST ->
-                                "• Фрагментация TLS ClientHello (1-5 байт)\n• Маскировка SNI под CDN-домен"
+                                stringResource(R.string.xbw_ghost_details)
                             com.carnelia.vpn.core.BlackWallEngine.StealthLevel.PHANTOM ->
-                                "• Фрагментация TLS (1-3 байт)\n• SNI-маскировка\n• Рандомный uTLS fingerprint"
+                                stringResource(R.string.xbw_phantom_details)
                             com.carnelia.vpn.core.BlackWallEngine.StealthLevel.WRAITH ->
-                                "• Максимальная фрагментация (1-2 байт)\n• SNI-маскировка + uTLS\n• Шумовой трафик (имитация браузера)"
+                                stringResource(R.string.xbw_wraith_details)
                             else -> ""
                         },
                         fontSize = 11.sp,
@@ -1258,7 +1258,7 @@ fun CensorshipBypassSettings(context: Context) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("TLS ClientHello", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    "Под какой браузер маскировать TLS-отпечаток по умолчанию — обходит DPI по белым спискам fingerprint'ов",
+                    stringResource(R.string.xset_tls_fp_desc),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -1269,7 +1269,7 @@ fun CensorshipBypassSettings(context: Context) {
                     "Safari" to "safari",
                     "iOS" to "ios",
                     "Edge" to "edge",
-                    "Случайный" to "randomized"
+                    stringResource(R.string.xset_random) to "randomized"
                 )
                 val selectedFpIdx = fpOptions.indexOfFirst { it.second == tlsFingerprint }.coerceAtLeast(0)
                 DropdownSettingItem(
@@ -1298,9 +1298,9 @@ fun CensorshipBypassSettings(context: Context) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Мульти-хоп", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                        Text(stringResource(R.string.xset_multihop), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                         Text(
-                            "Подключение идёт через входной сервер, который туннелирует до основного — двойное шифрование, ни один узел не знает всю цепочку",
+                            stringResource(R.string.xset_multihop_desc),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1317,7 +1317,7 @@ fun CensorshipBypassSettings(context: Context) {
                     Spacer(Modifier.height(12.dp))
                     if (multiHopServers.size < 2) {
                         Text(
-                            "Нужно минимум 2 сохранённых сервера (входной + основной)",
+                            stringResource(R.string.xset_multihop_need2),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -1346,7 +1346,7 @@ fun CensorshipBypassSettings(context: Context) {
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Основной (выходной) сервер — тот, что выбран как активный на главном экране",
+                            stringResource(R.string.xset_multihop_exit_desc),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -97,10 +97,10 @@ private class ShellSession(private val onLine: (String, Color) -> Unit) {
             send("alias xray='$nativeLibDir/libxray_core.so'")
             send("alias singbox='$nativeLibDir/libsingbox.so'")
             send("cd '$filesDir'")
-            onLine("shell: /system/bin/sh (pid известен через ps)", COL_SYS)
-            onLine("alias: xray, singbox · рабочая папка: $filesDir · 'core' — встроенные команды по ядрам", COL_DIM)
+            onLine("shell: /system/bin/sh (pid via ps)", COL_SYS)
+            onLine("alias: xray, singbox · working dir: $filesDir · 'core' — built-in core commands", COL_DIM)
         } catch (e: Exception) {
-            onLine("не удалось запустить shell: ${e.message}", COL_ERR)
+            onLine("failed to start shell: ${e.message}", COL_ERR)
         }
     }
 
@@ -123,7 +123,7 @@ private class ShellSession(private val onLine: (String, Color) -> Unit) {
             stdin?.write((cmd + "\n").toByteArray())
             stdin?.flush()
         } catch (e: Exception) {
-            onLine("ошибка ввода: ${e.message}", COL_ERR)
+            onLine("input error: ${e.message}", COL_ERR)
         }
     }
 
@@ -155,7 +155,7 @@ fun TerminalScreen(onBack: () -> Unit) {
     val session = remember { ShellSession(onLine = { t, c -> addLine(t, c) }) }
 
     fun restartShell() {
-        addLine("--- перезапуск сессии ---", COL_WARN)
+        addLine("--- session restart ---", COL_WARN)
         session.start(scope, context.applicationInfo.nativeLibraryDir, context.filesDir.absolutePath)
     }
 
@@ -168,13 +168,13 @@ fun TerminalScreen(onBack: () -> Unit) {
         when (args.firstOrNull()) {
             null, "help" -> addLine(
                 """
-                core paths     — пути к конфигам и нативным библиотекам ядер
-                core awg       — статус и версия AmneziaWG (JNI, не отдельный процесс — не виден в ps)
-                core status    — состояние VPN-соединения, последний использованный сервер, трафик
-                core conn      — локальные порты SOCKS5/HTTP-прокси ядер (Xray/sing-box)
-                core dns HOST  — быстрый DNS-запрос (A/AAAA) через java.net, без VPN-туннеля
-                core kill      — экстренно остановить все ядра (Xray/sing-box/AmneziaWG)
-                core restart   — перезапустить shell-сессию (если процесс завис без -c таймаута)
+                core paths     — paths to core configs and native libraries
+                core awg       — AmneziaWG status and version (JNI, not a separate process — invisible in ps)
+                core status    — VPN connection state, last used server, traffic
+                core conn      — local SOCKS5/HTTP proxy ports of the cores (Xray/sing-box)
+                core dns HOST  — quick DNS lookup (A/AAAA) via java.net, without the VPN tunnel
+                core kill      — force-stop all cores (Xray/sing-box/AmneziaWG)
+                core restart   — restart the shell session (if the process hung without a -c timeout)
                 """.trimIndent(), COL_SYS
             )
             "paths" -> {
@@ -201,14 +201,14 @@ fun TerminalScreen(onBack: () -> Unit) {
                 addLine("rx: ${stats.bytesReceived} B  ·  tx: ${stats.bytesSent} B")
             }
             "conn" -> {
-                addLine("xray:    SOCKS/HTTP на 127.0.0.1:${com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT} / :${com.carnelia.vpn.core.XrayCoreManager.LOCAL_HTTP_PORT}")
-                addLine("singbox: SOCKS5 на 127.0.0.1:${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}")
+                addLine("xray:    SOCKS/HTTP on 127.0.0.1:${com.carnelia.vpn.core.XrayCoreManager.LOCAL_PORT} / :${com.carnelia.vpn.core.XrayCoreManager.LOCAL_HTTP_PORT}")
+                addLine("singbox: SOCKS5 on 127.0.0.1:${com.carnelia.vpn.core.SingboxCoreManager.SOCKS5_PORT}")
                 addLine("state:   ${VpnGlobalState.connectionState.value}")
             }
             "dns" -> {
                 val host = args.getOrNull(1)
                 if (host.isNullOrBlank()) {
-                    addLine("использование: core dns <host>", COL_ERR)
+                    addLine("usage: core dns <host>", COL_ERR)
                 } else {
                     scope.launch {
                         val (addrs, error) = withContext(Dispatchers.IO) {
@@ -219,7 +219,7 @@ fun TerminalScreen(onBack: () -> Unit) {
                             }
                         }
                         if (error != null || addrs.isEmpty()) {
-                            addLine("не удалось разрешить $host: ${error?.message ?: "нет адресов"}", COL_ERR)
+                            addLine("failed to resolve $host: ${error?.message ?: "no addresses"}", COL_ERR)
                         } else {
                             addrs.forEach { addLine(it, COL_SYS) }
                         }
@@ -230,10 +230,10 @@ fun TerminalScreen(onBack: () -> Unit) {
                 try { com.carnelia.vpn.core.XrayCoreManager.stopCore() } catch (_: Exception) {}
                 try { com.carnelia.vpn.core.SingboxCoreManager.stopCore() } catch (_: Exception) {}
                 try { com.carnelia.vpn.core.AmneziaWgCoreManager.stopTunnel() } catch (_: Exception) {}
-                addLine("все ядра остановлены (xray/sing-box/awg)", COL_WARN)
+                addLine("all cores stopped (xray/sing-box/awg)", COL_WARN)
             }
             "restart" -> restartShell()
-            else -> addLine("неизвестная core-команда: ${args.firstOrNull()}", COL_ERR)
+            else -> addLine("unknown core command: ${args.firstOrNull()}", COL_ERR)
         }
     }
 
