@@ -27,7 +27,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.carnelia.vpn.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,7 +55,7 @@ fun AutoTuneScreen(context: Context) {
             LaunchedEffect(Unit) {
                 ConfigTuner.startTune(context, scope)
             }
-            AutoTunePreparingScreen(message = "Подготовка...")
+            AutoTunePreparingScreen(message = stringResource(R.string.xtune_preparing))
         }
         is TunerState.PreparingVpn -> AutoTunePreparingScreen(message = s.message)
         is TunerState.NoServer -> AutoTuneNoServerScreen(
@@ -107,7 +109,7 @@ private fun AutoTuneIntroScreen(onStart: () -> Unit) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Авто-Калибровка",
+            text = stringResource(R.string.xtune_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold,
@@ -117,7 +119,7 @@ private fun AutoTuneIntroScreen(onStart: () -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "MUX & Фрагментация",
+            text = stringResource(R.string.xtune_subtitle),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
@@ -143,7 +145,7 @@ private fun AutoTuneIntroScreen(onStart: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Требуется время и калибровка",
+                        text = stringResource(R.string.xtune_time_warning),
                         color = Color(0xFFFFC107),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleSmall
@@ -151,10 +153,7 @@ private fun AutoTuneIntroScreen(onStart: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Приложение проведёт серию тестов подключения к вашему серверу — всего 9 конфигураций. Каждая тестируется по 3 раза.\n\n" +
-                           "Общее время: ~2–3 минуты.\n\n" +
-                           "Если VPN сейчас подключён — приложение автоматически отключит его, проведёт калибровку и снова подключит. Ничего делать не нужно.\n\n" +
-                           "Не сворачивайте приложение во время калибровки.",
+                    text = stringResource(R.string.xtune_intro_body),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     lineHeight = 22.sp
@@ -173,16 +172,16 @@ private fun AutoTuneIntroScreen(onStart: () -> Unit) {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Что проверяется:",
+                    text = stringResource(R.string.xtune_what_checks),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.titleSmall
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                TuneInfoRow(Icons.Default.Speed, "Задержка (ping) до сервера")
-                TuneInfoRow(Icons.Default.ShowChart, "Джиттер (стабильность)")
-                TuneInfoRow(Icons.Default.Tune, "9 профилей MUX и фрагментации")
-                TuneInfoRow(Icons.Default.Psychology, "Оценка по эвристическому алгоритму")
+                TuneInfoRow(Icons.Default.Speed, stringResource(R.string.xtune_check_latency))
+                TuneInfoRow(Icons.Default.ShowChart, stringResource(R.string.xtune_check_jitter))
+                TuneInfoRow(Icons.Default.Tune, stringResource(R.string.xtune_check_profiles))
+                TuneInfoRow(Icons.Default.Psychology, stringResource(R.string.xtune_check_scoring))
             }
         }
 
@@ -201,7 +200,7 @@ private fun AutoTuneIntroScreen(onStart: () -> Unit) {
             Icon(Icons.Default.PlayArrow, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Начать калибровку",
+                text = stringResource(R.string.xtune_start),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium
             )
@@ -293,7 +292,7 @@ private fun AutoTuneNoServerScreen(onReset: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "Сервер не выбран",
+            stringResource(R.string.xtune_no_server),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold,
@@ -301,13 +300,13 @@ private fun AutoTuneNoServerScreen(onReset: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Сначала выберите сервер на главном экране и хотя бы один раз подключитесь к нему.",
+            stringResource(R.string.xtune_no_server_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
-        OutlinedButton(onClick = onReset) { Text("Назад") }
+        OutlinedButton(onClick = onReset) { Text(stringResource(R.string.xtune_back)) }
     }
 }
 
@@ -341,7 +340,7 @@ private fun AutoTuneRunningScreen(state: TunerState.Running, onCancel: () -> Uni
                 RadarPulseAnimation()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Тестирование...",
+                    text = stringResource(R.string.xtune_testing),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -411,7 +410,7 @@ private fun AutoTuneRunningScreen(state: TunerState.Running, onCancel: () -> Uni
             ) {
                 Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Отмена")
+                Text(stringResource(R.string.xtune_cancel))
             }
         }
     }
@@ -547,14 +546,14 @@ private fun AutoTuneDoneScreen(state: TunerState.Done, onRepeat: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                "Лучшая конфигурация",
+                stringResource(R.string.xtune_best_config),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                state.bestResult.candidate.label,
+                stringResource(state.bestResult.candidate.labelRes),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,
@@ -566,14 +565,14 @@ private fun AutoTuneDoneScreen(state: TunerState.Done, onRepeat: () -> Unit) {
             ) {
                 MetricChip(
                     label = "Ping",
-                    value = if (state.bestResult.avgLatencyMs > 0) "${state.bestResult.avgLatencyMs} мс" else "N/A"
+                    value = if (state.bestResult.avgLatencyMs > 0) stringResource(R.string.xtune_ms, state.bestResult.avgLatencyMs) else "N/A"
                 )
                 MetricChip(
-                    label = "Джиттер",
-                    value = "${state.bestResult.jitterMs} мс"
+                    label = stringResource(R.string.xtune_jitter),
+                    value = stringResource(R.string.xtune_ms, state.bestResult.jitterMs)
                 )
                 MetricChip(
-                    label = "Балл",
+                    label = stringResource(R.string.xtune_score),
                     value = "${"%.1f".format(state.bestResult.score)}"
                 )
             }
@@ -587,7 +586,7 @@ private fun AutoTuneDoneScreen(state: TunerState.Done, onRepeat: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Конфигурация применена автоматически",
+                    stringResource(R.string.xtune_applied),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF4CAF50)
                 )
@@ -603,7 +602,7 @@ private fun AutoTuneDoneScreen(state: TunerState.Done, onRepeat: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        "VPN переподключён с новыми настройками",
+                        stringResource(R.string.xtune_reconnected),
                         style = MaterialTheme.typography.labelMedium,
                         color = Color(0xFF4CAF50)
                     )
@@ -636,7 +635,7 @@ private fun AutoTuneDoneScreen(state: TunerState.Done, onRepeat: () -> Unit) {
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Повторить калибровку")
+                Text(stringResource(R.string.xtune_repeat))
             }
         }
     }
@@ -723,14 +722,14 @@ private fun TuneResultRow(result: TuneTestResult, isRunning: Boolean) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = result.candidate.label,
+                    text = stringResource(result.candidate.labelRes),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (result.isBest) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (result.isBest) FontWeight.SemiBold else FontWeight.Normal
                 )
                 if (result.avgLatencyMs > 0) {
                     Text(
-                        text = "ping: ${result.avgLatencyMs} мс  ±${result.jitterMs} мс",
+                        text = stringResource(R.string.xtune_ping_row, result.avgLatencyMs, result.jitterMs),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )

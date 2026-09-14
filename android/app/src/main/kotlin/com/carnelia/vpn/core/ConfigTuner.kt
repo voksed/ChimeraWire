@@ -19,7 +19,7 @@ import java.net.URL
 import kotlin.math.sqrt
 
 data class TuneCandidate(
-    val label: String,
+    val labelRes: Int,
     val shortLabel: String,
     val muxEnabled: Boolean,
     val muxConcurrency: Int,
@@ -61,15 +61,15 @@ object ConfigTuner {
     private var tuneJob: Job? = null
 
     val candidates = listOf(
-        TuneCandidate("Базовый (без надстроек)", "Baseline", false, 0, false, "none"),
-        TuneCandidate("Mux × 2", "Mux ×2", true, 2, false, "none"),
-        TuneCandidate("Mux × 4", "Mux ×4", true, 4, false, "none"),
-        TuneCandidate("Mux × 8", "Mux ×8", true, 8, false, "none"),
-        TuneCandidate("Mux × 16", "Mux ×16", true, 16, false, "none"),
-        TuneCandidate("Фрагментация: лёгкая", "Frag Light", false, 0, true, "light"),
-        TuneCandidate("Фрагментация: сбалансированная", "Frag Balanced", false, 0, true, "balanced"),
-        TuneCandidate("Фрагментация: агрессивная", "Frag Aggr.", false, 0, true, "aggressive"),
-        TuneCandidate("Mux ×4 + Фрагментация", "Mux+Frag", true, 4, true, "balanced")
+        TuneCandidate(R.string.xtune_cand_baseline, "Baseline", false, 0, false, "none"),
+        TuneCandidate(R.string.xtune_cand_mux2, "Mux ×2", true, 2, false, "none"),
+        TuneCandidate(R.string.xtune_cand_mux4, "Mux ×4", true, 4, false, "none"),
+        TuneCandidate(R.string.xtune_cand_mux8, "Mux ×8", true, 8, false, "none"),
+        TuneCandidate(R.string.xtune_cand_mux16, "Mux ×16", true, 16, false, "none"),
+        TuneCandidate(R.string.xtune_cand_frag_light, "Frag Light", false, 0, true, "light"),
+        TuneCandidate(R.string.xtune_cand_frag_balanced, "Frag Balanced", false, 0, true, "balanced"),
+        TuneCandidate(R.string.xtune_cand_frag_aggr, "Frag Aggr.", false, 0, true, "aggressive"),
+        TuneCandidate(R.string.xtune_cand_mux_frag, "Mux+Frag", true, 4, true, "balanced")
     )
 
     fun startTune(context: Context, scope: CoroutineScope) {
@@ -114,7 +114,7 @@ object ConfigTuner {
                 _state.value = TunerState.Running(
                     currentIndex = i,
                     total = candidates.size,
-                    currentLabel = candidate.label,
+                    currentLabel = context.getString(candidate.labelRes),
                     results = results.toList()
                 )
 
@@ -162,7 +162,7 @@ object ConfigTuner {
             if (!isActive) return@launch
 
             val best = results.maxByOrNull { it.score } ?: return@launch
-            val markedResults = results.map { it.copy(isBest = it.candidate.label == best.candidate.label) }
+            val markedResults = results.map { it.copy(isBest = it.candidate.labelRes == best.candidate.labelRes) }
 
             // Auto-apply best config to PrefsManager
             PrefsManager.setMuxEnabled(context, best.candidate.muxEnabled)
@@ -175,7 +175,7 @@ object ConfigTuner {
                 PrefsManager.setFragmentationMode(context, best.candidate.fragMode)
             }
 
-            AppLogger.log("ConfigTuner: best=[${best.candidate.label}] applied automatically")
+            AppLogger.log("ConfigTuner: best=[${best.candidate.shortLabel}] applied automatically")
 
             // Auto-reconnect VPN if it was active before calibration
             if (wasVpnActive && isActive) {

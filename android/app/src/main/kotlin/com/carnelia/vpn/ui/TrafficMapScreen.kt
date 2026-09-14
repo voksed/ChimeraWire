@@ -89,10 +89,10 @@ data class AppTrafficEntry(
 )
 
 fun formatBytes(bytes: Long): String {
-    if (bytes < 1024) return "${bytes} Б"
-    if (bytes < 1024 * 1024) return "${"%.1f".format(bytes / 1024f)} КБ"
-    if (bytes < 1024 * 1024 * 1024) return "${"%.1f".format(bytes / 1024f / 1024f)} МБ"
-    return "${"%.2f".format(bytes / 1024f / 1024f / 1024f)} ГБ"
+    if (bytes < 1024) return "${bytes} B"
+    if (bytes < 1024 * 1024) return "${"%.1f".format(bytes / 1024f)} KB"
+    if (bytes < 1024 * 1024 * 1024) return "${"%.1f".format(bytes / 1024f / 1024f)} MB"
+    return "${"%.2f".format(bytes / 1024f / 1024f / 1024f)} GB"
 }
 
 // ─── Routing state ───────────────────────────────────────────────────────────
@@ -425,7 +425,7 @@ fun TrafficMapScreen(context: Context) {
                 .padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            listOf("Карта трафика", "Соединения", "Трассировка").forEachIndexed { idx, label ->
+            listOf(stringResource(R.string.xtm_tab_map), stringResource(R.string.xtm_tab_connections), stringResource(R.string.xtm_tab_trace)).forEachIndexed { idx, label ->
                 val selected = activeTab == idx
                 Box(
                     modifier = Modifier
@@ -466,7 +466,7 @@ fun TrafficMapScreen(context: Context) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Поиск приложения…", color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 13.sp) },
+                placeholder = { Text(stringResource(R.string.xtm_search_app), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 13.sp) },
                 leadingIcon = { androidx.compose.material3.Icon(
                     androidx.compose.material.icons.Icons.Default.Search,
                     contentDescription = null,
@@ -505,12 +505,12 @@ fun TrafficMapScreen(context: Context) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = "Показывать:",
+                    text = stringResource(R.string.xtm_show),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
                     fontSize = 11.sp,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
-                listOf(20 to "20", 50 to "50", 100 to "100", Int.MAX_VALUE to "Все").forEach { (value, label) ->
+                listOf(20 to "20", 50 to "50", 100 to "100", Int.MAX_VALUE to stringResource(R.string.xtm_all)).forEach { (value, label) ->
                     val selected = maxApps == value
                     Box(
                         modifier = Modifier
@@ -547,7 +547,7 @@ fun TrafficMapScreen(context: Context) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Нужен доступ к статистике использования",
+                        text = stringResource(R.string.xtm_need_usage_access),
                         color = Color(0xFFFFC107),
                         fontSize = 12.sp,
                         modifier = Modifier.weight(1f)
@@ -564,7 +564,7 @@ fun TrafficMapScreen(context: Context) {
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107)),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
-                        Text("Разрешить", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
+                        Text(stringResource(R.string.xtm_allow), color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
                     }
                 }
             }
@@ -585,7 +585,7 @@ fun TrafficMapScreen(context: Context) {
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Приложений не найдено: «$searchQuery»", color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 14.sp)
+                Text(stringResource(R.string.xtm_no_apps_found, searchQuery), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 14.sp)
             }
         } else if (apps.isEmpty()) {
             val totalRx = remember { getDeviceTotalRxBytes() }
@@ -609,25 +609,25 @@ fun TrafficMapScreen(context: Context) {
                     Spacer(modifier = Modifier.height(8.dp))
                     if (!statsSupported) {
                         Text(
-                            text = "TrafficStats не поддерживается на этом устройстве",
+                            text = stringResource(R.string.xtm_trafficstats_unsupported),
                             color = Color(0xFFE53935),
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Функция работает на реальных устройствах с Android 6+",
+                            text = stringResource(R.string.xtm_works_on_real_devices),
                             color = Color(0xFF444444),
                             fontSize = 11.sp
                         )
                     } else {
                         Text(
-                            text = "Трафик устройства: ${totalRx / 1024 / 1024} МБ (с момента загрузки)",
+                            text = stringResource(R.string.xtm_device_traffic, totalRx / 1024 / 1024),
                             color = Color(0xFF4CAF50),
                             fontSize = 11.sp
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Откройте браузер или YouTube — данные появятся через 2 сек",
+                            text = stringResource(R.string.xtm_open_browser_hint),
                             color = Color(0xFF444444),
                             fontSize = 11.sp
                         )
@@ -656,8 +656,8 @@ fun TrafficMapScreen(context: Context) {
                         }
                         val stateLabel = when (state) {
                             AppRoutingState.VPN_PROXY        -> "VPN"
-                            AppRoutingState.DIRECT_BYPASS    -> "Прямой"
-                            AppRoutingState.FIREWALL_BLOCKED -> "Блок"
+                            AppRoutingState.DIRECT_BYPASS    -> stringResource(R.string.xtm_direct)
+                            AppRoutingState.FIREWALL_BLOCKED -> stringResource(R.string.xtm_block)
                         }
                         val isSelected = app.packageName == selectedApp?.packageName
                         Row(
@@ -694,7 +694,7 @@ fun TrafficMapScreen(context: Context) {
                                 Text(app.packageName, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 10.sp,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 if (speed > 512L) {
-                                    Text("↓ ${formatBytes(speed)}/с", color = Color(0xFF4CAF50), fontSize = 10.sp)
+                                    Text("↓ ${formatBytes(speed)}/s", color = Color(0xFF4CAF50), fontSize = 10.sp)
                                 }
                             }
                             Column(horizontalAlignment = Alignment.End) {
@@ -850,7 +850,7 @@ fun TrafficMapScreen(context: Context) {
         if (activeNow.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Передают прямо сейчас (${activeNow.size})",
+                text = stringResource(R.string.xtm_transmitting_now, activeNow.size),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
                 fontSize = 11.sp
             )
@@ -906,8 +906,8 @@ fun TrafficMapScreen(context: Context) {
             val serverName = remember {
                 try {
                     com.carnelia.vpn.data.ServerRepository(context).getLastUsedServer()
-                        ?.let { "${it.name} (${it.host})" } ?: "неизвестно"
-                } catch (e: Exception) { "неизвестно" }
+                        ?.let { "${it.name} (${it.host})" } ?: context.getString(R.string.xtm_unknown)
+                } catch (e: Exception) { context.getString(R.string.xtm_unknown) }
             }
             AppTrafficDetailSheet(
                 context = context,
@@ -952,17 +952,17 @@ private fun AppTrafficDetailSheet(
     val splitMode = remember { PrefsManager.getSplitTunnelMode(context) }
     val splitEnabled = remember { PrefsManager.isSplitTunnelingEnabled(context) }
     val routeRule = when {
-        isBlocked -> "Правило: Блокировка интернета"
-        isBypassed -> "Правило: Обход VPN"
+        isBlocked -> stringResource(R.string.xtm_rule_block_internet)
+        isBypassed -> stringResource(R.string.xtm_rule_bypass_vpn)
         splitEnabled && splitMode == "allow" && app.packageName !in PrefsManager.getSelectedApps(context)
-                    -> "Правило: Не в списке allow"
-        !splitEnabled -> "Правило: Глобальный прокси"
-        else -> "Правило: Глобальный прокси"
+                    -> stringResource(R.string.xtm_rule_not_allowed)
+        !splitEnabled -> stringResource(R.string.xtm_rule_global_proxy)
+        else -> stringResource(R.string.xtm_rule_global_proxy)
     }
     val routeState = when (routingState) {
         AppRoutingState.VPN_PROXY        -> "→  VPN Proxy"
-        AppRoutingState.DIRECT_BYPASS    -> "→  Прямой выход"
-        AppRoutingState.FIREWALL_BLOCKED -> "→  Заблокирован"
+        AppRoutingState.DIRECT_BYPASS    -> stringResource(R.string.xtm_route_direct_exit)
+        AppRoutingState.FIREWALL_BLOCKED -> stringResource(R.string.xtm_route_blocked)
     }
     val routeStateColor = when (routingState) {
         AppRoutingState.VPN_PROXY        -> Color(0xFF4CAF50)
@@ -971,8 +971,8 @@ private fun AppTrafficDetailSheet(
     }
     val routeDest = when (routingState) {
         AppRoutingState.VPN_PROXY     -> if (serverName.isNotBlank()) "→  $serverName" else ""
-        AppRoutingState.DIRECT_BYPASS -> "→  Интернет (без туннеля)"
-        AppRoutingState.FIREWALL_BLOCKED -> "→  Андроид /dev/null"
+        AppRoutingState.DIRECT_BYPASS -> stringResource(R.string.xtm_dest_internet)
+        AppRoutingState.FIREWALL_BLOCKED -> stringResource(R.string.xtm_dest_devnull)
     }
 
     fun rebuildIfConnected() {
@@ -1035,7 +1035,7 @@ private fun AppTrafficDetailSheet(
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Маршрут трафика", color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 10.sp)
+                Text(stringResource(R.string.xtm_traffic_route), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 10.sp)
                 Spacer(modifier = Modifier.height(2.dp))
                 // Line 1: app name
                 Text("\uD83D\uDCF1  ${app.label}", color = Color(0xFFCCCCCC), fontSize = 12.sp)
@@ -1054,9 +1054,9 @@ private fun AppTrafficDetailSheet(
 
         // Traffic stats row
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            TrafficStatChip(label = "Входящий", value = formatBytes(app.rxBytes), color = Color(0xFF4CAF50))
-            TrafficStatChip(label = "Исходящий", value = formatBytes(app.txBytes), color = Color(0xFF2196F3))
-            TrafficStatChip(label = "Скорость", value = "${formatBytes(speed)}/с", color = Color(0xFFFFC107))
+            TrafficStatChip(label = stringResource(R.string.xtm_incoming), value = formatBytes(app.rxBytes), color = Color(0xFF4CAF50))
+            TrafficStatChip(label = stringResource(R.string.xtm_outgoing), value = formatBytes(app.txBytes), color = Color(0xFF2196F3))
+            TrafficStatChip(label = stringResource(R.string.xtm_speed), value = "${formatBytes(speed)}/s", color = Color(0xFFFFC107))
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -1081,7 +1081,7 @@ private fun AppTrafficDetailSheet(
             )
         }
         Text(
-            text = "Доля трафика: ${"%.0f".format(ratio * 100)}% от топ-приложения",
+            text = stringResource(R.string.xtm_traffic_share, "${"%.0f".format(ratio * 100)}%"),
             color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
             fontSize = 10.sp,
             modifier = Modifier.padding(top = 4.dp)
@@ -1098,9 +1098,9 @@ private fun AppTrafficDetailSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Обход VPN", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.xtm_bypass_vpn), color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 Text(
-                    "Трафик идёт напрямую, без туннеля",
+                    stringResource(R.string.xtm_bypass_desc),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 11.sp
                 )
             }
@@ -1138,10 +1138,10 @@ private fun AppTrafficDetailSheet(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Заблокировать интернет", color = Color(0xFFE53935), fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.xtm_block_internet), color = Color(0xFFE53935), fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 }
                 Text(
-                    "Полная блокировка (VPN + прямой трафик)",
+                    stringResource(R.string.xtm_block_desc),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 11.sp
                 )
             }
@@ -1178,7 +1178,7 @@ private fun AppTrafficDetailSheet(
                     .padding(10.dp)
             ) {
                 Text(
-                    "VPN не включён — блокировка/обход сохранены и применятся при подключении",
+                    stringResource(R.string.xtm_vpn_off_saved),
                     color = Color(0xFFE53935),
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center,
@@ -1193,7 +1193,7 @@ private fun AppTrafficDetailSheet(
                     .padding(10.dp)
             ) {
                 Text(
-                    "✓ Применено без перезапуска VPN",
+                    stringResource(R.string.xtm_applied_no_restart),
                     color = Color(0xFF4CAF50),
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center,
@@ -1303,7 +1303,7 @@ private fun DrawScope.drawTrafficMap(
                 isFakeBoldText = true
             }
             drawContext.canvas.nativeCanvas.drawText(
-                formatBytes(speed) + "/с", midX, midY - 10f, speedLabelPaint
+                formatBytes(speed) + "/s", midX, midY - 10f, speedLabelPaint
             )
         }
     }
@@ -1439,7 +1439,7 @@ private fun DrawScope.drawTrafficMap(
                 textAlign = android.graphics.Paint.Align.CENTER
                 isAntiAlias = true
             }
-            drawContext.canvas.nativeCanvas.drawText("↓ ${formatBytes(speed)}/с", lax, lay + 22f, speedPaint)
+            drawContext.canvas.nativeCanvas.drawText("↓ ${formatBytes(speed)}/s", lax, lay + 22f, speedPaint)
         }
         // Drag hint label
         if (isDragging) {
@@ -1449,7 +1449,7 @@ private fun DrawScope.drawTrafficMap(
                 textAlign = android.graphics.Paint.Align.CENTER
                 isAntiAlias = true
             }
-            drawContext.canvas.nativeCanvas.drawText("✦ зажми и тяни", lax, lay + (if (speed > 512L) 42f else 22f), hintPaint)
+            drawContext.canvas.nativeCanvas.drawText("✦ hold & drag", lax, lay + (if (speed > 512L) 42f else 22f), hintPaint)
         }
     }
 
@@ -1546,7 +1546,7 @@ private fun ActiveAppPacketChip(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "↓ ${formatBytes(speed)}/с",
+                        text = "↓ ${formatBytes(speed)}/s",
                         color = Color(0xFF4CAF50),
                         fontSize = 10.sp
                     )
@@ -1619,7 +1619,7 @@ internal fun PacketTraceContent(context: Context) {
                     onMethod = { methodUsed = it }
                 )
             } catch (e: CancellationException) { throw e
-            } catch (e: Exception) { errorMsg = e.message ?: "Ошибка" }
+            } catch (e: Exception) { errorMsg = e.message ?: context.getString(R.string.xtm_error) }
             finally { isRunning = false }
         }
     }
@@ -1630,7 +1630,7 @@ internal fun PacketTraceContent(context: Context) {
             OutlinedTextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                label = { Text("Цель (IP или домен)", fontSize = 12.sp) },
+                label = { Text(stringResource(R.string.xtm_target), fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 enabled = !isRunning,
@@ -1657,7 +1657,7 @@ internal fun PacketTraceContent(context: Context) {
         }
 
         if (methodUsed.isNotEmpty()) {
-            Text("Метод: $methodUsed", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
+            Text(stringResource(R.string.xtm_method, methodUsed), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
                 modifier = Modifier.padding(top = 2.dp))
         }
         if (errorMsg.isNotEmpty()) {
@@ -1676,10 +1676,10 @@ internal fun PacketTraceContent(context: Context) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.Route, contentDescription = null, tint = Color(0xFF444444), modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text("Трассировка пакетов", color = Color(0xFFCCCCCC), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.xtm_packet_trace), color = Color(0xFFCCCCCC), fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Показывает через какие узлы и ДЦ\nпроходит трафик с пингом по каждому",
+                        stringResource(R.string.xtm_trace_desc),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 12.sp, textAlign = TextAlign.Center, lineHeight = 18.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1687,13 +1687,13 @@ internal fun PacketTraceContent(context: Context) {
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB84629))) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Запустить трассировку", fontSize = 13.sp)
+                        Text(stringResource(R.string.xtm_run_trace), fontSize = 13.sp)
                     }
                 }
             }
         } else {
             // Device node
-            TraceHopRow(TraceHop(0, "Устройство", 0L, TraceHopStatus.OK, "Это устройство"), isFirst = true)
+            TraceHopRow(TraceHop(0, "device", 0L, TraceHopStatus.OK, ""), isFirst = true)
             LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
                 itemsIndexed(hops) { _, hop ->
                     AnimatedVisibility(visible = true, enter = fadeIn() + expandVertically()) {
@@ -1706,7 +1706,7 @@ internal fun PacketTraceContent(context: Context) {
                             verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp, color = Color(0xFFB84629))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Сканирование…", color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 11.sp)
+                            Text(stringResource(R.string.xtm_scanning), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 11.sp)
                         }
                     }
                 }
@@ -1745,10 +1745,10 @@ private fun TraceHopRow(hop: TraceHop, isFirst: Boolean) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.weight(1f)) {
-                    if (hop.index > 0) Text("Узел ${hop.index}", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
+                    if (hop.index > 0) Text(stringResource(R.string.xtm_hop, hop.index), fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
                     val mainLabel = when {
-                        hop.ip == "Устройство" -> "Это устройство"
-                        hop.status == TraceHopStatus.TIMEOUT -> "★ ★ ★  Нет ответа"
+                        hop.ip == "device" -> stringResource(R.string.xtm_this_device)
+                        hop.status == TraceHopStatus.TIMEOUT -> stringResource(R.string.xtm_no_response)
                         hop.country.isNotEmpty() -> buildString {
                             append(hop.country)
                             if (hop.city.isNotEmpty()) append(" · ${hop.city}")
@@ -1758,12 +1758,12 @@ private fun TraceHopRow(hop: TraceHop, isFirst: Boolean) {
                     Text(mainLabel, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Color(0xFFDDDDDD))
                     if (hop.isp.isNotEmpty() && hop.status != TraceHopStatus.TIMEOUT)
                         Text(hop.isp, fontSize = 11.sp, color = Color(0xFF777777))
-                    if (hop.ip != "*" && hop.ip != "Устройство" && hop.status !in listOf(TraceHopStatus.RESOLVING, TraceHopStatus.TIMEOUT))
+                    if (hop.ip != "*" && hop.ip != "device" && hop.status !in listOf(TraceHopStatus.RESOLVING, TraceHopStatus.TIMEOUT))
                         Text(hop.ip, fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = Color(0xFF484848))
                     if (hop.status == TraceHopStatus.DESTINATION) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFF003318)) {
-                            Text("ЦЕЛЬ", color = Color(0xFF66FF99), fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                            Text(stringResource(R.string.xtm_target_label), color = Color(0xFF66FF99), fontSize = 9.sp, fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp))
                         }
                     }
@@ -1776,7 +1776,7 @@ private fun TraceHopRow(hop: TraceHop, isFirst: Boolean) {
                     hop.latencyMs > 0 -> {
                         val lc = when { hop.latencyMs < 50L -> Color(0xFF4CAF50); hop.latencyMs < 150L -> Color(0xFFFFA726); else -> Color(0xFFFF5252) }
                         Surface(shape = RoundedCornerShape(10.dp), color = lc.copy(alpha = 0.15f), border = BorderStroke(1.dp, lc.copy(alpha = 0.4f))) {
-                            Text("${hop.latencyMs} мс", color = lc, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                            Text(stringResource(R.string.xtm_ms, hop.latencyMs), color = lc, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp))
                         }
                     }
@@ -1818,7 +1818,7 @@ private suspend fun runTraceInternal(
         onMethod(if (binary.contains("tracepath")) "tracepath" else "traceroute")
         runBinaryTrace(binary, host, onHop)
     } else {
-        onMethod("TCP probe (traceroute недоступен)")
+        onMethod("TCP probe (traceroute unavailable)")
         runTcpTrace(host, onHop)
     }
 }
@@ -1927,10 +1927,10 @@ internal fun LiveConnectionsContent(context: Context) {
                 val port = parts.lastOrNull() ?: ""
                 val secondsAgo = (now - c.time) / 1000L
                 val timeLabel = when {
-                    secondsAgo < 5  -> "только что"
-                    secondsAgo < 60 -> "${secondsAgo}с"
-                    secondsAgo < 3600 -> "${secondsAgo / 60}м"
-                    else -> "${secondsAgo / 3600}ч"
+                    secondsAgo < 5  -> context.getString(R.string.xtm_just_now)
+                    secondsAgo < 60 -> context.getString(R.string.xtm_secs, secondsAgo)
+                    secondsAgo < 3600 -> context.getString(R.string.xtm_mins, secondsAgo / 60)
+                    else -> context.getString(R.string.xtm_hours, secondsAgo / 3600)
                 }
                 LiveConnection(c.dest, host, port, c.tag, timeLabel)
             }
@@ -1947,7 +1947,7 @@ internal fun LiveConnectionsContent(context: Context) {
         OutlinedTextField(
             value = filterQuery,
             onValueChange = { filterQuery = it },
-            placeholder = { Text("Фильтр по хосту или тегу…", color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 12.sp) },
+            placeholder = { Text(stringResource(R.string.xtm_filter_host_tag), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 12.sp) },
             leadingIcon = {
                 Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
                     modifier = Modifier.size(18.dp))
@@ -1978,7 +1978,7 @@ internal fun LiveConnectionsContent(context: Context) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (connections.isEmpty()) "Нет данных" else "${connections.size} соединений",
+                text = if (connections.isEmpty()) stringResource(R.string.xtm_no_data) else stringResource(R.string.xtm_connections_count, connections.size),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
                 fontSize = 11.sp
             )
@@ -1989,7 +1989,7 @@ internal fun LiveConnectionsContent(context: Context) {
                     )
                 )
                 Text(
-                    text = if (isConnected) "VPN активен" else "VPN отключён",
+                    text = if (isConnected) stringResource(R.string.xtm_vpn_active) else stringResource(R.string.xtm_vpn_off),
                     color = if (isConnected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f),
                     fontSize = 11.sp
                 )
@@ -2003,8 +2003,8 @@ internal fun LiveConnectionsContent(context: Context) {
                         tint = Color(0xFF444444), modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = if (!isConnected) "Включите VPN — соединения появятся здесь"
-                        else "Нет записей в xray_access.log\nГенерируйте трафик (браузер, YouTube…)",
+                        text = if (!isConnected) stringResource(R.string.xtm_enable_vpn_hint)
+                        else stringResource(R.string.xtm_no_log_records),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 13.sp,
                         textAlign = TextAlign.Center, lineHeight = 18.sp
                     )
@@ -2047,8 +2047,8 @@ private fun LiveConnectionRow(conn: LiveConnection) {
             Text(
                 text = when {
                     conn.tag.contains("proxy") -> "VPN"
-                    conn.tag.contains("direct") -> "Прямой"
-                    conn.tag.contains("block") -> "Блок"
+                    conn.tag.contains("direct") -> stringResource(R.string.xtm_direct)
+                    conn.tag.contains("block") -> stringResource(R.string.xtm_block)
                     else -> conn.tag.take(8)
                 },
                 color = tagColor,
