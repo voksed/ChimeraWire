@@ -886,19 +886,29 @@ fun ConnectButton(
     val isPressed by interactionSource.collectIsPressedAsState()
     val pressScale by animateFloatAsState(if (isPressed) 0.94f else 1f, label = "press-scale")
 
-    // Мягкое "дыхание" свечения — быстрее во время подключения/переключения, спокойнее когда просто активен
-    val infiniteTransition = rememberInfiniteTransition(label = "connect-glow")
-    val breathe by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(if (isBusy) 650 else 1800, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathe"
-    )
-    val glowAlpha = if (isBusy) 0.14f + 0.18f * breathe else 0.08f + 0.09f * breathe
-    val glowScale = 1f + (if (isBusy) 0.09f else 0.04f) * breathe
+    // Breathing glow runs ONLY while connecting/reconnecting (a transient state). When the
+    // screen is idle or the VPN is simply connected the glow is static, so the home screen
+    // stops redrawing — previously this infinite animation kept the GPU busy at ~60fps the
+    // whole time the screen was open, which drained the battery and heated the device.
+    val glowAlpha: Float
+    val glowScale: Float
+    if (isBusy) {
+        val infiniteTransition = rememberInfiniteTransition(label = "connect-glow")
+        val breathe by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(650, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "breathe"
+        )
+        glowAlpha = 0.14f + 0.18f * breathe
+        glowScale = 1f + 0.09f * breathe
+    } else {
+        glowAlpha = 0.12f
+        glowScale = 1.03f
+    }
 
     Box(
         modifier = Modifier.size(buttonSize),

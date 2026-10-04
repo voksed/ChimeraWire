@@ -89,7 +89,7 @@ object UpdateManager {
         onProgress: (Float) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
         try {
-            val outFile = File(context.getExternalFilesDir(null) ?: context.filesDir, "carnelia-update.apk")
+            val outFile = File(context.getExternalFilesDir(null) ?: context.filesDir, "chimera-update.apk")
             if (outFile.exists()) outFile.delete()
 
             val request = Request.Builder().url(url).build()
@@ -141,7 +141,7 @@ object UpdateManager {
     }
 
     /**
-     * Picks the release-notes section for the device language. A release body may bundle
+     * Picks the release-notes section for the in-app language. A release body may bundle
      * several languages, each led by a line marker like `[[en]]`, `[[ru]]`, `[[es]]`
      * (2-letter code). Falls back to English, then to the whole body if unmarked.
      */
@@ -157,7 +157,10 @@ object UpdateManager {
             val end = if (i + 1 < matches.size) matches[i + 1].range.first else body.length
             sections[lang] = body.substring(start, end).trim()
         }
-        val lang = java.util.Locale.getDefault().language.lowercase()
+        // Key off the in-app language (per-app locale set via AppCompatDelegate) so the
+        // changelog matches the UI; fall back to the system locale when the app follows it.
+        val lang = (androidx.appcompat.app.AppCompatDelegate.getApplicationLocales().get(0)?.language
+            ?: java.util.Locale.getDefault().language).lowercase()
         return sections[lang] ?: sections["en"] ?: sections.values.firstOrNull() ?: body.trim()
     }
 
