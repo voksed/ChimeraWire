@@ -873,4 +873,24 @@ Android: %2$s
     <!-- i18n:auto-end -->
     <string name="xdyn_title">Системные цвета (Material You)</string>
     <string name="xdyn_subtitle">Брать палитру из обоев — только Android 12+</string>
+    <string name="xhub_tools_subtitle">Диагностика сети и туннеля</string>
+    <string name="xhub_group_privacy">Приватность</string>
+    <string name="xhub_group_analysis">Анализ трафика</string>
+    <string name="xmain_chip_connected">Подключено</string>
+    <string name="xmain_chip_disconnected">Отключено</string>
+    <string name="xmain_server_prefix">Сервер</string>
+    <string name="xmain_online">онлайн</string>
+    <string name="xdrawer_section_connection">Подключение</string>
+    <string name="xdrawer_section_protection">Защита</string>
+    <string name="xdrawer_home">Главная</string>
+    <string name="xdrawer_version">Версия %1$s (Build %2$d)</string>
+    <string name="xset_group_app">Приложение</string>
+    <string name="xset_row_network">Сеть</string>
+    <string name="xset_sub_tunnel">Mux, IP Strategy, LAN, автозапуск</string>
+    <string name="xset_sub_network">Раздельное туннелирование, DNS</string>
+    <string name="xset_sub_autoconnect">По сетям и приложениям</string>
+    <string name="xset_sub_appearance">Тема, динамические цвета</string>
+    <string name="xset_reset_title">Сбросить настройки</string>
+    <string name="xset_reset_desc">Все параметры вернутся к значениям по умолчанию. Серверы и подписки останутся.</string>
+    <string name="xset_reset_btn">Сбросить</string>
 </resources>

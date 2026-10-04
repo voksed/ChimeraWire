@@ -871,4 +871,24 @@ Last Error: %5$s
     <!-- i18n:auto-end -->
     <string name="xdyn_title">System colors (Material You)</string>
     <string name="xdyn_subtitle">Use the palette from your wallpaper — Android 12+ only</string>
+    <string name="xhub_tools_subtitle">Network and tunnel diagnostics</string>
+    <string name="xhub_group_privacy">Privacy</string>
+    <string name="xhub_group_analysis">Traffic analysis</string>
+    <string name="xmain_chip_connected">Connected</string>
+    <string name="xmain_chip_disconnected">Disconnected</string>
+    <string name="xmain_server_prefix">Server</string>
+    <string name="xmain_online">online</string>
+    <string name="xdrawer_section_connection">Connection</string>
+    <string name="xdrawer_section_protection">Protection</string>
+    <string name="xdrawer_home">Home</string>
+    <string name="xdrawer_version">Version %1$s (Build %2$d)</string>
+    <string name="xset_group_app">App</string>
+    <string name="xset_row_network">Network</string>
+    <string name="xset_sub_tunnel">Mux, IP strategy, LAN, auto-start</string>
+    <string name="xset_sub_network">Split tunneling, DNS</string>
+    <string name="xset_sub_autoconnect">By networks and apps</string>
+    <string name="xset_sub_appearance">Theme, dynamic colors</string>
+    <string name="xset_reset_title">Reset settings</string>
+    <string name="xset_reset_desc">All options return to their defaults. Servers and subscriptions are kept.</string>
+    <string name="xset_reset_btn">Reset</string>
 </resources>

@@ -871,4 +871,24 @@ Android: %2$s
     <!-- i18n:auto-end -->
     <string name="xdyn_title">ألوان النظام (Material You)</string>
     <string name="xdyn_subtitle">استخدام ألوان الخلفية — Android 12+ فقط</string>
+    <string name="xhub_tools_subtitle">تشخيص الشبكة والنفق</string>
+    <string name="xhub_group_privacy">الخصوصية</string>
+    <string name="xhub_group_analysis">تحليل حركة المرور</string>
+    <string name="xmain_chip_connected">متصل</string>
+    <string name="xmain_chip_disconnected">غير متصل</string>
+    <string name="xmain_server_prefix">الخادم</string>
+    <string name="xmain_online">متصل</string>
+    <string name="xdrawer_section_connection">الاتصال</string>
+    <string name="xdrawer_section_protection">الحماية</string>
+    <string name="xdrawer_home">الرئيسية</string>
+    <string name="xdrawer_version">الإصدار %1$s (Build %2$d)</string>
+    <string name="xset_group_app">التطبيق</string>
+    <string name="xset_row_network">الشبكة</string>
+    <string name="xset_sub_tunnel">Mux، إستراتيجية IP، LAN، التشغيل التلقائي</string>
+    <string name="xset_sub_network">النفق المقسَّم، DNS</string>
+    <string name="xset_sub_autoconnect">حسب الشبكات والتطبيقات</string>
+    <string name="xset_sub_appearance">السمة، الألوان الديناميكية</string>
+    <string name="xset_reset_title">إعادة تعيين الإعدادات</string>
+    <string name="xset_reset_desc">تعود جميع الخيارات إلى قيمها الافتراضية. تبقى الخوادم والاشتراكات.</string>
+    <string name="xset_reset_btn">إعادة تعيين</string>
 </resources>

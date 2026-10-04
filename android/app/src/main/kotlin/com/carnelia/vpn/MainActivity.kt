@@ -10,6 +10,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -84,6 +85,10 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.filled.Dns
 
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -352,7 +357,8 @@ fun ChimeraApp(
     val connectionState by VpnGlobalState.connectionState.collectAsState()
     val stats by VpnGlobalState.stats.collectAsState()
     val repository = remember { ServerRepository(context) }
-    var activeConfig by remember { 
+    val subCount = remember { SubscriptionManager(context).getSubscriptions().size }
+    var activeConfig by remember {
         mutableStateOf(repository.getLastUsedServer() ?: repository.getServers().firstOrNull())
     }
     
@@ -441,49 +447,57 @@ fun ChimeraApp(
                 drawerContainerColor = surface,
                 drawerContentColor = onSurface
             ) {
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.menu_title),
-                    modifier = Modifier.padding(start = 24.dp, bottom = 16.dp),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = primary
-                )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = outline)
-                Spacer(Modifier.height(16.dp))
-                
-                // Settings
-                NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.settings_title_menu)) },
-                    selected = false,
-                    onClick = {
-                        context.startActivity(Intent(context, SettingsActivity::class.java))
-                        scope.launch { drawerState.close() }
-                    },
-                    icon = { Icon(Icons.Default.Tune, contentDescription = null, tint = onSurface) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
-                )
+                // ── Header: brand tile + live status ──
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Shield, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(22.dp))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(stringResource(R.string.carnelia_vpn_title), fontSize = 16.sp, fontWeight = FontWeight.Medium, color = onSurface)
+                        Text(
+                            if (connectionState == ConnectionState.CONNECTED) stringResource(R.string.status_secured) else stringResource(R.string.status_not_protected),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
-                // Subscriptions
+                DrawerSectionLabel(stringResource(R.string.xdrawer_section_connection))
+                NavigationDrawerItem(
+                    label = { Text(stringResource(R.string.xdrawer_home)) },
+                    selected = true,
+                    onClick = { scope.launch { drawerState.close() } },
+                    icon = { Icon(Icons.Default.PowerSettingsNew, contentDescription = null) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = chimeraDrawerColors()
+                )
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.xmain_subscriptions)) },
                     selected = false,
+                    badge = { if (subCount > 0) Text("$subCount", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     onClick = {
                         showSubscriptionsDialog = true
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Refresh, contentDescription = null, tint = onSurface) },
+                    icon = { Icon(Icons.Default.Sync, contentDescription = null) },
                     modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
+                    colors = chimeraDrawerColors()
                 )
 
-                // Black Wall
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outline)
+                DrawerSectionLabel(stringResource(R.string.xdrawer_section_protection))
                 NavigationDrawerItem(
                     label = { Text("Black Wall") },
                     selected = false,
@@ -491,15 +505,10 @@ fun ChimeraApp(
                         context.startActivity(Intent(context, BlackWallActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Security, contentDescription = null, tint = onSurface) },
+                    icon = { Icon(Icons.Default.Security, contentDescription = null) },
                     modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
+                    colors = chimeraDrawerColors()
                 )
-
-                // App traffic blocker + analyzer (serverless local firewall)
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.xmain_traffic_blocker)) },
                     selected = false,
@@ -507,31 +516,10 @@ fun ChimeraApp(
                         context.startActivity(Intent(context, AppFirewallActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.Block, contentDescription = null, tint = onSurface) },
+                    icon = { Icon(Icons.Default.Block, contentDescription = null) },
                     modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
+                    colors = chimeraDrawerColors()
                 )
-
-                // Tools Hub
-                NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.xmain_tools)) },
-                    selected = false,
-                    onClick = {
-                        context.startActivity(Intent(context, ToolsHubActivity::class.java))
-                        scope.launch { drawerState.close() }
-                    },
-                    icon = { Icon(Icons.Default.Build, contentDescription = null, tint = onSurface) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
-                )
-
-                // Geolocation Spoofing
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.geo_spoof_title)) },
                     selected = false,
@@ -539,30 +527,42 @@ fun ChimeraApp(
                         context.startActivity(Intent(context, GeoSpoofActivity::class.java))
                         scope.launch { drawerState.close() }
                     },
-                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = onSurface) },
+                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
                     modifier = Modifier.padding(horizontal = 12.dp),
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color.Transparent,
-                        unselectedTextColor = onSurface
-                    )
+                    colors = chimeraDrawerColors()
                 )
 
-                // P2P Chat — временно скрыт из меню (код и вся фича остаются в проекте,
-                // просто нет входа в UI). Чтобы вернуть: раскомментировать этот блок.
-                // NavigationDrawerItem(
-                //     label = { Text("Чат") },
-                //     selected = false,
-                //     onClick = {
-                //         context.startActivity(Intent(context, ChatActivity::class.java))
-                //         scope.launch { drawerState.close() }
-                //     },
-                //     icon = { Icon(Icons.Default.Forum, contentDescription = null, tint = onSurface) },
-                //     modifier = Modifier.padding(horizontal = 12.dp),
-                //     colors = NavigationDrawerItemDefaults.colors(
-                //         unselectedContainerColor = Color.Transparent,
-                //         unselectedTextColor = onSurface
-                //     )
-                // )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outline)
+                NavigationDrawerItem(
+                    label = { Text(stringResource(R.string.xmain_tools)) },
+                    selected = false,
+                    onClick = {
+                        context.startActivity(Intent(context, ToolsHubActivity::class.java))
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Build, contentDescription = null) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = chimeraDrawerColors()
+                )
+                NavigationDrawerItem(
+                    label = { Text(stringResource(R.string.settings_title_menu)) },
+                    selected = false,
+                    onClick = {
+                        context.startActivity(Intent(context, SettingsActivity::class.java))
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    colors = chimeraDrawerColors()
+                )
+
+                Spacer(Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.xdrawer_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(16.dp)
+                )
 
             }
         }
@@ -573,29 +573,12 @@ fun ChimeraApp(
             topBar = {
                 TopAppBar(
                     title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(RoundedCornerShape(9.dp))
-                                    .background(surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Image(
-                                    painter = painterResource(R.drawable.ic_launcher_foreground),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = stringResource(R.string.carnelia_vpn_title),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.3.sp,
-                                color = onBackground
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.carnelia_vpn_title),
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = onBackground
+                        )
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
@@ -618,8 +601,7 @@ fun ChimeraApp(
                             }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = background),
-                    modifier = Modifier.shadow(elevation = 8.dp)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = background)
                 )
             },
             containerColor = background
@@ -629,13 +611,7 @@ fun ChimeraApp(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        brush = if (isDark) Brush.verticalGradient(
-                            colors = listOf(surfaceVariant, background)
-                        ) else Brush.verticalGradient(
-                            colors = listOf(background, background)
-                        )
-                    )
+                    .background(background)
                     .padding(paddingValues)
             ) {
                 if (windowSize.isLandscape) {
@@ -644,105 +620,75 @@ fun ChimeraApp(
                         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        // Left pane: connect button + stats
+                        // Left pane: connect ring
                         Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            ConnectButton(
+                            ConnectRing(
                                 connectionState = connectionState,
-                                currentTheme = currentTheme,
-                                buttonSize = windowSize.connectButtonDp,
                                 onConnect = {
                                     val server = activeConfig ?: repository.getServers().firstOrNull()
                                     if (server != null) onConnect(server) else showServerList = true
                                 },
                                 onDisconnect = onDisconnect
                             )
-                            Spacer(modifier = Modifier.height(20.dp))
-                            StatsRow(stats = stats)
                         }
 
-                        // Right pane: status + duration + server picker
+                        // Right pane: status + stats + server
                         Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            ConnectionStatusText(connectionState = connectionState)
-                            if (connectionState == ConnectionState.CONNECTED) {
-                                Text(
-                                    text = connectionDuration,
-                                    fontSize = if (windowSize.isTablet) 32.sp else 22.sp,
-                                    fontWeight = FontWeight.Light,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.height(32.dp))
+                            StatusChip(connectionState, connectionDuration)
+                            Spacer(Modifier.height(16.dp))
+                            HeadlineStatus(connectionState)
+                            Spacer(Modifier.height(24.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                StatCard(Icons.Default.ArrowDownward, formatBytes(stats.bytesReceived), stringResource(R.string.received_label), Modifier.weight(1f))
+                                StatCard(Icons.Default.ArrowUpward, formatBytes(stats.bytesSent), stringResource(R.string.sent_label), Modifier.weight(1f))
                             }
-                            ServerPickerPill(
-                                activeConfig = activeConfig,
-                                onClick = { showServerList = true }
-                            )
+                            Spacer(Modifier.height(16.dp))
+                            ServerCard(activeConfig) { showServerList = true }
                         }
                     }
                 } else {
-                    // ── Portrait: original single-column layout ──
-                    val hPadding = if (windowSize.isTablet) 48.dp else 24.dp
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    // ── Portrait: single-column layout per the design canvas ──
+                    val hPadding = if (windowSize.isTablet) 48.dp else 16.dp
                     Column(
                         modifier = Modifier
-                            .padding(horizontal = hPadding, vertical = 24.dp)
+                            .padding(horizontal = hPadding)
                             .then(
                                 if (windowSize.isTablet)
-                                    Modifier.widthIn(max = 480.dp).align(Alignment.Center)
+                                    Modifier.widthIn(max = 480.dp).align(Alignment.Center).fillMaxHeight()
                                 else Modifier.fillMaxSize()
                             ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        ConnectionStatusText(connectionState = connectionState)
-
-                        if (connectionState == ConnectionState.CONNECTED) {
-                            Text(
-                                text = connectionDuration,
-                                fontSize = if (windowSize.isTablet) 32.sp else 24.sp,
-                                fontWeight = FontWeight.Light,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        ConnectButton(
+                        Spacer(Modifier.height(24.dp))
+                        StatusChip(connectionState, connectionDuration)
+                        Spacer(Modifier.height(20.dp))
+                        HeadlineStatus(connectionState)
+                        Spacer(Modifier.height(40.dp))
+                        ConnectRing(
                             connectionState = connectionState,
-                            currentTheme = currentTheme,
-                            buttonSize = windowSize.connectButtonDp,
                             onConnect = {
                                 val server = activeConfig ?: repository.getServers().firstOrNull()
                                 if (server != null) onConnect(server) else showServerList = true
                             },
                             onDisconnect = onDisconnect
                         )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-                        StatsRow(stats = stats)
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        ServerPickerPill(
-                            activeConfig = activeConfig,
-                            onClick = { showServerList = true }
-                        )
+                        Spacer(Modifier.height(40.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            StatCard(Icons.Default.ArrowDownward, formatBytes(stats.bytesReceived), stringResource(R.string.received_label), Modifier.weight(1f))
+                            StatCard(Icons.Default.ArrowUpward, formatBytes(stats.bytesSent), stringResource(R.string.sent_label), Modifier.weight(1f))
+                        }
+                        Spacer(Modifier.weight(1f))
+                        ServerCard(activeConfig) { showServerList = true }
+                        Spacer(Modifier.height(8.dp))
                     }
-                    } // end Box (tablet portrait centering)
                 }
             }
         }
@@ -825,17 +771,63 @@ fun formatBytes(bytes: Long): String {
 // ── Reusable connect-screen sub-composables ────────────────────────────────
 
 @Composable
-fun ConnectionStatusText(connectionState: ConnectionState) {
-    val hint = when (connectionState) {
-        ConnectionState.CONNECTED -> stringResource(R.string.status_hint_connected)
-        ConnectionState.DISCONNECTED, ConnectionState.ERROR -> stringResource(R.string.status_hint_disconnected)
-        else -> null
+private fun chimeraDrawerColors() = NavigationDrawerItemDefaults.colors(
+    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+    selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    unselectedContainerColor = Color.Transparent,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurface,
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+)
+
+@Composable
+private fun DrawerSectionLabel(text: String) {
+    Text(
+        text,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 28.dp, top = 8.dp, bottom = 8.dp)
+    )
+}
+
+/** Status pill above the headline: ember-filled when connected (with the live timer), outlined otherwise. */
+@Composable
+fun StatusChip(connectionState: ConnectionState, duration: String) {
+    val connected = connectionState == ConnectionState.CONNECTED
+    val scheme = MaterialTheme.colorScheme
+    val label = when (connectionState) {
+        ConnectionState.CONNECTED -> stringResource(R.string.xmain_chip_connected) + " · " + duration
+        ConnectionState.CONNECTING -> stringResource(R.string.status_connecting)
+        ConnectionState.RECONNECTING -> stringResource(R.string.status_switching)
+        else -> stringResource(R.string.xmain_chip_disconnected)
     }
+    val bg = if (connected) scheme.primaryContainer else Color.Transparent
+    val fg = if (connected) scheme.onPrimaryContainer else scheme.onSurfaceVariant
+    val borderColor = if (connected) scheme.primaryContainer else scheme.outline
+    Surface(shape = RoundedCornerShape(8.dp), color = bg, border = BorderStroke(1.dp, borderColor)) {
+        Row(
+            modifier = Modifier.padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Shield, null, tint = fg, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(label, color = fg, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+/** Large headline word ("Защищено" / "Не защищено") with a supporting line, animated on state change. */
+@Composable
+fun HeadlineStatus(connectionState: ConnectionState) {
+    val supporting = if (connectionState == ConnectionState.CONNECTED)
+        stringResource(R.string.status_hint_connected) else stringResource(R.string.status_hint_disconnected)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AnimatedContent(
             targetState = connectionState,
             transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) },
-            label = "status-word"
+            label = "headline"
         ) { state ->
             Text(
                 text = when (state) {
@@ -844,101 +836,60 @@ fun ConnectionStatusText(connectionState: ConnectionState) {
                     ConnectionState.RECONNECTING -> stringResource(R.string.status_switching)
                     else -> stringResource(R.string.status_not_protected)
                 },
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Black,
-                color = when (state) {
-                    ConnectionState.CONNECTED    -> Color(0xFF16A34A)
-                    ConnectionState.RECONNECTING -> Color(0xFFD97706)
-                    ConnectionState.ERROR        -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                letterSpacing = 1.5.sp
+                fontSize = 32.sp,
+                lineHeight = 40.sp,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
-        if (hint != null) {
-            Text(
-                text = hint,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
+        Spacer(Modifier.height(4.dp))
+        Text(supporting, fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
+/**
+ * The hero power control: a 176dp button inside a 224dp ring. The button morphs from a full
+ * circle (off) to a rounded square (on) and swaps to the ember fill, matching the design canvas.
+ * A spinner shows during connect/reconnect; a long-press opens the debug panel.
+ */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun ConnectButton(
+fun ConnectRing(
     connectionState: ConnectionState,
-    currentTheme: AppTheme,
-    buttonSize: androidx.compose.ui.unit.Dp,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit
 ) {
     val context = LocalContext.current
-    val primary = MaterialTheme.colorScheme.primary
-    val onPrimary = MaterialTheme.colorScheme.onPrimary
-    val iconSize = (buttonSize.value * 0.34f).dp
+    val scheme = MaterialTheme.colorScheme
     val isConnected = connectionState == ConnectionState.CONNECTED
     val isBusy = connectionState == ConnectionState.CONNECTING || connectionState == ConnectionState.RECONNECTING
+    val radius by animateDpAsState(if (isConnected) 56.dp else 88.dp, label = "btn-radius")
+    val btnBg = if (isConnected) scheme.primary else scheme.surfaceContainerHighest
+    val btnFg = if (isConnected) scheme.onPrimary else scheme.primary
+    val ringBg = if (isConnected) scheme.surfaceContainerHigh else scheme.surfaceContainer
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val pressScale by animateFloatAsState(if (isPressed) 0.94f else 1f, label = "press-scale")
-
-    // Breathing glow runs ONLY while connecting/reconnecting (a transient state). When the
-    // screen is idle or the VPN is simply connected the glow is static, so the home screen
-    // stops redrawing — previously this infinite animation kept the GPU busy at ~60fps the
-    // whole time the screen was open, which drained the battery and heated the device.
-    val glowAlpha: Float
-    val glowScale: Float
-    if (isBusy) {
-        val infiniteTransition = rememberInfiniteTransition(label = "connect-glow")
-        val breathe by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(650, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "breathe"
-        )
-        glowAlpha = 0.14f + 0.18f * breathe
-        glowScale = 1f + 0.09f * breathe
-    } else {
-        glowAlpha = 0.12f
-        glowScale = 1.03f
-    }
+    val pressScale by animateFloatAsState(if (isPressed) 0.95f else 1f, label = "press-scale")
 
     Box(
-        modifier = Modifier.size(buttonSize),
+        modifier = Modifier.size(224.dp).clip(CircleShape).background(ringBg),
         contentAlignment = Alignment.Center
     ) {
-        // Мягкое свечение акцентом позади кнопки
-        Box(
-            modifier = Modifier
-                .size(buttonSize)
-                .scale(glowScale)
-                .clip(CircleShape)
-                .background(primary.copy(alpha = glowAlpha))
-        )
-
         if (isBusy) {
             CircularProgressIndicator(
-                modifier = Modifier.size(buttonSize - 6.dp),
-                color = primary,
+                modifier = Modifier.size(200.dp),
+                color = scheme.primary,
                 strokeWidth = 3.dp,
                 trackColor = Color.Transparent
             )
         }
-
-        // Основная кнопка — всегда залита акцентом, состояние читается по иконке
         Box(
             modifier = Modifier
-                .size(buttonSize - 18.dp)
+                .size(176.dp)
                 .scale(pressScale)
-                .clip(CircleShape)
-                .background(primary)
+                .clip(RoundedCornerShape(radius))
+                .background(btnBg)
                 .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -950,97 +901,85 @@ fun ConnectButton(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            AnimatedContent(
-                targetState = isConnected,
-                transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(120)) },
-                label = "connect-icon"
-            ) { connected ->
-                Icon(
-                    imageVector = if (connected) Icons.Default.Check else Icons.Default.PowerSettingsNew,
-                    contentDescription = "Connect",
-                    modifier = Modifier.size(iconSize),
-                    tint = onPrimary
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.PowerSettingsNew,
+                contentDescription = "Connect",
+                modifier = Modifier.size(64.dp),
+                tint = btnFg
+            )
         }
     }
 }
 
+/** One of the two traffic tiles: a circular tonal icon badge + value + label. */
 @Composable
-fun StatsRow(stats: com.carnelia.vpn.core.VpnStats) {
-    Row(
-        modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        StatChip(
-            icon = Icons.Default.ArrowDownward,
-            value = formatBytes(stats.bytesReceived),
-            label = stringResource(R.string.received_label),
-            modifier = Modifier.weight(1f)
-        )
-        StatChip(
-            icon = Icons.Default.ArrowUpward,
-            value = formatBytes(stats.bytesSent),
-            label = stringResource(R.string.sent_label),
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun StatChip(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(10.dp))
+fun StatCard(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(shape = RoundedCornerShape(16.dp), color = scheme.surfaceContainer, modifier = modifier) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(40.dp).clip(CircleShape).background(scheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, tint = scheme.onSecondaryContainer, modifier = Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(12.dp))
             Column {
                 AnimatedContent(
                     targetState = value,
                     transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) },
                     label = "stat-value"
                 ) { v ->
-                    Text(v, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(v, color = scheme.onSurface, fontSize = 22.sp, lineHeight = 28.sp)
                 }
-                Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, letterSpacing = 0.5.sp)
+                Text(label, color = scheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp)
             }
         }
     }
 }
 
+/** Bottom server selector card: icon tile, "Сервер" + name, online dot, expand chevron. */
 @Composable
-fun ServerPickerPill(activeConfig: com.carnelia.vpn.core.VpnServerConfig?, onClick: () -> Unit) {
-    val outline = MaterialTheme.colorScheme.outline
-    val onSurface = MaterialTheme.colorScheme.onSurface
+fun ServerCard(activeConfig: com.carnelia.vpn.core.VpnServerConfig?, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val online = Color(0xFFA8D5A2)
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, outline),
+        shape = RoundedCornerShape(28.dp),
+        color = scheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+            modifier = Modifier.heightIn(min = 72.dp).padding(start = 12.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.size(8.dp).background(
-                color = if (activeConfig != null) Color(0xFF16A34A) else MaterialTheme.colorScheme.error,
-                shape = CircleShape
-            ))
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                activeConfig?.name ?: stringResource(R.string.select_server_btn),
-                color = onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(Icons.Default.KeyboardArrowUp, null, tint = onSurface.copy(alpha = 0.5f))
+            Box(
+                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(scheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Dns, null, tint = scheme.onPrimaryContainer)
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                val label = if (activeConfig != null)
+                    stringResource(R.string.xmain_server_prefix) + " · " + activeConfig.protocol.name
+                else stringResource(R.string.xmain_server_prefix)
+                Text(label, color = scheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp)
+                Text(
+                    activeConfig?.name ?: stringResource(R.string.select_server_btn),
+                    color = scheme.onSurface,
+                    fontSize = 16.sp,
+                    lineHeight = 24.sp,
+                    maxLines = 1
+                )
+            }
+            if (activeConfig != null) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(online))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.xmain_online), color = online, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+            Spacer(Modifier.width(6.dp))
+            Icon(Icons.Default.UnfoldMore, null, tint = scheme.onSurfaceVariant)
         }
     }
 }

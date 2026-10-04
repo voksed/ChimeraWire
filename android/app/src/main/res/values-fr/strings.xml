@@ -871,4 +871,24 @@ Dernière erreur : %5$s
     <!-- i18n:auto-end -->
     <string name="xdyn_title">Couleurs système (Material You)</string>
     <string name="xdyn_subtitle">Utiliser la palette du fond d\'écran — Android 12+ uniquement</string>
+    <string name="xhub_tools_subtitle">Diagnostic du réseau et du tunnel</string>
+    <string name="xhub_group_privacy">Confidentialité</string>
+    <string name="xhub_group_analysis">Analyse du trafic</string>
+    <string name="xmain_chip_connected">Connecté</string>
+    <string name="xmain_chip_disconnected">Déconnecté</string>
+    <string name="xmain_server_prefix">Serveur</string>
+    <string name="xmain_online">en ligne</string>
+    <string name="xdrawer_section_connection">Connexion</string>
+    <string name="xdrawer_section_protection">Protection</string>
+    <string name="xdrawer_home">Accueil</string>
+    <string name="xdrawer_version">Version %1$s (Build %2$d)</string>
+    <string name="xset_group_app">Application</string>
+    <string name="xset_row_network">Réseau</string>
+    <string name="xset_sub_tunnel">Mux, stratégie IP, LAN, démarrage auto</string>
+    <string name="xset_sub_network">Tunnel partagé, DNS</string>
+    <string name="xset_sub_autoconnect">Par réseaux et applications</string>
+    <string name="xset_sub_appearance">Thème, couleurs dynamiques</string>
+    <string name="xset_reset_title">Réinitialiser les réglages</string>
+    <string name="xset_reset_desc">Toutes les options reviennent par défaut. Les serveurs et abonnements sont conservés.</string>
+    <string name="xset_reset_btn">Réinitialiser</string>
 </resources>

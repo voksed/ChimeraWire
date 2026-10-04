@@ -871,4 +871,24 @@ Región: %4$s
     <!-- i18n:auto-end -->
     <string name="xdyn_title">Colores del sistema (Material You)</string>
     <string name="xdyn_subtitle">Usar la paleta del fondo de pantalla — solo Android 12+</string>
+    <string name="xhub_tools_subtitle">Diagnóstico de red y túnel</string>
+    <string name="xhub_group_privacy">Privacidad</string>
+    <string name="xhub_group_analysis">Análisis de tráfico</string>
+    <string name="xmain_chip_connected">Conectado</string>
+    <string name="xmain_chip_disconnected">Desconectado</string>
+    <string name="xmain_server_prefix">Servidor</string>
+    <string name="xmain_online">en línea</string>
+    <string name="xdrawer_section_connection">Conexión</string>
+    <string name="xdrawer_section_protection">Protección</string>
+    <string name="xdrawer_home">Inicio</string>
+    <string name="xdrawer_version">Versión %1$s (Build %2$d)</string>
+    <string name="xset_group_app">Aplicación</string>
+    <string name="xset_row_network">Red</string>
+    <string name="xset_sub_tunnel">Mux, estrategia IP, LAN, inicio automático</string>
+    <string name="xset_sub_network">Túnel dividido, DNS</string>
+    <string name="xset_sub_autoconnect">Por redes y apps</string>
+    <string name="xset_sub_appearance">Tema, colores dinámicos</string>
+    <string name="xset_reset_title">Restablecer ajustes</string>
+    <string name="xset_reset_desc">Todas las opciones vuelven a sus valores predeterminados. Se conservan los servidores y las suscripciones.</string>
+    <string name="xset_reset_btn">Restablecer</string>
 </resources>

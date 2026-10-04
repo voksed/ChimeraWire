@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,6 +54,8 @@ import com.carnelia.vpn.utils.LogLevel
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.launch
 import com.carnelia.vpn.ui.rememberWindowSize
+import com.carnelia.vpn.ui.GroupRow
+import com.carnelia.vpn.ui.GroupSection
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -125,10 +129,10 @@ fun SettingsScreen(startPage: String? = null) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { 
+                    title = {
                         Text(
                             text = when(currentScreen) {
-                                SettingsPage.MAIN -> stringResource(R.string.settings_title)
+                                SettingsPage.MAIN -> ""
                                 SettingsPage.APPEARANCE -> stringResource(R.string.appearance_section)
                                 SettingsPage.SECURITY -> stringResource(R.string.security_section)
                                 SettingsPage.CONNECTION -> stringResource(R.string.connection_section)
@@ -144,10 +148,10 @@ fun SettingsScreen(startPage: String? = null) {
                         ) 
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = MaterialTheme.colorScheme.background
                     ),
                     navigationIcon = {
-                        IconButton(onClick = { 
+                        IconButton(onClick = {
                             if (currentScreen == SettingsPage.MAIN) {
                                 (context as? android.app.Activity)?.finish()
                             } else {
@@ -275,183 +279,143 @@ fun MainSettingsMenu(
     context: Context,
     onNavigate: (SettingsPage) -> Unit
 ) {
+    var showBackupDialog by remember { mutableStateOf(false) }
+    if (showBackupDialog) {
+        BackupDialog(context = context, onDismiss = { showBackupDialog = false })
+    }
+
+    val connection = listOf(
+        GroupRow(Icons.Default.Tune, stringResource(R.string.tunnel_settings_section), stringResource(R.string.xset_sub_tunnel)) { onNavigate(SettingsPage.TUNNEL) },
+        GroupRow(Icons.AutoMirrored.Filled.AltRoute, stringResource(R.string.xset_row_network), stringResource(R.string.xset_sub_network)) { onNavigate(SettingsPage.CONNECTION) },
+        GroupRow(Icons.Default.Bolt, stringResource(R.string.smart_auto_connect_title), stringResource(R.string.xset_sub_autoconnect)) { onNavigate(SettingsPage.AUTO_CONNECT) },
+        GroupRow(Icons.Default.VpnLock, stringResource(R.string.bypass_advanced_section), stringResource(R.string.fragmentation_title)) { onNavigate(SettingsPage.CENSORSHIP_BYPASS) },
+    )
+    val security = listOf(
+        GroupRow(Icons.Default.Shield, stringResource(R.string.security_section), stringResource(R.string.netshield_title) + ", " + stringResource(R.string.kill_switch_internal)) { onNavigate(SettingsPage.SECURITY) },
+        GroupRow(Icons.Default.Backup, stringResource(R.string.backup_section_title), stringResource(R.string.backup_section_desc)) { showBackupDialog = true },
+    )
+    val localeTag = androidx.core.os.LocaleListCompat.getAdjustedDefault().get(0)?.language?.uppercase() ?: "EN"
+    val app = listOf(
+        GroupRow(Icons.Default.Palette, stringResource(R.string.appearance_section), stringResource(R.string.xset_sub_appearance)) { onNavigate(SettingsPage.APPEARANCE) },
+        GroupRow(Icons.Default.Language, stringResource(R.string.language_title), value = localeTag) { onNavigate(SettingsPage.LANGUAGE) },
+        GroupRow(Icons.AutoMirrored.Filled.ReceiptLong, stringResource(R.string.show_app_logs)) { context.startActivity(Intent(context, LogsActivity::class.java)) },
+        GroupRow(Icons.Default.PrivacyTip, stringResource(R.string.privacy_policy_title), stringResource(R.string.privacy_policy_tile_desc)) { context.startActivity(Intent(context, PrivacyPolicyActivity::class.java)) },
+        GroupRow(Icons.Default.Favorite, stringResource(R.string.donate_dev_title), stringResource(R.string.donate_dev_desc)) { onNavigate(SettingsPage.DONATION) },
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
             .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 32.dp)
     ) {
-        
-        // --- Categories ---
-        SettingsCategoryItem(
-            icon = Icons.Default.Palette,
-            title = stringResource(R.string.appearance_section),
-            onClick = { onNavigate(SettingsPage.APPEARANCE) }
+        Text(
+            stringResource(R.string.settings_title),
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 32.sp,
+            lineHeight = 40.sp,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 24.dp)
         )
+        GroupSection(stringResource(R.string.xdrawer_section_connection), connection)
+        Spacer(Modifier.height(24.dp))
+        GroupSection(stringResource(R.string.security_section), security)
+        Spacer(Modifier.height(24.dp))
+        GroupSection(stringResource(R.string.xset_group_app), app)
 
-        SettingsCategoryItem(
-            icon = Icons.Default.Tune,
-            title = stringResource(R.string.tunnel_settings_section),
-            description = "Mux, IP Strategy, LAN, Auto Start",
-            onClick = { onNavigate(SettingsPage.TUNNEL) }
-        )
-        
-        SettingsCategoryItem(
-            icon = Icons.Default.Security,
-            title = stringResource(R.string.security_section),
-            description = stringResource(R.string.netshield_title) + ", " + stringResource(R.string.kill_switch_internal),
-            onClick = { onNavigate(SettingsPage.SECURITY) }
-        )
+        Spacer(Modifier.height(24.dp))
 
-        SettingsCategoryItem(
-            icon = Icons.Default.Wifi,
-            title = stringResource(R.string.connection_section),
-            description = stringResource(R.string.split_tunneling_title) + ", DNS",
-            onClick = { onNavigate(SettingsPage.CONNECTION) }
-        )
-
-         SettingsCategoryItem(
-            icon = Icons.Default.Bolt,
-            title = stringResource(R.string.smart_auto_connect_title),
-            onClick = { onNavigate(SettingsPage.AUTO_CONNECT) }
-        )
-
-        SettingsCategoryItem(
-            icon = Icons.Default.VpnLock,
-            title = stringResource(R.string.bypass_advanced_section),
-            description = stringResource(R.string.fragmentation_title),
-            onClick = { onNavigate(SettingsPage.CENSORSHIP_BYPASS) }
-        )
-
-        SettingsCategoryItem(
-            icon = Icons.Default.Favorite,
-            title = stringResource(R.string.donate_dev_title),
-            description = stringResource(R.string.donate_dev_desc),
-            onClick = { onNavigate(SettingsPage.DONATION) }
-        )
-
-        // Backup & Restore
-        var showBackupDialog by remember { mutableStateOf(false) }
-        if (showBackupDialog) {
-            BackupDialog(context = context, onDismiss = { showBackupDialog = false })
-        }
-        SettingsCategoryItem(
-            icon = Icons.Default.SaveAlt,
-            title = stringResource(R.string.backup_section_title),
-            description = stringResource(R.string.backup_section_desc),
-            onClick = { showBackupDialog = true }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // --- Other Items (Language, Report, Logs) ---
-        
-        SettingsCategoryItem(
-            icon = Icons.Default.Language,
-            title = stringResource(R.string.language_title),
-            value = androidx.core.os.LocaleListCompat.getAdjustedDefault().get(0)?.language?.uppercase() ?: "EN",
-            onClick = { onNavigate(SettingsPage.LANGUAGE) }
-        )
-
-        SettingsCategoryItem(
-            icon = Icons.Default.BugReport,
-            title = stringResource(R.string.show_app_logs),
-            onClick = { context.startActivity(Intent(context, LogsActivity::class.java)) }
-        )
-
-        SettingsCategoryItem(
-            icon = Icons.Default.PrivacyTip,
-            title = stringResource(R.string.privacy_policy_title),
-            description = stringResource(R.string.privacy_policy_tile_desc),
-            onClick = {
-                context.startActivity(Intent(context, PrivacyPolicyActivity::class.java))
-            }
-        )
-
-        // Report Bug
+        // Report bug (filled tonal) + GitHub source (outlined)
         Button(
             onClick = { SettingsActivity.reportBug(context) },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ),
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
-            Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.report_bug), color = MaterialTheme.colorScheme.onPrimary)
+            Icon(Icons.Default.BugReport, null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.report_bug))
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Source code on GitHub
-        Button(
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(
             onClick = {
-                 try {
-                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/voksed/carnelia-vpn"))
-                    context.startActivity(intent)
+                try {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/voksed/ChimeraWire")))
                 } catch (e: Exception) {}
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF24292E)),
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(28.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
-             Text(stringResource(R.string.github_source), fontSize = 12.sp, color = Color.White)
+            Icon(Icons.Default.Code, null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.github_source))
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            stringResource(R.string.version_fmt, com.carnelia.vpn.BuildConfig.VERSION_NAME),
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Reset
-        Button(
-            onClick = { 
-                PrefsManager.resetSettings(context)
-                // Theme will be reset to default automatically
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-            modifier = Modifier.fillMaxWidth(),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(20.dp))
+
+        // Reset settings card
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(R.string.reset_settings_caps), color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Default.RestartAlt, null, tint = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(stringResource(R.string.xset_reset_title), color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, lineHeight = 24.sp)
+                        Text(stringResource(R.string.xset_reset_desc), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp)
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = { PrefsManager.resetSettings(context) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.align(Alignment.End).height(40.dp)
+                ) {
+                    Text(stringResource(R.string.xset_reset_btn), fontWeight = FontWeight.Medium)
+                }
+            }
         }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Version
+
+        Spacer(Modifier.height(16.dp))
+
+        // Footer version — preserves the 7-tap / long-press easter eggs
         val versionInfo = try {
-             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-             "${packageInfo.versionName} (Build ${if (android.os.Build.VERSION.SDK_INT >= 28) packageInfo.longVersionCode else packageInfo.versionCode})"
-        } catch (e: Exception) { "1.0.0" }
-        
+            val pi = context.packageManager.getPackageInfo(context.packageName, 0)
+            "${pi.versionName} (Build ${if (android.os.Build.VERSION.SDK_INT >= 28) pi.longVersionCode else pi.versionCode})"
+        } catch (e: Exception) { com.carnelia.vpn.BuildConfig.VERSION_NAME }
         var clickCount by remember { mutableStateOf(0) }
-        
         Text(
-            text = "Version: $versionInfo",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = stringResource(R.string.carnelia_vpn_title) + " · " + versionInfo,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            fontSize = 12.sp,
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
                 .combinedClickable(
                     onClick = {
                         clickCount++
                         if (clickCount >= 7) {
                             clickCount = 0
-                            // Launch Space Dodger
                             context.startActivity(Intent(context, EasterEggActivity::class.java))
                         }
                     },
                     onLongClick = {
-                        // Launch Miner Game
                         context.startActivity(Intent(context, com.carnelia.vpn.games.MinerActivity::class.java))
                     }
                 ),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }
