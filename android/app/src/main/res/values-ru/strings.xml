@@ -871,4 +871,6 @@ Android: %2$s
     <string name="xtune_cand_frag_aggr">Фрагментация: агрессивная</string>
     <string name="xtune_cand_mux_frag">Mux ×4 + Фрагментация</string>
     <!-- i18n:auto-end -->
+    <string name="xdyn_title">Системные цвета (Material You)</string>
+    <string name="xdyn_subtitle">Брать палитру из обоев — только Android 12+</string>
 </resources>

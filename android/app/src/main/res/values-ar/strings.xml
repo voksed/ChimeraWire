@@ -869,4 +869,6 @@ Android: %2$s
     <string name="xtune_cand_frag_aggr">التجزئة: عدوانية</string>
     <string name="xtune_cand_mux_frag">Mux ×4 + التجزئة</string>
     <!-- i18n:auto-end -->
+    <string name="xdyn_title">ألوان النظام (Material You)</string>
+    <string name="xdyn_subtitle">استخدام ألوان الخلفية — Android 12+ فقط</string>
 </resources>

@@ -869,4 +869,6 @@ Región: %4$s
     <string name="xtune_cand_frag_aggr">Fragmentación: agresiva</string>
     <string name="xtune_cand_mux_frag">Mux ×4 + Fragmentación</string>
     <!-- i18n:auto-end -->
+    <string name="xdyn_title">Colores del sistema (Material You)</string>
+    <string name="xdyn_subtitle">Usar la paleta del fondo de pantalla — solo Android 12+</string>
 </resources>

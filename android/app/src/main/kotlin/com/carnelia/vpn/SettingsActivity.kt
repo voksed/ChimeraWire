@@ -640,6 +640,8 @@ fun TunnelSettings(context: Context) {
 @Composable
 fun AppearanceSettings(themeIndex: Int, onThemeChange: (Int) -> Unit) {
     val themes = com.carnelia.vpn.ui.theme.AppTheme.entries.toList()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var dynamicColor by remember { mutableStateOf(PrefsManager.isDynamicColorEnabled(context)) }
 
     Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
         Card(
@@ -689,6 +691,33 @@ fun AppearanceSettings(themeIndex: Int, onThemeChange: (Int) -> Unit) {
                             )
                         }
                     }
+                }
+            }
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.xdyn_title), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.xdyn_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Switch(
+                        checked = dynamicColor,
+                        onCheckedChange = {
+                            dynamicColor = it
+                            PrefsManager.setDynamicColorEnabled(context, it)
+                            (context as? android.app.Activity)?.recreate()
+                        }
+                    )
                 }
             }
         }

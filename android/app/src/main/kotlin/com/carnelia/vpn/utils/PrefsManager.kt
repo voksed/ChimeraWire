@@ -45,6 +45,11 @@ object PrefsManager {
     fun isNetShieldEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_NET_SHIELD, true) // Default On
     fun setNetShieldEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_NET_SHIELD, enabled).apply()
 
+    // Material You — derive the color scheme from the system wallpaper (Android 12+). Off by
+    // default so the ember/teal brand palette is the default experience.
+    fun isDynamicColorEnabled(context: Context): Boolean = getPrefs(context).getBoolean("dynamic_color", false)
+    fun setDynamicColorEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean("dynamic_color", enabled).apply()
+
     fun isSecureKeyCheckEnabled(context: Context): Boolean = getPrefs(context).getBoolean(KEY_SECURE_KEYS, true) // Default On
     fun setSecureKeyCheckEnabled(context: Context, enabled: Boolean) = getPrefs(context).edit().putBoolean(KEY_SECURE_KEYS, enabled).apply()
 

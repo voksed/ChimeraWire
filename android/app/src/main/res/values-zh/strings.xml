@@ -869,4 +869,6 @@ Android：%2$s
     <string name="xtune_cand_frag_aggr">分片：激进</string>
     <string name="xtune_cand_mux_frag">Mux ×4 + 分片</string>
     <!-- i18n:auto-end -->
+    <string name="xdyn_title">系统颜色 (Material You)</string>
+    <string name="xdyn_subtitle">使用壁纸配色——仅限 Android 12+</string>
 </resources>

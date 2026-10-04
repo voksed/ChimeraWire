@@ -869,4 +869,6 @@ Dernière erreur : %5$s
     <string name="xtune_cand_frag_aggr">Fragmentation : agressive</string>
     <string name="xtune_cand_mux_frag">Mux ×4 + Fragmentation</string>
     <!-- i18n:auto-end -->
+    <string name="xdyn_title">Couleurs système (Material You)</string>
+    <string name="xdyn_subtitle">Utiliser la palette du fond d\'écran — Android 12+ uniquement</string>
 </resources>
