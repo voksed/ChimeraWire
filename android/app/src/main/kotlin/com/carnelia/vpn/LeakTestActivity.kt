@@ -179,7 +179,7 @@ fun LeakTestScreen(onBack: () -> Unit) {
 
                     Text(
                         stringResource(R.string.leak_test_disclaimer),
-                        color = Color(0xFF555555),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
                         lineHeight = 16.sp
                     )
@@ -193,7 +193,7 @@ fun LeakTestScreen(onBack: () -> Unit) {
 private fun LeakInfoCard(title: String, value: String, subtitle: String, isOk: Boolean) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -211,7 +211,7 @@ private fun LeakInfoCard(title: String, value: String, subtitle: String, isOk: B
             }
             Text(value, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             if (subtitle.isNotBlank()) {
-                Text(subtitle, color = Color(0xFF888888), fontSize = 11.sp)
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
         }
     }

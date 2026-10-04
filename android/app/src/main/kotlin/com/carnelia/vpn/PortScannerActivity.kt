@@ -129,8 +129,8 @@ fun PortScannerScreen(onBack: () -> Unit) {
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                    focusedBorderColor = Color(0xFF00AAFF),
-                    unfocusedBorderColor = Color(0xFF444444)
+                    focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
@@ -160,8 +160,8 @@ fun PortScannerScreen(onBack: () -> Unit) {
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onBackground,
                         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedBorderColor = Color(0xFF00AAFF),
-                        unfocusedBorderColor = Color(0xFF444444)
+                        focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -170,7 +170,7 @@ fun PortScannerScreen(onBack: () -> Unit) {
                 onClick = { scan() },
                 enabled = !isScanning && targetHost.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00AAFF))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
             ) {
                 if (isScanning) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
@@ -183,13 +183,13 @@ fun PortScannerScreen(onBack: () -> Unit) {
                 LinearProgressIndicator(
                     progress = { if (progress.second > 0) progress.first / progress.second.toFloat() else 0f },
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color(0xFF00AAFF)
+                    color = MaterialTheme.colorScheme.tertiary
                 )
-                Text("${progress.first}/${progress.second}", fontSize = 12.sp, color = Color(0xFF888888), fontFamily = FontFamily.Monospace)
+                Text("${progress.first}/${progress.second}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace)
             }
 
             if (results.isEmpty() && !isScanning) {
-                Text(stringResource(R.string.xps_no_open), color = Color(0xFF444444), fontSize = 13.sp)
+                Text(stringResource(R.string.xps_no_open), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             } else {
                 Text(stringResource(R.string.xps_open_count, results.size), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -200,7 +200,7 @@ fun PortScannerScreen(onBack: () -> Unit) {
                         ) {
                             Text("${r.port}", color = Color(0xFF44DD66), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
                             Text(r.service, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-                            Text("${r.ms}ms", color = Color(0xFF888888), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                            Text("${r.ms}ms", color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
                         }
                     }
                 }

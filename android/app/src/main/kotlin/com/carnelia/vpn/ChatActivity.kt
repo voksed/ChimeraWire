@@ -91,7 +91,7 @@ private fun RoomListScreen(onBack: () -> Unit, onOpenRoom: (VpnServerConfig) -> 
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             if (servers.isEmpty()) {
-                Text(stringResource(R.string.xchat_no_servers), color = Color(0xFF444444), fontSize = 13.sp)
+                Text(stringResource(R.string.xchat_no_servers), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(servers, key = { it.id }) { server ->
@@ -154,9 +154,9 @@ private fun RoomScreen(config: VpnServerConfig, onBack: () -> Unit) {
                     Column {
                         Text(config.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.People, null, tint = Color(0xFF888888), modifier = Modifier.size(12.dp))
+                            Icon(Icons.Default.People, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.xchat_peers_online, peers.size), fontSize = 11.sp, color = Color(0xFF888888))
+                            Text(stringResource(R.string.xchat_peers_online, peers.size), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 },
@@ -242,7 +242,7 @@ private fun MessageBubble(msg: ChatMessage, sdf: SimpleDateFormat) {
                     Text(msg.from, fontSize = 11.sp, color = Color(0xFF44DD66), fontWeight = FontWeight.Bold)
                 }
                 Text(msg.text, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
-                Text(sdf.format(Date(msg.timestamp)), fontSize = 9.sp, color = Color(0xFF666666))
+                Text(sdf.format(Date(msg.timestamp)), fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

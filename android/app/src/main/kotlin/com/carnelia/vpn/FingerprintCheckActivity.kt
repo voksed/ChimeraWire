@@ -141,7 +141,7 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
                 },
                 actions = {
                     IconButton(onClick = { runCheck() }, enabled = !isLoading) {
-                        Icon(Icons.Default.Refresh, null, tint = if (isLoading) Color.Gray else Color(0xFF00AAFF))
+                        Icon(Icons.Default.Refresh, null, tint = if (isLoading) Color.Gray else MaterialTheme.colorScheme.tertiary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -181,7 +181,7 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
                     Modifier.fillMaxWidth().padding(vertical = 48.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = Color(0xFF00AAFF))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.tertiary)
                 }
             } else if (error != null) {
                 Card(
@@ -196,7 +196,7 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
                     )
                 }
             } else result?.let { r ->
-                FpInfoCard(stringResource(R.string.fingerprint_ip), r.ip, Color(0xFF00AAFF))
+                FpInfoCard(stringResource(R.string.fingerprint_ip), r.ip, MaterialTheme.colorScheme.tertiary)
                 FpInfoCard(
                     stringResource(R.string.fingerprint_location),
                     listOf(r.city, r.regionName, r.country).filter { it.isNotBlank() }.joinToString(", "),
@@ -210,7 +210,7 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FpFlagChip(stringResource(R.string.fingerprint_flag_proxy),   r.proxy,   if (r.proxy)   Color(0xFFFF4444) else Color(0xFF44DD66))
                     FpFlagChip(stringResource(R.string.fingerprint_flag_hosting), r.hosting, if (r.hosting) Color(0xFFFFAA00) else Color(0xFF44DD66))
-                    FpFlagChip(stringResource(R.string.fingerprint_flag_mobile),  r.mobile,  Color(0xFF888888))
+                    FpFlagChip(stringResource(R.string.fingerprint_flag_mobile),  r.mobile,  MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -230,7 +230,7 @@ private fun FpInfoCard(label: String, value: String, valueColor: Color) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(14.dp)) {
-            Text(label, color = Color(0xFF555555), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(3.dp))
             Text(value.ifBlank { "—" }, color = valueColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }

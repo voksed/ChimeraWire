@@ -515,7 +515,7 @@ fun TrafficMapScreen(context: Context) {
                     Box(
                         modifier = Modifier
                             .background(
-                                if (selected) Color(0xFF1565C0) else Color(0xFF1A1A1A),
+                                if (selected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,
                                 RoundedCornerShape(12.dp)
                             )
                             .then(Modifier.pointerInput(value) {
@@ -616,7 +616,7 @@ fun TrafficMapScreen(context: Context) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = stringResource(R.string.xtm_works_on_real_devices),
-                            color = Color(0xFF444444),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 11.sp
                         )
                     } else {
@@ -628,7 +628,7 @@ fun TrafficMapScreen(context: Context) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = stringResource(R.string.xtm_open_browser_hint),
-                            color = Color(0xFF444444),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 11.sp
                         )
                     }
@@ -709,7 +709,7 @@ fun TrafficMapScreen(context: Context) {
                                 }
                                 Spacer(modifier = Modifier.height(3.dp))
                                 val total = app.rxBytes + app.txBytes
-                                Text(formatBytes(total), color = Color(0xFF777777), fontSize = 10.sp)
+                                Text(formatBytes(total), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                             }
                         }
                     }
@@ -995,7 +995,7 @@ private fun AppTrafficDetailSheet(
             modifier = Modifier
                 .width(40.dp)
                 .height(4.dp)
-                .background(Color(0xFF444444), RoundedCornerShape(2.dp))
+                .background(MaterialTheme.colorScheme.onSurfaceVariant, RoundedCornerShape(2.dp))
                 .align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -1038,7 +1038,7 @@ private fun AppTrafficDetailSheet(
                 Text(stringResource(R.string.xtm_traffic_route), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 10.sp)
                 Spacer(modifier = Modifier.height(2.dp))
                 // Line 1: app name
-                Text("\uD83D\uDCF1  ${app.label}", color = Color(0xFFCCCCCC), fontSize = 12.sp)
+                Text("\uD83D\uDCF1  ${app.label}", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
                 // Line 2: rule
                 Text(routeRule, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 11.sp)
                 // Line 3: routing state (colored)
@@ -1509,7 +1509,7 @@ private fun ActiveAppPacketChip(
     Box(
         modifier = Modifier
             .background(
-                if (isSelected) Color(0xFF0A1830) else Color(0xFF141414),
+                if (isSelected) Color(0xFF0A1830) else MaterialTheme.colorScheme.surfaceVariant,
                 RoundedCornerShape(10.dp)
             )
             .pointerInput(app.packageName) { detectTapGestures { onSelect() } }
@@ -1529,7 +1529,7 @@ private fun ActiveAppPacketChip(
                 Box(
                     modifier = Modifier
                         .size(22.dp)
-                        .background(Color(0xFF1E1E1E), CircleShape),
+                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(app.label.first().toString(), color = Color.White, fontSize = 10.sp)
@@ -1538,7 +1538,7 @@ private fun ActiveAppPacketChip(
             Column {
                 Text(
                     text = app.label,
-                    color = if (isSelected) Color.White else Color(0xFFCCCCCC),
+                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
                     fontSize = 11.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
@@ -1553,7 +1553,7 @@ private fun ActiveAppPacketChip(
                 }
                 Text(
                     text = app.packageName,
-                    color = Color(0xFF444444),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 9.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -1649,7 +1649,7 @@ internal fun PacketTraceContent(context: Context) {
             } else {
                 IconButton(
                     onClick = { startTrace(inputText) },
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0xFF1A1A1A))
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color(0xFF4CAF50))
                 }
@@ -1674,9 +1674,9 @@ internal fun PacketTraceContent(context: Context) {
         if (hops.isEmpty() && !isRunning) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Route, contentDescription = null, tint = Color(0xFF444444), modifier = Modifier.size(48.dp))
+                    Icon(Icons.Default.Route, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text(stringResource(R.string.xtm_packet_trace), color = Color(0xFFCCCCCC), fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.xtm_packet_trace), color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         stringResource(R.string.xtm_trace_desc),
@@ -1733,9 +1733,9 @@ private fun TraceHopRow(hop: TraceHop, isFirst: Boolean) {
     }
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(30.dp)) {
-            if (!isFirst) Spacer(modifier = Modifier.width(2.dp).height(8.dp).background(Color(0xFF2A2A2A)))
+            if (!isFirst) Spacer(modifier = Modifier.width(2.dp).height(8.dp).background(MaterialTheme.colorScheme.outline))
             Box(modifier = Modifier.size(if (hop.index == 0) 12.dp else 9.dp).background(dotColor, CircleShape))
-            Spacer(modifier = Modifier.width(2.dp).height(8.dp).background(Color(0xFF2A2A2A)))
+            Spacer(modifier = Modifier.width(2.dp).height(8.dp).background(MaterialTheme.colorScheme.outline))
         }
         Spacer(modifier = Modifier.width(6.dp))
         Card(colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -1755,9 +1755,9 @@ private fun TraceHopRow(hop: TraceHop, isFirst: Boolean) {
                         }
                         else -> hop.ip
                     }
-                    Text(mainLabel, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Color(0xFFDDDDDD))
+                    Text(mainLabel, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
                     if (hop.isp.isNotEmpty() && hop.status != TraceHopStatus.TIMEOUT)
-                        Text(hop.isp, fontSize = 11.sp, color = Color(0xFF777777))
+                        Text(hop.isp, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (hop.ip != "*" && hop.ip != "device" && hop.status !in listOf(TraceHopStatus.RESOLVING, TraceHopStatus.TIMEOUT))
                         Text(hop.ip, fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = Color(0xFF484848))
                     if (hop.status == TraceHopStatus.DESTINATION) {
@@ -1771,7 +1771,7 @@ private fun TraceHopRow(hop: TraceHop, isFirst: Boolean) {
                 Spacer(modifier = Modifier.width(8.dp))
                 when {
                     hop.index == 0 -> {}
-                    hop.status == TraceHopStatus.TIMEOUT -> Text("—", color = Color(0xFF444444), fontSize = 15.sp)
+                    hop.status == TraceHopStatus.TIMEOUT -> Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
                     hop.status == TraceHopStatus.RESOLVING -> CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
                     hop.latencyMs > 0 -> {
                         val lc = when { hop.latencyMs < 50L -> Color(0xFF4CAF50); hop.latencyMs < 150L -> Color(0xFFFFA726); else -> Color(0xFFFF5252) }
@@ -1985,7 +1985,7 @@ internal fun LiveConnectionsContent(context: Context) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box(
                     modifier = Modifier.size(6.dp).background(
-                        if (isConnected) Color(0xFF4CAF50) else Color(0xFF444444), CircleShape
+                        if (isConnected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant, CircleShape
                     )
                 )
                 Text(
@@ -2000,7 +2000,7 @@ internal fun LiveConnectionsContent(context: Context) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                     Icon(Icons.Default.NetworkCheck, contentDescription = null,
-                        tint = Color(0xFF444444), modifier = Modifier.size(48.dp))
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = if (!isConnected) stringResource(R.string.xtm_enable_vpn_hint)
@@ -2032,7 +2032,7 @@ private fun LiveConnectionRow(conn: LiveConnection) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF0F0F0F), RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2061,7 +2061,7 @@ private fun LiveConnectionRow(conn: LiveConnection) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = conn.host,
-                color = Color(0xFFCCCCCC),
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 12.sp,
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                 maxLines = 1,
@@ -2072,6 +2072,6 @@ private fun LiveConnectionRow(conn: LiveConnection) {
             }
         }
         // Time
-        Text(conn.timeLabel, color = Color(0xFF444444), fontSize = 10.sp)
+        Text(conn.timeLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
     }
 }

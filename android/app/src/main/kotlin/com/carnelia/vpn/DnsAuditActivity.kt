@@ -146,7 +146,7 @@ fun DnsAuditScreen(context: Context, onBack: () -> Unit) {
                     Column(Modifier.padding(14.dp)) {
                         Text(
                             stringResource(R.string.dns_audit_system_servers),
-                            color = Color(0xFF555555),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -181,7 +181,7 @@ private fun DnsEntryCard(entry: DnsEntry) {
             Column(Modifier.weight(1f)) {
                 Text(entry.domain, color = MaterialTheme.colorScheme.onBackground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 when {
-                    !entry.done  -> Text(stringResource(R.string.dns_audit_resolving), color = Color(0xFF555555), fontSize = 11.sp)
+                    !entry.done  -> Text(stringResource(R.string.dns_audit_resolving), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                     entry.failed -> Text(stringResource(R.string.dns_audit_failed), color = Color(0xFFFF4444), fontSize = 11.sp)
                     else -> {
                         Text(
@@ -192,7 +192,7 @@ private fun DnsEntryCard(entry: DnsEntry) {
                         if (entry.ips.size > 1) {
                             Text(
                                 "+${entry.ips.size - 1} more",
-                                color = Color(0xFF555555),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 10.sp
                             )
                         }

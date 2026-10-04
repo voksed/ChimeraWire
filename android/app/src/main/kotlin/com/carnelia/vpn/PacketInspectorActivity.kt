@@ -86,7 +86,7 @@ fun PacketInspectorScreen(onBack: () -> Unit) {
                         )
                     }
                     IconButton(onClick = { AppLogger.clear() }) {
-                        Icon(Icons.Default.Delete, null, tint = Color(0xFF444444))
+                        Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -106,13 +106,13 @@ fun PacketInspectorScreen(onBack: () -> Unit) {
                     Icon(
                         Icons.Default.WifiOff,
                         null,
-                        tint = Color(0xFF2A2A2A),
+                        tint = MaterialTheme.colorScheme.outline,
                         modifier = Modifier.size(52.dp)
                     )
-                    Text(stringResource(R.string.packet_inspector_empty), color = Color(0xFF444444), fontSize = 13.sp)
+                    Text(stringResource(R.string.packet_inspector_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     Text(
                         stringResource(R.string.packet_inspector_empty_hint),
-                        color = Color(0xFF333333),
+                        color = MaterialTheme.colorScheme.outline,
                         fontSize = 11.sp
                     )
                 }
@@ -132,7 +132,7 @@ fun PacketInspectorScreen(onBack: () -> Unit) {
                         entry.message.contains("udp", ignoreCase = true)   -> Color(0xFFFFAA00)
                         entry.message.contains("tcp", ignoreCase = true)   -> Color(0xFF44AAFF)
                         entry.message.contains("->")                       -> Color(0xFF44DD66)
-                        else                                               -> Color(0xFF666666)
+                        else                                               -> MaterialTheme.colorScheme.onSurfaceVariant
                     }
                     Row(
                         modifier = Modifier

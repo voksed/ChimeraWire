@@ -133,7 +133,7 @@ private fun SpeedStat(label: String, bps: Long, color: Color) {
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
-        Text(label, color = Color(0xFF666666), fontSize = 11.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
     }
 }
 
@@ -146,7 +146,7 @@ private fun TotalStat(label: String, bytes: Long, color: Color) {
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
-        Text(label, color = Color(0xFF555555), fontSize = 10.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
     }
 }
 
@@ -158,7 +158,7 @@ private fun SpeedGraph(
 ) {
     val downColor = Color(0xFF44DD66)
     val upColor   = Color(0xFFFFAA00)
-    val gridColor = Color(0xFF1A1A1A)
+    val gridColor = MaterialTheme.colorScheme.surfaceVariant
 
     Canvas(modifier = modifier) {
         if (downHistory.isEmpty() && upHistory.isEmpty()) return@Canvas

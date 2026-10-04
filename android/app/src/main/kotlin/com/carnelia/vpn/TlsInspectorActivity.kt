@@ -147,8 +147,8 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onBackground,
                         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedBorderColor = Color(0xFF00DDCC),
-                        unfocusedBorderColor = Color(0xFF444444)
+                        focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
                 OutlinedTextField(
@@ -160,8 +160,8 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = MaterialTheme.colorScheme.onBackground,
                         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedBorderColor = Color(0xFF00DDCC),
-                        unfocusedBorderColor = Color(0xFF444444)
+                        focusedBorderColor = MaterialTheme.colorScheme.tertiary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -170,7 +170,7 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
                 onClick = { inspect() },
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00DDCC))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -198,15 +198,15 @@ fun TlsInspectorScreen(onBack: () -> Unit) {
             }
 
             result?.let { r ->
-                TlsRow(stringResource(R.string.tls_version),    r.tlsVersion,            Color(0xFF00DDCC))
+                TlsRow(stringResource(R.string.tls_version),    r.tlsVersion,            MaterialTheme.colorScheme.tertiary)
                 TlsRow(stringResource(R.string.tls_cipher),     r.cipherSuite,           MaterialTheme.colorScheme.onBackground)
-                TlsRow(stringResource(R.string.tls_chain_depth), stringResource(R.string.tls_certs_suffix, r.chainDepth), Color(0xFF888888))
+                TlsRow(stringResource(R.string.tls_chain_depth), stringResource(R.string.tls_certs_suffix, r.chainDepth), MaterialTheme.colorScheme.onSurfaceVariant)
                 TlsRow(stringResource(R.string.tls_subject),    r.subject,               MaterialTheme.colorScheme.onBackground)
-                TlsRow(stringResource(R.string.tls_issuer),     r.issuer,                Color(0xFF888888))
+                TlsRow(stringResource(R.string.tls_issuer),     r.issuer,                MaterialTheme.colorScheme.onSurfaceVariant)
                 TlsRow(stringResource(R.string.tls_valid_from), r.validFrom,             MaterialTheme.colorScheme.onBackground)
                 TlsRow(stringResource(R.string.tls_valid_until), r.validTo,              Color(0xFF44DD66))
-                if (r.san.isNotBlank()) TlsRow(stringResource(R.string.tls_sans), r.san, Color(0xFF888888))
-                TlsRow(stringResource(R.string.tls_sha256_fp),  r.sha256, Color(0xFF444444), mono = true)
+                if (r.san.isNotBlank()) TlsRow(stringResource(R.string.tls_sans), r.san, MaterialTheme.colorScheme.onSurfaceVariant)
+                TlsRow(stringResource(R.string.tls_sha256_fp),  r.sha256, MaterialTheme.colorScheme.onSurfaceVariant, mono = true)
             }
         }
     }
@@ -222,7 +222,7 @@ private fun TlsRow(label: String, value: String, valueColor: Color, mono: Boolea
         Column(Modifier.padding(12.dp)) {
             Text(
                 label,
-                color = Color(0xFF555555),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Medium
             )

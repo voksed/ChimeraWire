@@ -233,7 +233,7 @@ fun TrafficChart(history: List<com.carnelia.vpn.core.TrafficSession>, modifier: 
     val maxVal = (dailyDown + dailyUp).maxOrNull()?.toFloat() ?: 1f
     val downColor = Color(0xFF00E676)
     val upColor = Color(0xFF2979FF)
-    val gridColor = Color(0xFF333333)
+    val gridColor = MaterialTheme.colorScheme.outline
 
     Canvas(modifier = modifier) {
         val w = size.width

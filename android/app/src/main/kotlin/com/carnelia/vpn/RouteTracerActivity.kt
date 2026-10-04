@@ -129,7 +129,7 @@ fun RouteTracerScreen(onBack: () -> Unit) {
                         focusedTextColor = MaterialTheme.colorScheme.onBackground,
                         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         focusedBorderColor = Color(0xFFFFAA00),
-                        unfocusedBorderColor = Color(0xFF444444)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
                 Button(
@@ -150,7 +150,7 @@ fun RouteTracerScreen(onBack: () -> Unit) {
             }
 
             if (hops.isEmpty() && !isRunning) {
-                Text(stringResource(R.string.route_tracer_hint_empty), color = Color(0xFF444444), fontSize = 13.sp)
+                Text(stringResource(R.string.route_tracer_hint_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             } else {
                 LazyColumn(
                     state = listState,
@@ -174,7 +174,7 @@ private fun HopRow(hop: TraceHop) {
     ) {
         Text(
             text = "${hop.ttl}",
-            color = Color(0xFF555555),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
