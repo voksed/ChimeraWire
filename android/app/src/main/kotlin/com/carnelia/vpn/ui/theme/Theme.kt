@@ -18,10 +18,10 @@ import com.carnelia.vpn.utils.PrefsManager
 import com.carnelia.vpn.R
 
 /**
- * ChimeraWire "Live Wire" palette: warm ember as the hero accent (connect button, key
- * actions) and teal as the second accent (highlights, active states), on near-black
- * neutral surfaces — mirroring the logo. error stays a distinct red so it never reads as
- * the ember accent. Exactly 4 themes, no ad-hoc variants.
+ * ChimeraWire "Live Wire" palette on a full Material 3 color system: warm ember as the
+ * hero accent (connect button, key actions) and teal as the second accent, on neutral
+ * surfaces with proper M3 tonal elevation (surfaceContainer*). error stays a distinct
+ * red so it never reads as the ember accent. Exactly 4 themes.
  */
 enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose.material3.ColorScheme, val isDark: Boolean) {
     LIGHT(R.string.theme_light, lightColorScheme(
@@ -47,7 +47,20 @@ enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose
         onSurface = Color(0xFF1A1C1E),
         surfaceVariant = Color(0xFFECEFF1),
         onSurfaceVariant = Color(0xFF48505A),
-        outline = Color(0xFFD9DDE2)
+        outline = Color(0xFFD9DDE2),
+        outlineVariant = Color(0xFFC7CBD0),
+        scrim = Color(0xFF000000),
+        inverseSurface = Color(0xFF2E3133),
+        inverseOnSurface = Color(0xFFF0F1F3),
+        inversePrimary = Color(0xFFFF9D5C),
+        surfaceTint = Color(0xFFA3480F),
+        surfaceDim = Color(0xFFD8DADE),
+        surfaceBright = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFFFFFFFF),
+        surfaceContainerLow = Color(0xFFF2F4F6),
+        surfaceContainer = Color(0xFFECEEF1),
+        surfaceContainerHigh = Color(0xFFE6E9EC),
+        surfaceContainerHighest = Color(0xFFE0E4E7)
     ), isDark = false),
 
     LIGHT_HC(R.string.theme_light_hc, lightColorScheme(
@@ -73,7 +86,20 @@ enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose
         onSurface = Color(0xFF000000),
         surfaceVariant = Color(0xFFE2E6EA),
         onSurfaceVariant = Color(0xFF16191C),
-        outline = Color(0xFF000000)
+        outline = Color(0xFF000000),
+        outlineVariant = Color(0xFF5A5F66),
+        scrim = Color(0xFF000000),
+        inverseSurface = Color(0xFF000000),
+        inverseOnSurface = Color(0xFFFFFFFF),
+        inversePrimary = Color(0xFFFFB68C),
+        surfaceTint = Color(0xFF6E2B00),
+        surfaceDim = Color(0xFFD0D3D7),
+        surfaceBright = Color(0xFFFFFFFF),
+        surfaceContainerLowest = Color(0xFFFFFFFF),
+        surfaceContainerLow = Color(0xFFF0F2F4),
+        surfaceContainer = Color(0xFFE8EBED),
+        surfaceContainerHigh = Color(0xFFE0E3E6),
+        surfaceContainerHighest = Color(0xFFD8DCDF)
     ), isDark = false),
 
     DARK(R.string.theme_dark, darkColorScheme(
@@ -99,7 +125,20 @@ enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose
         onSurface = Color(0xFFECEEF1),
         surfaceVariant = Color(0xFF202327),
         onSurfaceVariant = Color(0xFFAEB4BC),
-        outline = Color(0xFF2C3137)
+        outline = Color(0xFF2C3137),
+        outlineVariant = Color(0xFF3A3F45),
+        scrim = Color(0xFF000000),
+        inverseSurface = Color(0xFFECEEF1),
+        inverseOnSurface = Color(0xFF2B2E32),
+        inversePrimary = Color(0xFFA3480F),
+        surfaceTint = Color(0xFFFF9D5C),
+        surfaceDim = Color(0xFF0E1013),
+        surfaceBright = Color(0xFF34383E),
+        surfaceContainerLowest = Color(0xFF090B0E),
+        surfaceContainerLow = Color(0xFF141619),
+        surfaceContainer = Color(0xFF181B1F),
+        surfaceContainerHigh = Color(0xFF22262B),
+        surfaceContainerHighest = Color(0xFF2D3137)
     ), isDark = true),
 
     DARK_AMOLED(R.string.theme_dark_amoled, darkColorScheme(
@@ -125,7 +164,20 @@ enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose
         onSurface = Color(0xFFECEEF1),
         surfaceVariant = Color(0xFF121212),
         onSurfaceVariant = Color(0xFFA8AEB5),
-        outline = Color(0xFF242424)
+        outline = Color(0xFF242424),
+        outlineVariant = Color(0xFF2E2E2E),
+        scrim = Color(0xFF000000),
+        inverseSurface = Color(0xFFECEEF1),
+        inverseOnSurface = Color(0xFF2B2E32),
+        inversePrimary = Color(0xFFA3480F),
+        surfaceTint = Color(0xFFFFB078),
+        surfaceDim = Color(0xFF000000),
+        surfaceBright = Color(0xFF2A2A2A),
+        surfaceContainerLowest = Color(0xFF000000),
+        surfaceContainerLow = Color(0xFF0C0C0C),
+        surfaceContainer = Color(0xFF121212),
+        surfaceContainerHigh = Color(0xFF1C1C1C),
+        surfaceContainerHighest = Color(0xFF262626)
     ), isDark = true)
 }
 
