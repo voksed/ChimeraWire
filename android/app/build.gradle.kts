@@ -23,9 +23,9 @@ android {
         applicationId = "com.carnelia.vpn"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.1.0"
-        // app_name берётся из strings.xml ("Carnelia VPN")
+        versionCode = 5
+        versionName = "1.2.0"
+        // app_name берётся из strings.xml ("ChimeraWire")
     }
 
     signingConfigs {
