@@ -98,4 +98,4 @@ Si la política cambia de forma sustancial, actualizaremos la fecha en la parte 
 
 ## Contacto
 
-Preguntas sobre privacidad: abre un issue en [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues).
+Preguntas sobre privacidad: abre un issue en [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues).

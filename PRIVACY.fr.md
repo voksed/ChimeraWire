@@ -1,4 +1,4 @@
-# Politique de confidentialité — Carnelia VPN
+# Politique de confidentialité — ChimeraWire
 
 [English](PRIVACY.md) · [Русский](PRIVACY.ru.md) · [Español](PRIVACY.es.md) · [中文](PRIVACY.zh.md) · [العربية](PRIVACY.ar.md) · **Français**
 
@@ -8,7 +8,7 @@
 
 ## En bref
 
-Carnelia VPN ne collecte, ne stocke ni ne transmet aucune donnée personnelle.
+ChimeraWire ne collecte, ne stocke ni ne transmet aucune donnée personnelle.
 Aucun serveur d'analytique. Aucune télémétrie. Aucune inscription. Aucun compte.
 
 Tout ce que l'appli enregistre reste sur votre appareil. Nous n'avons pas de serveurs à nous, et donc aucun moyen de savoir qui vous êtes ni ce que vous faites.
@@ -53,7 +53,7 @@ Si vous ajoutez une URL d'abonnement, l'appli contacte régulièrement cette adr
 
 ## Trafic VPN
 
-Carnelia VPN crée un tunnel chiffré avec le protocole que vous choisissez (VLESS, VMess, Trojan, Hysteria2, WireGuard, etc.). Votre trafic passe **par le serveur VPN que vous avez vous-même indiqué**. Nous n'exploitons pas ces serveurs et ne sommes pas responsables des politiques de leurs opérateurs. Choisissez des serveurs de confiance.
+ChimeraWire crée un tunnel chiffré avec le protocole que vous choisissez (VLESS, VMess, Trojan, Hysteria2, WireGuard, etc.). Votre trafic passe **par le serveur VPN que vous avez vous-même indiqué**. Nous n'exploitons pas ces serveurs et ne sommes pas responsables des politiques de leurs opérateurs. Choisissez des serveurs de confiance.
 
 ---
 
@@ -100,4 +100,4 @@ En cas de modification substantielle de la politique, nous mettrons à jour la d
 
 ## Contact
 
-Questions sur la confidentialité : ouvrez une issue sur [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues).
+Questions sur la confidentialité : ouvrez une issue sur [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues).

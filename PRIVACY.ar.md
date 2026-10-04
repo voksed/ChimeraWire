@@ -1,4 +1,4 @@
-# سياسة الخصوصية — Carnelia VPN
+# سياسة الخصوصية — ChimeraWire
 
 [English](PRIVACY.md) · [Русский](PRIVACY.ru.md) · [Español](PRIVACY.es.md) · [中文](PRIVACY.zh.md) · **العربية** · [Français](PRIVACY.fr.md)
 
@@ -8,7 +8,7 @@
 
 ## باختصار
 
-لا يجمع Carnelia VPN أي بيانات شخصية ولا يخزّنها ولا ينقلها.
+لا يجمع ChimeraWire أي بيانات شخصية ولا يخزّنها ولا ينقلها.
 لا خوادم تحليلات. لا قياس عن بُعد. لا تسجيل. لا حسابات.
 
 كل ما يحفظه التطبيق يبقى على جهازك. ليست لدينا خوادم خاصة، ومن ثمّ لا سبيل لدينا لمعرفة من أنت أو ماذا تفعل.
@@ -53,7 +53,7 @@
 
 ## حركة VPN
 
-ينشئ Carnelia VPN نفقًا مشفّرًا باستخدام البروتوكول الذي تختاره (VLESS، VMess، Trojan، Hysteria2، WireGuard، إلخ). تمرّ حركتك **عبر خادم VPN الذي حدّدته بنفسك**. لا نشغّل هذه الخوادم ولسنا مسؤولين عن سياسات مشغّليها. اختر خوادم تثق بها.
+ينشئ ChimeraWire نفقًا مشفّرًا باستخدام البروتوكول الذي تختاره (VLESS، VMess، Trojan، Hysteria2، WireGuard، إلخ). تمرّ حركتك **عبر خادم VPN الذي حدّدته بنفسك**. لا نشغّل هذه الخوادم ولسنا مسؤولين عن سياسات مشغّليها. اختر خوادم تثق بها.
 
 ---
 
@@ -100,4 +100,4 @@
 
 ## التواصل
 
-للأسئلة حول الخصوصية: افتح issue على [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues).
+للأسئلة حول الخصوصية: افتح issue على [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues).

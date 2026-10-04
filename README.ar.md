@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="logo.svg" width="120" alt="Carnelia VPN Logo"/>
+<img src="logo.svg" width="120" alt="ChimeraWire Logo"/>
 
-# Carnelia VPN
+# ChimeraWire
 
 **عميل VPN مجاني ومتعدّد النوى لنظام Android لتجاوز الرقابة. مبنيّ من الصفر.**
 
-[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/carnelia-vpn)
+[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/ChimeraWire)
 [![Cores](https://img.shields.io/badge/Cores-Xray%20%7C%20sing--box%20%7C%20AmneziaWG-FF6B35?style=flat-square)](https://github.com/XTLS/Xray-core)
 [![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.1-success?style=flat-square)](https://github.com/voksed/carnelia-vpn/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.2-success?style=flat-square)](https://github.com/voksed/ChimeraWire/releases)
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [中文](README.zh.md) · **العربية** · [Français](README.fr.md)
 
@@ -19,7 +19,7 @@
 
 ## ما هو؟
 
-Carnelia VPN هو عميل Android لتجاوز الرقابة، مكتوب من الصفر بلغة Kotlin و Jetpack Compose فوق `VpnService` الأصلي. لا واجهة منسوخة — كود ومعمارية خاصّة به. يحمل بداخله عدة نوى أصلية ويبدّل بينها حسب بروتوكول الخادم.
+ChimeraWire هو عميل Android لتجاوز الرقابة، مكتوب من الصفر بلغة Kotlin و Jetpack Compose فوق `VpnService` الأصلي. لا واجهة منسوخة — كود ومعمارية خاصّة به. يحمل بداخله عدة نوى أصلية ويبدّل بينها حسب بروتوكول الخادم.
 
 ---
 
@@ -46,7 +46,9 @@ VLESS (REALITY / TLS / WSS / gRPC)، VMess، Trojan، Shadowsocks، WireGuard، 
 
 ## الميزات
 
-- **Black Wall — محرّك مضاد لـ DPI:** تجزئة TLS ClientHello، تمويه SNI، حركة ضوضاء
+- **Black Wall — محرّك مضاد لـ DPI:** تجزئة TLS ClientHello، تمويه SNI، حركة ضوضاء؛ يعمل حتى **بدون خادم** (وضع FREEDOM)
+- **واجهة Material 3 «Live Wire»:** لوحة كهرمانية دافئة، سمات فاتحة / داكنة / AMOLED + ألوان Material You الديناميكية (Android 12+)
+- **DNS-over-HTTPS** — DNS مشفّر بدون نفق
 - **قاطع الاتصال** (داخل التطبيق + إرشاد Always-on للنظام) وحماية من تسرّب IPv6
 - **النفق المُقسّم** مع اختيار لكل تطبيق
 - **الاتصال التلقائي** عند التشغيل / تغيّر الشبكة، وإعادة اتصال سلسة عند التبديل بين Wi-Fi وبيانات الجوال

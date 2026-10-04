@@ -98,4 +98,4 @@
 
 ## التواصل
 
-للأسئلة حول الخصوصية: افتح issue على [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues).
+للأسئلة حول الخصوصية: افتح issue على [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues).

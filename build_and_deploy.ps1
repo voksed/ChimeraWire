@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Собирает Carnelia VPN (release APK, arm64-v8a + x86_64) и опционально ставит на телефон.
+    Собирает ChimeraWire (release APK, arm64-v8a + x86_64) и опционально ставит на телефон.
 .USAGE
     .\build_and_deploy.ps1                 # Собрать + установить на подключённое устройство
     .\build_and_deploy.ps1 -BuildOnly      # Только собрать
@@ -69,10 +69,10 @@ foreach ($apk in $allApks) {
     $arch = if ($apk.FullName -like "*arm64*") { "arm64" }
             elseif ($apk.FullName -like "*x86_64*") { "x86_64" }
             else { "universal" }
-    $destPath = Join-Path $RELEASES "carnelia-vpn-$arch.apk"
+    $destPath = Join-Path $RELEASES "ChimeraWire-$arch.apk"
     Copy-Item $apk.FullName $destPath -Force
     $sizeMb = [math]::Round($apk.Length / 1MB, 1)
-    Write-OK "carnelia-vpn-$arch.apk  ($sizeMb МБ)"
+    Write-OK "ChimeraWire-$arch.apk  ($sizeMb МБ)"
     $copiedApks += $destPath
 }
 

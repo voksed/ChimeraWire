@@ -98,4 +98,4 @@ GPS 伪装功能会更改 Android 报告给各应用的坐标。它完全在本�
 
 ## 联系方式
 
-隐私相关问题：在 [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues) 提交 issue。
+隐私相关问题：在 [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues) 提交 issue。

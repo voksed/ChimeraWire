@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="logo.svg" width="120" alt="Carnelia VPN Logo"/>
+<img src="logo.svg" width="120" alt="ChimeraWire Logo"/>
 
-# Carnelia VPN
+# ChimeraWire
 
 **Cliente VPN de Android gratuito y multinúcleo para evadir la censura. Creado desde cero.**
 
-[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/carnelia-vpn)
+[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/ChimeraWire)
 [![Cores](https://img.shields.io/badge/Cores-Xray%20%7C%20sing--box%20%7C%20AmneziaWG-FF6B35?style=flat-square)](https://github.com/XTLS/Xray-core)
 [![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.1-success?style=flat-square)](https://github.com/voksed/carnelia-vpn/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.2-success?style=flat-square)](https://github.com/voksed/ChimeraWire/releases)
 
 [English](README.md) · [Русский](README.ru.md) · **Español** · [中文](README.zh.md) · [العربية](README.ar.md) · [Français](README.fr.md)
 
@@ -19,7 +19,7 @@
 
 ## ¿Qué es?
 
-Carnelia VPN es un cliente de Android para evadir la censura, escrito desde cero en Kotlin + Jetpack Compose sobre el `VpnService` nativo. Sin interfaz bifurcada: código y arquitectura propios. Bajo el capó lleva varios núcleos nativos y cambia entre ellos según el protocolo del servidor.
+ChimeraWire es un cliente de Android para evadir la censura, escrito desde cero en Kotlin + Jetpack Compose sobre el `VpnService` nativo. Sin interfaz bifurcada: código y arquitectura propios. Bajo el capó lleva varios núcleos nativos y cambia entre ellos según el protocolo del servidor.
 
 ---
 
@@ -46,7 +46,9 @@ Importación mediante `vless://` `vmess://` `ss://` `trojan://` `wireguard://` `
 
 ## Características
 
-- **Black Wall — motor anti-DPI:** fragmentación del ClientHello de TLS, camuflaje de SNI, tráfico de ruido
+- **Black Wall — motor anti-DPI:** fragmentación del ClientHello de TLS, camuflaje de SNI, tráfico de ruido; funciona incluso **sin servidor** (modo FREEDOM)
+- **Interfaz Material 3 «Live Wire»:** paleta ámbar cálida, temas claro / oscuro / AMOLED + colores dinámicos Material You (Android 12+)
+- **DNS-over-HTTPS** — DNS cifrado sin túnel
 - **Kill Switch** (en la app + guía del Always-on del sistema) y protección contra fugas de IPv6
 - **Túnel dividido** con selección por app
 - **Conexión automática** al iniciar / al cambiar de red, reconexión fluida al pasar de Wi-Fi a datos móviles

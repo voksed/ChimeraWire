@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="logo.svg" width="120" alt="Carnelia VPN Logo"/>
+<img src="logo.svg" width="120" alt="ChimeraWire Logo"/>
 
-# Carnelia VPN
+# ChimeraWire
 
 **免费、多核心的 Android VPN 客户端，用于突破网络审查。完全从零构建。**
 
-[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/carnelia-vpn)
+[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/voksed/ChimeraWire)
 [![Cores](https://img.shields.io/badge/Cores-Xray%20%7C%20sing--box%20%7C%20AmneziaWG-FF6B35?style=flat-square)](https://github.com/XTLS/Xray-core)
 [![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.1-success?style=flat-square)](https://github.com/voksed/carnelia-vpn/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.2-success?style=flat-square)](https://github.com/voksed/ChimeraWire/releases)
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · **中文** · [العربية](README.ar.md) · [Français](README.fr.md)
 
@@ -19,7 +19,7 @@
 
 ## 这是什么
 
-Carnelia VPN 是一款用于突破审查的 Android 客户端，基于原生 `VpnService`，采用 Kotlin + Jetpack Compose 从零编写。没有套用任何第三方界面——完全自有的代码与架构。其内部集成了多个原生核心，并根据服务器协议在它们之间切换。
+ChimeraWire 是一款用于突破审查的 Android 客户端，基于原生 `VpnService`，采用 Kotlin + Jetpack Compose 从零编写。没有套用任何第三方界面——完全自有的代码与架构。其内部集成了多个原生核心，并根据服务器协议在它们之间切换。
 
 ---
 
@@ -46,7 +46,9 @@ VLESS（REALITY / TLS / WSS / gRPC）、VMess、Trojan、Shadowsocks、WireGuard
 
 ## 功能
 
-- **Black Wall —— 反 DPI 引擎：** TLS ClientHello 分片、SNI 伪装、噪声流量
+- **Black Wall —— 反 DPI 引擎：** TLS ClientHello 分片、SNI 伪装、噪声流量；即使**没有服务器**也能工作（FREEDOM 模式）
+- **Material 3「Live Wire」界面：** 温暖的琥珀配色，浅色 / 深色 / AMOLED 主题 + Material You 动态取色（Android 12+）
+- **DNS-over-HTTPS** —— 无需隧道的加密 DNS
 - **网络断路器**（应用内 + 系统 Always-on 引导）与 IPv6 泄漏防护
 - **分应用代理**，可按应用选择
 - **自动连接**（启动时 / 网络切换时），Wi-Fi↔移动数据切换时无缝重连

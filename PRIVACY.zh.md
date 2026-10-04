@@ -1,4 +1,4 @@
-# 隐私政策 — Carnelia VPN
+# 隐私政策 — ChimeraWire
 
 [English](PRIVACY.md) · [Русский](PRIVACY.ru.md) · [Español](PRIVACY.es.md) · **中文** · [العربية](PRIVACY.ar.md) · [Français](PRIVACY.fr.md)
 
@@ -8,7 +8,7 @@
 
 ## 简述
 
-Carnelia VPN 不收集、不存储、不传输任何个人数据。
+ChimeraWire 不收集、不存储、不传输任何个人数据。
 没有分析服务器。没有遥测。无需注册。没有账户。
 
 应用保存的一切都留在你的设备上。我们没有自己的服务器，因此无从得知你是谁、你在做什么。
@@ -53,7 +53,7 @@ Carnelia VPN 不收集、不存储、不传输任何个人数据。
 
 ## VPN 流量
 
-Carnelia VPN 使用你选择的协议（VLESS、VMess、Trojan、Hysteria2、WireGuard 等）建立加密隧道。你的流量通过**你自己指定的 VPN 服务器**传输。我们不运营这些服务器，也不对其运营者的政策负责。请选择你信任的服务器。
+ChimeraWire 使用你选择的协议（VLESS、VMess、Trojan、Hysteria2、WireGuard 等）建立加密隧道。你的流量通过**你自己指定的 VPN 服务器**传输。我们不运营这些服务器，也不对其运营者的政策负责。请选择你信任的服务器。
 
 ---
 
@@ -100,4 +100,4 @@ GPS 伪装功能会更改 Android 报告给各应用的坐标。它完全在本�
 
 ## 联系方式
 
-隐私相关问题：在 [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues) 提交 issue。
+隐私相关问题：在 [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues) 提交 issue。

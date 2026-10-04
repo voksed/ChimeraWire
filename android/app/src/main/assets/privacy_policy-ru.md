@@ -98,4 +98,4 @@ ChimeraWire создаёт зашифрованный туннель через 
 
 ## Контакт
 
-Вопросы по конфиденциальности: создайте issue на [github.com/voksed/carnelia-vpn/issues](https://github.com/voksed/carnelia-vpn/issues).
+Вопросы по конфиденциальности: создайте issue на [github.com/voksed/ChimeraWire/issues](https://github.com/voksed/ChimeraWire/issues).

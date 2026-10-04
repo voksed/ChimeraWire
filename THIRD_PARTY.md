@@ -1,6 +1,6 @@
 # Third-party components
 
-Carnelia VPN bundles the following native cores and libraries. Their licenses
+ChimeraWire bundles the following native cores and libraries. Their licenses
 apply to the respective binaries shipped inside the APK (`android/app/src/main/jniLibs/`).
 
 | Component | File | License | Upstream |
@@ -12,7 +12,7 @@ apply to the respective binaries shipped inside the APK (`android/app/src/main/j
 | hev-socks5-tunnel | `libhev-socks5-tunnel.so` | MIT | https://github.com/heiher/hev-socks5-tunnel |
 | tun2socks bridge | `libgojni.so`, `tun2socks.aar` | see upstream | https://github.com/xjasonlyu/tun2socks |
 
-Because **sing-box is licensed under GPL-3.0**, the combined work (the Carnelia VPN
+Because **sing-box is licensed under GPL-3.0**, the combined work (the ChimeraWire
 APK) is distributed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE).
 This is a copyleft ("share-alike") obligation: any redistributed or modified build
 must also be offered under GPL-3.0 with source available.
