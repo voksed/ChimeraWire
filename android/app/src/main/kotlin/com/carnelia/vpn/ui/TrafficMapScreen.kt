@@ -492,7 +492,7 @@ fun TrafficMapScreen(context: Context) {
                     unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    cursorColor = Color(0xFFB84629)
+                    cursorColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(10.dp)
             )
@@ -1635,8 +1635,8 @@ internal fun PacketTraceContent(context: Context) {
                 singleLine = true,
                 enabled = !isRunning,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFB84629),
-                    focusedLabelColor = Color(0xFFB84629),
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface
                 )
@@ -1684,7 +1684,7 @@ internal fun PacketTraceContent(context: Context) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = { startTrace(inputText) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB84629))) {
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.xtm_run_trace), fontSize = 13.sp)
@@ -1704,7 +1704,7 @@ internal fun PacketTraceContent(context: Context) {
                     item {
                         Row(modifier = Modifier.padding(start = 36.dp, top = 4.dp, bottom = 8.dp),
                             verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp, color = Color(0xFFB84629))
+                            CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.xtm_scanning), color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), fontSize = 11.sp)
                         }
@@ -1964,7 +1964,7 @@ internal fun LiveConnectionsContent(context: Context) {
                 unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                cursorColor = Color(0xFFB84629)
+                cursorColor = MaterialTheme.colorScheme.primary
             ),
             shape = RoundedCornerShape(10.dp)
         )
