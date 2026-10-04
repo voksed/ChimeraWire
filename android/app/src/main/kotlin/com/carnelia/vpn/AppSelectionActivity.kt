@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,7 +40,7 @@ class AppSelectionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CarheliaTheme {
+            ChimeraTheme {
                 AppSelectionScreen()
             }
         }

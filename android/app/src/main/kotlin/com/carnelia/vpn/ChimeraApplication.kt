@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class CarheliaApplication : Application() {
+class ChimeraApplication : Application() {
     
     val networkMonitor: NetworkMonitor by lazy { NetworkMonitor(this) }
 
@@ -18,18 +18,18 @@ class CarheliaApplication : Application() {
         private set
     
     companion object {
-        lateinit var instance: CarheliaApplication
+        lateinit var instance: ChimeraApplication
             private set
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        AppLogger.log("CarheliaApplication: Started")
+        AppLogger.log("ChimeraApplication: Started")
 
         // Проверка целостности устройства (root, Frida, Xposed)
         CoroutineScope(Dispatchers.Default).launch {
-            detectedThreats = SecurityChecker.runChecks(this@CarheliaApplication, includePackageCheck = true)
+            detectedThreats = SecurityChecker.runChecks(this@ChimeraApplication, includePackageCheck = true)
             if (detectedThreats.isNotEmpty()) {
                 AppLogger.error("SecurityChecker: обнаружены угрозы: ${detectedThreats.map { it.title }}")
             }

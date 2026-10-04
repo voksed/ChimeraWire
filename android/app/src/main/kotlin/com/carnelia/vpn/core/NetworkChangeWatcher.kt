@@ -11,7 +11,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
-import com.carnelia.vpn.service.CarheliaVpnService
+import com.carnelia.vpn.service.ChimeraVpnService
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.NetworkUtils
 
@@ -59,8 +59,8 @@ object NetworkChangeWatcher {
         if (VpnGlobalState.connectionState.value != ConnectionState.CONNECTED) return
 
         AppLogger.log("NetworkChangeWatcher: сеть изменилась ($previous → $key) — бесшовный reconnect")
-        val intent = Intent(context, CarheliaVpnService::class.java).apply {
-            action = CarheliaVpnService.ACTION_NETWORK_RECONNECT
+        val intent = Intent(context, ChimeraVpnService::class.java).apply {
+            action = ChimeraVpnService.ACTION_NETWORK_RECONNECT
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)

@@ -46,7 +46,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import com.carnelia.vpn.service.GeoSpoofService
 import kotlinx.coroutines.launch
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.ui.rememberWindowSize
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
@@ -72,7 +72,7 @@ class GeoSpoofActivity : AppCompatActivity() {
         val osmConf = Configuration.getInstance()
         osmConf.load(this, getSharedPreferences("osmdroid", MODE_PRIVATE))
         // OSM tile servers отдают 403 без идентифицирующего User-Agent
-        osmConf.userAgentValue = "CarneliaVPN/$packageName"
+        osmConf.userAgentValue = "ChimeraWire/$packageName"
         // На Android 10+ дефолтный /sdcard/osmdroid недоступен (scoped storage) —
         // тайлы скачиваются, но не кэшируются и карта остаётся пустой.
         // Переносим базу и кэш во внутреннюю папку приложения (всегда доступна для записи).
@@ -80,7 +80,7 @@ class GeoSpoofActivity : AppCompatActivity() {
         osmConf.osmdroidTileCache = java.io.File(cacheDir, "osmdroid-tiles").apply { mkdirs() }
 
         setContent {
-            CarheliaTheme {
+            ChimeraTheme {
                 GeoSpoofScreen(
                     onBack = { finish() },
                     onShowToast = { msg ->
@@ -149,7 +149,7 @@ private suspend fun geocodePlace(query: String): List<GeoSearchResult> =
             val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
                 connectTimeout = 10000
                 readTimeout = 10000
-                setRequestProperty("User-Agent", "CarneliaVPN/${BuildConfig.VERSION_NAME} (geo spoof)")
+                setRequestProperty("User-Agent", "ChimeraWire/${BuildConfig.VERSION_NAME} (geo spoof)")
             }
             val body = conn.inputStream.bufferedReader().use { it.readText() }
             conn.disconnect()

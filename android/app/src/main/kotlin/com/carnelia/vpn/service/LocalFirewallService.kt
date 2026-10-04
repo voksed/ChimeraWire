@@ -30,7 +30,7 @@ import java.io.FileInputStream
  * forwarded — packets are read and discarded — so the captured apps lose all
  * connectivity (IPv4 and IPv6) while every other app keeps its normal, direct network.
  *
- * It is independent of [CarheliaVpnService]: Android permits a single active VpnService,
+ * It is independent of [ChimeraVpnService]: Android permits a single active VpnService,
  * so this runs when the main tunnel is off (the "Black Wall without Connect" mode).
  */
 class LocalFirewallService : VpnService() {

@@ -46,7 +46,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.ui.draw.scale
 import com.carnelia.vpn.core.VpnGlobalState
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.LogLevel
 import com.carnelia.vpn.utils.PrefsManager
@@ -121,7 +121,7 @@ fun SettingsScreen(startPage: String? = null) {
         currentScreen = SettingsPage.MAIN
     }
 
-    CarheliaTheme(themeIndex = themeIndex) {
+    ChimeraTheme(themeIndex = themeIndex) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -2171,7 +2171,7 @@ fun BackupDialog(context: Context, onDismiss: () -> Unit) {
                         onClick = {
                             if (password.length >= 4) {
                                 val sdf = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US)
-                                exportLauncher.launch("carnelia_${sdf.format(java.util.Date())}.carnelia")
+                                exportLauncher.launch("chimera_${sdf.format(java.util.Date())}.chimera")
                             } else status = strPasswordMin
                         },
                         enabled = !isWorking,

@@ -508,7 +508,7 @@ class Hysteria2VpnProtocol(private val context: Context) : IVpnProtocol {
  * Supports AWG obfuscation extensions (Jc/Jmin/Jmax/S1/S2/H1-H4/I1-I5).
  * No sing-box involved — amneziawg-go reads/writes the TUN fd directly.
  *
- * Socket loop protection: CarheliaVpnService always adds addDisallowedApplication(packageName),
+ * Socket loop protection: ChimeraVpnService always adds addDisallowedApplication(packageName),
  * so our process traffic bypasses the VPN tunnel — AWG UDP reaches the server directly.
  */
 class AmneziaWgVpnProtocol(private val context: Context) : IVpnProtocol {

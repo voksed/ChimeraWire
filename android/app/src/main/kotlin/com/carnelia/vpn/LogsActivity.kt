@@ -15,7 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.LogLevel
 import android.content.ClipData
@@ -31,7 +31,7 @@ class LogsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CarheliaTheme {
+            ChimeraTheme {
                 LogsScreen(
                     onBack = { finish() },
                     onCopy = { copyLogs() },
@@ -46,7 +46,7 @@ class LogsActivity : ComponentActivity() {
             "[${AppLogger.getFormattedTime(it.timestamp)}] ${it.level}: ${it.message}" 
         }
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("CarneliaVPN Logs", logs)
+        val clip = ClipData.newPlainText("ChimeraWire Logs", logs)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, getString(R.string.logs_copied_toast), Toast.LENGTH_SHORT).show()
     }

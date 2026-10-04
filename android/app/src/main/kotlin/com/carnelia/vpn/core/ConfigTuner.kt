@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.carnelia.vpn.R
 import com.carnelia.vpn.data.ServerRepository
-import com.carnelia.vpn.service.CarheliaVpnService
+import com.carnelia.vpn.service.ChimeraVpnService
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.*
@@ -92,8 +92,8 @@ object ConfigTuner {
             if (wasVpnActive) {
                 _state.value = TunerState.PreparingVpn(context.getString(R.string.xcfg_disconnecting_for_calibration))
                 AppLogger.log("ConfigTuner: auto-disconnecting VPN before calibration")
-                val disconnectIntent = Intent(context, CarheliaVpnService::class.java).apply {
-                    action = CarheliaVpnService.ACTION_DISCONNECT
+                val disconnectIntent = Intent(context, ChimeraVpnService::class.java).apply {
+                    action = ChimeraVpnService.ACTION_DISCONNECT
                 }
                 context.startService(disconnectIntent)
                 // Wait up to 10 seconds for disconnect
@@ -182,9 +182,9 @@ object ConfigTuner {
                 _state.value = TunerState.PreparingVpn(context.getString(R.string.xcfg_restoring_vpn_best_settings))
                 AppLogger.log("ConfigTuner: auto-reconnecting VPN after calibration")
                 delay(800)
-                val connectIntent = Intent(context, CarheliaVpnService::class.java).apply {
-                    action = CarheliaVpnService.ACTION_CONNECT
-                    putExtra(CarheliaVpnService.EXTRA_CONFIG, server)
+                val connectIntent = Intent(context, ChimeraVpnService::class.java).apply {
+                    action = ChimeraVpnService.ACTION_CONNECT
+                    putExtra(ChimeraVpnService.EXTRA_CONFIG, server)
                 }
                 context.startService(connectIntent)
                 delay(1000)

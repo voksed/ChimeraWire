@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.R
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ class MinerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 MinerGameScreen()
             }
         }

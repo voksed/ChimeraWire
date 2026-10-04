@@ -99,9 +99,9 @@ class VpnTileService : TileService() {
             
             if (lastServer != null) {
                 // Connect
-                val intent = Intent(this, CarheliaVpnService::class.java)
-                intent.action = CarheliaVpnService.ACTION_CONNECT
-                intent.putExtra(CarheliaVpnService.EXTRA_CONFIG, lastServer)
+                val intent = Intent(this, ChimeraVpnService::class.java)
+                intent.action = ChimeraVpnService.ACTION_CONNECT
+                intent.putExtra(ChimeraVpnService.EXTRA_CONFIG, lastServer)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(intent)
                 } else {
@@ -120,8 +120,8 @@ class VpnTileService : TileService() {
             }
         } else {
             // Stop VPN
-            val intent = Intent(this, CarheliaVpnService::class.java)
-            intent.action = CarheliaVpnService.ACTION_DISCONNECT
+            val intent = Intent(this, ChimeraVpnService::class.java)
+            intent.action = ChimeraVpnService.ACTION_DISCONNECT
             startService(intent)
             
              // Optimistic UI update

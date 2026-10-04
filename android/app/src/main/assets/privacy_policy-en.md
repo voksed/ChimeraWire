@@ -1,4 +1,4 @@
-# Privacy Policy — Carnelia VPN
+# Privacy Policy — ChimeraWire
 
 **Last updated:** July 2026
 
@@ -6,7 +6,7 @@
 
 ## In short
 
-Carnelia VPN does not collect, store, or transmit any personal data.
+ChimeraWire does not collect, store, or transmit any personal data.
 No analytics servers. No telemetry. No sign-up. No accounts.
 
 Everything the app stores stays on your device. We have no servers of our own and therefore no way to see who you are or what you do.
@@ -51,7 +51,7 @@ If you add a subscription URL, the app periodically contacts that address to fet
 
 ## VPN traffic
 
-Carnelia VPN builds an encrypted tunnel using the protocol you chose (VLESS, VMess, Trojan, Hysteria2, WireGuard, etc.). Your traffic passes **through the VPN server you specified yourself**. We do not operate these servers and are not responsible for their operators' policies. Choose servers you trust.
+ChimeraWire builds an encrypted tunnel using the protocol you chose (VLESS, VMess, Trojan, Hysteria2, WireGuard, etc.). Your traffic passes **through the VPN server you specified yourself**. We do not operate these servers and are not responsible for their operators' policies. Choose servers you trust.
 
 ---
 

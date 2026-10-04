@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +36,7 @@ class TlsInspectorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 TlsInspectorScreen(onBack = { finish() })
             }
         }

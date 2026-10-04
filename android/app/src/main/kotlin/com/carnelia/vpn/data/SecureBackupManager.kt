@@ -17,7 +17,8 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Encrypted backup to/from .carnelia file (AES-256-GCM + PBKDF2).
+ * Encrypted backup to/from .chimera file (AES-256-GCM + PBKDF2).
+ * The CNLA magic is kept unchanged so backups exported by older builds still import.
  * Format: magic(4) + version(1) + salt(16) + iv(12) + ciphertext
  */
 object SecureBackupManager {

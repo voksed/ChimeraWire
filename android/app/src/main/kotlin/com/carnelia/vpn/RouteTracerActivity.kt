@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -32,7 +32,7 @@ class RouteTracerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 RouteTracerScreen(onBack = { finish() })
             }
         }

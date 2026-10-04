@@ -38,8 +38,8 @@ import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.VpnGlobalState
 import com.carnelia.vpn.core.VpnProtocol
 import com.carnelia.vpn.core.VpnServerConfig
-import com.carnelia.vpn.service.CarheliaVpnService
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.service.ChimeraVpnService
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,7 +50,7 @@ class BlackWallActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val themeIndex = PrefsManager.getThemeIndex(this)
         setContent {
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 BlackWallScreen(onBack = { finish() })
             }
         }
@@ -80,9 +80,9 @@ fun BlackWallScreen(onBack: () -> Unit) {
         )
     }
     fun startBypass() {
-        context.startService(Intent(context, CarheliaVpnService::class.java).apply {
-            action = CarheliaVpnService.ACTION_CONNECT
-            putExtra(CarheliaVpnService.EXTRA_CONFIG, freedomConfig)
+        context.startService(Intent(context, ChimeraVpnService::class.java).apply {
+            action = ChimeraVpnService.ACTION_CONNECT
+            putExtra(ChimeraVpnService.EXTRA_CONFIG, freedomConfig)
         })
     }
     val vpnConsentLauncher = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
@@ -91,8 +91,8 @@ fun BlackWallScreen(onBack: () -> Unit) {
     }
     fun toggleBypass() {
         if (bypassRunning) {
-            context.startService(Intent(context, CarheliaVpnService::class.java).apply {
-                action = CarheliaVpnService.ACTION_DISCONNECT
+            context.startService(Intent(context, ChimeraVpnService::class.java).apply {
+                action = ChimeraVpnService.ACTION_DISCONNECT
             })
         } else {
             val prep = VpnService.prepare(context)

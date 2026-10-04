@@ -41,7 +41,7 @@ import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.VpnGlobalState
 import com.carnelia.vpn.core.XrayCoreManager
 import com.carnelia.vpn.data.ServerRepository
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.LogLevel
 import com.carnelia.vpn.utils.PrefsManager
@@ -55,7 +55,7 @@ class DebugActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 DebugScreen(onBack = { finish() })
             }
         }
@@ -182,7 +182,7 @@ fun DebugScreen(onBack: () -> Unit) {
                 actions = {
                     IconButton(onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("CarneliaVPN logs", AppLogger.getLogsAsString()))
+                        clipboard.setPrimaryClip(ClipData.newPlainText("ChimeraWire logs", AppLogger.getLogsAsString()))
                         Toast.makeText(context, context.getString(R.string.xdbg_logs_copied), Toast.LENGTH_SHORT).show()
                     }) {
                         Text("CP", color = Color(0xFF888888), fontSize = 12.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
@@ -200,7 +200,7 @@ fun DebugScreen(onBack: () -> Unit) {
                     IconButton(onClick = {
                         val send = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "CarneliaVPN debug log")
+                            putExtra(Intent.EXTRA_SUBJECT, "ChimeraWire debug log")
                             putExtra(Intent.EXTRA_TEXT, AppLogger.getLogsAsString())
                         }
                         context.startActivity(Intent.createChooser(send, context.getString(R.string.xdbg_send_logs)))

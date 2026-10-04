@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.VpnGlobalState
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.LeakTestManager
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.launch
@@ -36,7 +36,7 @@ class LeakTestActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 LeakTestScreen(onBack = { finish() })
             }
         }

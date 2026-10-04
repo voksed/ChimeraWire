@@ -15,7 +15,7 @@ import com.carnelia.vpn.utils.PrefsManager
 import com.carnelia.vpn.R
 
 /**
- * Единая палитра Carnelia: холодные нейтральные серые (не тёплая охра/шоколад) + один акцент —
+ * Единая палитра ChimeraWire: холодные нейтральные серые (не тёплая охра/шоколад) + один акцент —
  * карнелиан (сердолик), от которого взято имя приложения. Ровно 4 темы, без вариаций-костылей.
  */
 enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose.material3.ColorScheme, val isDark: Boolean) {
@@ -125,7 +125,7 @@ enum class AppTheme(val displayNameResId: Int, val colorScheme: androidx.compose
 }
 
 @Composable
-fun CarheliaTheme(
+fun ChimeraTheme(
     themeIndex: Int? = null,
     content: @Composable () -> Unit
 ) {

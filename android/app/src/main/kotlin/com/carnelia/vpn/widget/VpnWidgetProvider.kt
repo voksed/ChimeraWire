@@ -10,7 +10,7 @@ import android.widget.RemoteViews
 import com.carnelia.vpn.MainActivity
 import com.carnelia.vpn.R
 import com.carnelia.vpn.core.ConnectionState
-import com.carnelia.vpn.service.CarheliaVpnService
+import com.carnelia.vpn.service.ChimeraVpnService
 import com.carnelia.vpn.core.VpnGlobalState
 
 class VpnWidgetProvider : AppWidgetProvider() {
@@ -56,7 +56,7 @@ class VpnWidgetProvider : AppWidgetProvider() {
           try {
             val views = RemoteViews(context.packageName, R.layout.vpn_widget_info)
 
-            val state = CarheliaVpnService.currentState
+            val state = ChimeraVpnService.currentState
             val isConnected = state == ConnectionState.CONNECTED
 
             // Status Text
@@ -87,8 +87,8 @@ class VpnWidgetProvider : AppWidgetProvider() {
                 views.setInt(R.id.widget_status_icon, "setColorFilter", android.graphics.Color.GREEN)
 
                 // Action: Disconnect
-                val disconnectIntent = Intent(context, CarheliaVpnService::class.java).apply {
-                    action = CarheliaVpnService.ACTION_DISCONNECT
+                val disconnectIntent = Intent(context, ChimeraVpnService::class.java).apply {
+                    action = ChimeraVpnService.ACTION_DISCONNECT
                 }
                 val pendingIntent = PendingIntent.getService(
                     context, 0, disconnectIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

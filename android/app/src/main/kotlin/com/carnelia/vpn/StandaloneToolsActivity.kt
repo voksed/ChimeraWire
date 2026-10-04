@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.service.DnsOnlyService
 import com.carnelia.vpn.service.NetworkBoostService
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.AppLogger
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.*
@@ -52,7 +52,7 @@ class StandaloneToolsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 StandaloneToolsScreen(activity = this)
             }
         }

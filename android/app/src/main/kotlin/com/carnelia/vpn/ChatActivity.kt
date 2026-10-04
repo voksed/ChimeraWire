@@ -33,7 +33,7 @@ import com.carnelia.vpn.core.chat.ChatMessage
 import com.carnelia.vpn.core.chat.ChatRoomRegistry
 import com.carnelia.vpn.data.ServerRepository
 import com.carnelia.vpn.service.ChatService
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -44,7 +44,7 @@ class ChatActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 ChatRootScreen(onBack = { finish() })
             }
         }

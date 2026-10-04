@@ -27,9 +27,9 @@ class BootReceiver : BroadcastReceiver() {
                     val lastServer = repository.getLastUsedServer()
                     if (lastServer != null) {
                         AppLogger.log("BootReceiver: Connecting to ${lastServer.name}")
-                        val serviceIntent = Intent(context, CarheliaVpnService::class.java).apply {
-                            action = CarheliaVpnService.ACTION_CONNECT
-                            putExtra(CarheliaVpnService.EXTRA_CONFIG, lastServer)
+                        val serviceIntent = Intent(context, ChimeraVpnService::class.java).apply {
+                            action = ChimeraVpnService.ACTION_CONNECT
+                            putExtra(ChimeraVpnService.EXTRA_CONFIG, lastServer)
                         }
                         
                         // Starting service from background on Android 8+ requires startForegroundService

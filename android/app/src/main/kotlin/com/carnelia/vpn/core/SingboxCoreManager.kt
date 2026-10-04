@@ -19,7 +19,7 @@ object SingboxCoreManager {
 
     /** uTLS ClientHello-профиль по умолчанию (chrome/firefox/...), настраивается в Settings. */
     private fun defaultFingerprint(): String =
-        PrefsManager.getTlsFingerprint(com.carnelia.vpn.CarheliaApplication.instance)
+        PrefsManager.getTlsFingerprint(com.carnelia.vpn.ChimeraApplication.instance)
 
     suspend fun startCore(context: Context, config: VpnServerConfig) = withContext(Dispatchers.IO) {
         appContext = context

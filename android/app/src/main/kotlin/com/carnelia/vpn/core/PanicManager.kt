@@ -3,7 +3,7 @@ package com.carnelia.vpn.core
 import android.content.Context
 import android.content.Intent
 import com.carnelia.vpn.data.ServerRepository
-import com.carnelia.vpn.service.CarheliaVpnService
+import com.carnelia.vpn.service.ChimeraVpnService
 import com.carnelia.vpn.utils.AppLogger
 import java.io.File
 
@@ -19,8 +19,8 @@ object PanicManager {
 
         // 1. Рвём VPN немедленно
         try {
-            val intent = Intent(context, CarheliaVpnService::class.java).apply {
-                action = CarheliaVpnService.ACTION_DISCONNECT
+            val intent = Intent(context, ChimeraVpnService::class.java).apply {
+                action = ChimeraVpnService.ACTION_DISCONNECT
             }
             context.startService(intent)
         } catch (_: Exception) {

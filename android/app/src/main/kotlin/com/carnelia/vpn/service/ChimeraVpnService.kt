@@ -23,10 +23,10 @@ import com.carnelia.vpn.core.TrafficSession
 import com.carnelia.vpn.core.DualNetworkManager
 
 /**
- * Carnelia VPN Service
+ * ChimeraWire Service
  * Background service for VPN connections
  */
-class CarheliaVpnService : VpnService() {
+class ChimeraVpnService : VpnService() {
 
     companion object {
         const val ACTION_CONNECT = "com.carnelia.vpn.CONNECT"
@@ -66,7 +66,7 @@ class CarheliaVpnService : VpnService() {
     private var isLockdown = false
 
     inner class LocalBinder : Binder() {
-        fun getService(): CarheliaVpnService = this@CarheliaVpnService
+        fun getService(): ChimeraVpnService = this@ChimeraVpnService
     }
 
     override fun onCreate() {
@@ -261,7 +261,7 @@ class CarheliaVpnService : VpnService() {
                     if (finalStats.bytesReceived > 0 || finalStats.bytesSent > 0) {
                         AppLogger.log("Service: Saving session. Duration: ${duration}s, Rx: ${finalStats.bytesReceived}, Tx: ${finalStats.bytesSent}")
                         TrafficStatsManager.saveSession(
-                            this@CarheliaVpnService,
+                            this@ChimeraVpnService,
                             TrafficSession(startTime, duration, finalStats.bytesReceived, finalStats.bytesSent)
                         )
                     }
@@ -601,7 +601,7 @@ class CarheliaVpnService : VpnService() {
         }
 
         // Action: Disconnect
-        val disconnectIntent = Intent(this, CarheliaVpnService::class.java).apply {
+        val disconnectIntent = Intent(this, ChimeraVpnService::class.java).apply {
             action = ACTION_DISCONNECT
         }
         val disconnectPendingIntent = android.app.PendingIntent.getService(
@@ -624,7 +624,7 @@ class CarheliaVpnService : VpnService() {
 
         return android.app.Notification.Builder(this, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Carnelia VPN")
+            .setContentTitle("ChimeraWire")
             .setContentText(text)
             .setContentIntent(contentPendingIntent)
             .addAction(disconnectAction)

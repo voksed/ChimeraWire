@@ -31,7 +31,7 @@ object XrayCoreManager {
 
     /** uTLS ClientHello-профиль по умолчанию (chrome/firefox/...), настраивается в Settings. */
     private fun defaultFingerprint(): String =
-        PrefsManager.getTlsFingerprint(com.carnelia.vpn.CarheliaApplication.instance)
+        PrefsManager.getTlsFingerprint(com.carnelia.vpn.ChimeraApplication.instance)
 
     /**
      * REALITY mandates TLS 1.3. Some uTLS fingerprints emit a TLS 1.2-only ClientHello —
@@ -66,7 +66,7 @@ object XrayCoreManager {
         if (now - lastRealityWarnAt < 15000) return
         lastRealityWarnAt = now
 
-        val app = com.carnelia.vpn.CarheliaApplication.instance
+        val app = com.carnelia.vpn.ChimeraApplication.instance
         val message = when {
             noTls13 -> app.getString(R.string.xcore_reality_no_tls13)
             realCert -> app.getString(R.string.xcore_reality_real_cert)
@@ -923,7 +923,7 @@ object XrayCoreManager {
             val pbk = (config.config["pbk"] ?: config.config["publicKey"] ?: "").trim()
             if (pbk.isBlank() || !isValidRealityPublicKey(pbk)) {
                 throw Exception(
-                    com.carnelia.vpn.CarheliaApplication.instance.getString(R.string.xcore_reality_invalid_pbk, pbk)
+                    com.carnelia.vpn.ChimeraApplication.instance.getString(R.string.xcore_reality_invalid_pbk, pbk)
                 )
             }
         }

@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.VpnGlobalState
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,7 +41,7 @@ class FingerprintCheckActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 FingerprintCheckScreen(onBack = { finish() })
             }
         }
@@ -69,7 +69,7 @@ fun FingerprintCheckScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val vpnState by VpnGlobalState.connectionState.collectAsState()
     val vpnConnected = vpnState == ConnectionState.CONNECTED
-    // VpnGlobalState видит только саму Carnelia — если активен ДРУГОЙ VPN-клиент,
+    // VpnGlobalState видит только саму ChimeraWire — если активен ДРУГОЙ VPN-клиент,
     // система всё равно маршрутизирует трафик через него, но баннер этого не показывал.
     val systemVpnActive = remember(vpnState) { isAnyVpnActive(context) }
     val protectedByAny = vpnConnected || systemVpnActive

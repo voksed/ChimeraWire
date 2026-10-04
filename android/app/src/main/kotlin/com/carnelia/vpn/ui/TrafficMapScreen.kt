@@ -977,8 +977,8 @@ private fun AppTrafficDetailSheet(
 
     fun rebuildIfConnected() {
         if (isConnected) {
-            val intent = Intent(context, com.carnelia.vpn.service.CarheliaVpnService::class.java).apply {
-                action = com.carnelia.vpn.service.CarheliaVpnService.ACTION_REBUILD_INTERFACE
+            val intent = Intent(context, com.carnelia.vpn.service.ChimeraVpnService::class.java).apply {
+                action = com.carnelia.vpn.service.ChimeraVpnService.ACTION_REBUILD_INTERFACE
             }
             context.startService(intent)
         }
@@ -1877,7 +1877,7 @@ private suspend fun resolveHopGeo(hop: TraceHop): TraceHop = withContext(Dispatc
     try {
         val conn = (URL("https://ipwho.is/${hop.ip}").openConnection() as HttpURLConnection).apply {
             connectTimeout = 4000; readTimeout = 4000; requestMethod = "GET"
-            setRequestProperty("User-Agent", "CarneliaVPN/2.4")
+            setRequestProperty("User-Agent", "ChimeraWire/2.4")
         }
         if (conn.responseCode != 200) return@withContext hop.copy(
             status = if (hop.status == TraceHopStatus.RESOLVING) TraceHopStatus.OK else hop.status)

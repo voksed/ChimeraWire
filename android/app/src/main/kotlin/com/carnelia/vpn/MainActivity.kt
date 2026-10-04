@@ -55,10 +55,10 @@ import androidx.compose.ui.text.font.FontWeight
 import com.carnelia.vpn.utils.PrefsManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.ui.ManualEntryDialog
 import com.carnelia.vpn.core.*
-import com.carnelia.vpn.service.CarheliaVpnService
+import com.carnelia.vpn.service.ChimeraVpnService
 import com.carnelia.vpn.data.ServerRepository
 import com.carnelia.vpn.data.SubscriptionManager
 import java.text.SimpleDateFormat
@@ -197,10 +197,10 @@ class MainActivity : ComponentActivity() {
                 onDispose { lifecycle.removeObserver(observer) }
             }
 
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 val currentTheme = AppTheme.entries.getOrElse(themeIndex) { AppTheme.DARK }
                 
-                CarheliaApp(
+                ChimeraApp(
                     vpnManager, 
                     ::startVpn, 
                     ::stopVpn,
@@ -280,9 +280,9 @@ class MainActivity : ComponentActivity() {
                 vpnPrepareLauncher.launch(intent)
                 return
             }
-            val serviceIntent = Intent(this, CarheliaVpnService::class.java).apply {
-                action = CarheliaVpnService.ACTION_CONNECT
-                putExtra(CarheliaVpnService.EXTRA_CONFIG, config)
+            val serviceIntent = Intent(this, ChimeraVpnService::class.java).apply {
+                action = ChimeraVpnService.ACTION_CONNECT
+                putExtra(ChimeraVpnService.EXTRA_CONFIG, config)
             }
             startService(serviceIntent)
         } catch (e: Exception) {
@@ -291,17 +291,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun stopVpn() {
-        val intent = Intent(this, CarheliaVpnService::class.java).apply {
-            action = CarheliaVpnService.ACTION_DISCONNECT
+        val intent = Intent(this, ChimeraVpnService::class.java).apply {
+            action = ChimeraVpnService.ACTION_DISCONNECT
         }
         startService(intent)
     }
 
     private fun switchVpn(config: VpnServerConfig) {
         try {
-            val serviceIntent = Intent(this, CarheliaVpnService::class.java).apply {
-                action = CarheliaVpnService.ACTION_RECONNECT
-                putExtra(CarheliaVpnService.EXTRA_CONFIG, config)
+            val serviceIntent = Intent(this, ChimeraVpnService::class.java).apply {
+                action = ChimeraVpnService.ACTION_RECONNECT
+                putExtra(ChimeraVpnService.EXTRA_CONFIG, config)
             }
             startService(serviceIntent)
         } catch (e: Exception) {
@@ -317,7 +317,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CarheliaApp(
+fun ChimeraApp(
     vpnManager: VpnManager,
     onConnect: (VpnServerConfig) -> Unit,
     onDisconnect: () -> Unit,

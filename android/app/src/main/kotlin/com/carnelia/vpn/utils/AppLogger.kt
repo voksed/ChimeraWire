@@ -21,17 +21,17 @@ object AppLogger {
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     fun log(message: String) {
-        android.util.Log.i("CarneliaVPN", message)
+        android.util.Log.i("ChimeraWire", message)
         addEntry(LogLevel.INFO, message)
     }
 
     fun debug(message: String) {
-        android.util.Log.d("CarneliaVPN", message)
+        android.util.Log.d("ChimeraWire", message)
         addEntry(LogLevel.DEBUG, message)
     }
 
     fun error(message: String, throwable: Throwable? = null) {
-        android.util.Log.e("CarneliaVPN", message, throwable)
+        android.util.Log.e("ChimeraWire", message, throwable)
         val fullMessage = if (throwable != null) {
             val cause = throwable.cause
             val causeStr = if (cause != null && cause.message != throwable.message) " (cause: ${cause.message})" else ""

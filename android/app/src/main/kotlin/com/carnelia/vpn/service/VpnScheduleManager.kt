@@ -92,8 +92,8 @@ class ScheduleReceiver : BroadcastReceiver() {
         AppLogger.log("ScheduleReceiver: action=${intent.action}")
         when (intent.action) {
             "com.carnelia.vpn.SCHEDULE_CONNECT" -> {
-                val svcIntent = Intent(context, CarheliaVpnService::class.java).apply {
-                    action = CarheliaVpnService.ACTION_CONNECT
+                val svcIntent = Intent(context, ChimeraVpnService::class.java).apply {
+                    action = ChimeraVpnService.ACTION_CONNECT
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(svcIntent)
@@ -102,8 +102,8 @@ class ScheduleReceiver : BroadcastReceiver() {
                 }
             }
             "com.carnelia.vpn.SCHEDULE_DISCONNECT" -> {
-                context.startService(Intent(context, CarheliaVpnService::class.java).apply {
-                    action = CarheliaVpnService.ACTION_DISCONNECT
+                context.startService(Intent(context, ChimeraVpnService::class.java).apply {
+                    action = ChimeraVpnService.ACTION_DISCONNECT
                 })
             }
         }

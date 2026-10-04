@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.carnelia.vpn.service.LocalFirewallService
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -60,7 +60,7 @@ class AppFirewallActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CarheliaTheme(themeIndex = PrefsManager.getThemeIndex(this)) {
+            ChimeraTheme(themeIndex = PrefsManager.getThemeIndex(this)) {
                 AppFirewallScreen(this)
             }
         }

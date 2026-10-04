@@ -63,10 +63,10 @@ class NetworkMonitor(private val context: Context) {
         
         // If VPN is already connected or connecting, do nothing?
         // Wait, if we switch networks, we might be technically connected but using old network.
-        // But CarheliaVpnService handles that? 
+        // But ChimeraVpnService handles that? 
         // We only want to AUTO START if it's currently STOPPED.
-        if (CarheliaVpnService.currentState == ConnectionState.CONNECTED || 
-            CarheliaVpnService.currentState == ConnectionState.CONNECTING) {
+        if (ChimeraVpnService.currentState == ConnectionState.CONNECTED || 
+            ChimeraVpnService.currentState == ConnectionState.CONNECTING) {
              return
         }
 
@@ -88,9 +88,9 @@ class NetworkMonitor(private val context: Context) {
             val lastServer = repository.getLastUsedServer()
             if (lastServer != null) {
                 AppLogger.log("NetworkMonitor: triggerVpn → proto=${lastServer.protocol.name} name='${lastServer.name}'")
-                val intent = Intent(context, CarheliaVpnService::class.java)
-                intent.action = CarheliaVpnService.ACTION_CONNECT
-                intent.putExtra(CarheliaVpnService.EXTRA_CONFIG, lastServer)
+                val intent = Intent(context, ChimeraVpnService::class.java)
+                intent.action = ChimeraVpnService.ACTION_CONNECT
+                intent.putExtra(ChimeraVpnService.EXTRA_CONFIG, lastServer)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(intent)
                 } else {

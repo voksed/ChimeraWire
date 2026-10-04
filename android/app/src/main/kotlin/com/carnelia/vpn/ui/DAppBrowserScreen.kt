@@ -215,7 +215,7 @@ private fun buildTonConnectBridgeJs(walletAddress: String): String {
 
   const deviceInfo = {
     platform: 'android',
-    appName: 'CarneliaVPN',
+    appName: 'ChimeraWire',
     appVersion: '2.1.0',
     maxProtocolVersion: 2,
     features: ['SendTransaction']
@@ -225,7 +225,7 @@ private fun buildTonConnectBridgeJs(walletAddress: String): String {
   const provider = {
     deviceInfo: deviceInfo,
     walletInfo: {
-      name: 'CarneliaVPN',
+      name: 'ChimeraWire',
       image: '',
       tondns: '',
       about_url: ''
@@ -325,8 +325,8 @@ private fun buildTonConnectBridgeJs(walletAddress: String): String {
 
     getWallets: function() {
       return Promise.resolve([{
-        appName: 'CarneliaVPN',
-        name: 'CarneliaVPN',
+        appName: 'ChimeraWire',
+        name: 'ChimeraWire',
         imageUrl: '',
         aboutUrl: '',
         universalLink: '',
@@ -341,7 +341,7 @@ private fun buildTonConnectBridgeJs(walletAddress: String): String {
   // Expose as window.tonconnect and window.TonConnect
   window.tonconnect  = provider;
   window.TonConnect  = provider;
-  window.carneliaWallet = provider;
+  window.chimeraWallet = provider;
 
   // Legacy window.ton (used by older dApps and some Stonfi integrations)
   window.ton = {
@@ -368,7 +368,7 @@ private fun buildTonConnectBridgeJs(walletAddress: String): String {
     }
   };
 
-  console.log('[CarneliaVPN] TON Connect bridge injected, address:', walletAddress);
+  console.log('[ChimeraWire] TON Connect bridge injected, address:', walletAddress);
 })();
 """.trimIndent()
 }

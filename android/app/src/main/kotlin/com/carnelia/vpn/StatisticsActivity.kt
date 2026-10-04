@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.core.TrafficStatsManager
 import com.carnelia.vpn.core.TrafficSession
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,7 +40,7 @@ class StatisticsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         setContent {
-            CarheliaTheme {
+            ChimeraTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background 

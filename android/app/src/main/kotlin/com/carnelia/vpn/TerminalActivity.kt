@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.VpnGlobalState
 import com.carnelia.vpn.data.ServerRepository
-import com.carnelia.vpn.ui.theme.CarheliaTheme
+import com.carnelia.vpn.ui.theme.ChimeraTheme
 import com.carnelia.vpn.utils.PrefsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +54,7 @@ class TerminalActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeIndex = PrefsManager.getThemeIndex(this)
-            CarheliaTheme(themeIndex = themeIndex) {
+            ChimeraTheme(themeIndex = themeIndex) {
                 TerminalScreen(onBack = { finish() })
             }
         }
