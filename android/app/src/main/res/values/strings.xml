@@ -899,4 +899,5 @@ Last Error: %5$s
     <string name="xbw_probe_none">Nothing blocked, or no fragmentation helped</string>
     <string name="xbw_probe_ooni">Verify with OONI Probe</string>
     <string name="xbw_probe_vpn_on">Disconnect the VPN before testing</string>
+    <string name="xbw_probe_hosts">Sites to test (one per line, or comma separated)</string>
 </resources>

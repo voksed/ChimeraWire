@@ -899,4 +899,5 @@ Región: %4$s
     <string name="xbw_probe_none">Sin bloqueos o ninguna fragmentación funcionó</string>
     <string name="xbw_probe_ooni">Verificar con OONI Probe</string>
     <string name="xbw_probe_vpn_on">Desconecta la VPN antes de probar</string>
+    <string name="xbw_probe_hosts">Sitios a probar (uno por línea o separados por comas)</string>
 </resources>

@@ -104,6 +104,12 @@ fun BlackWallScreen(onBack: () -> Unit) {
     // Block detection: local OONI-style DNS/TCP/TLS probe that tunes the fragmentation.
     val scope = rememberCoroutineScope()
     var probing by remember { mutableStateOf(false) }
+    var hostsText by remember {
+        mutableStateOf(
+            PrefsManager.getProbeHosts(context).ifBlank { BypassProbe.DEFAULT_HOSTS.joinToString("\n") }
+        )
+    }
+    fun probeHosts(): List<String> = BypassProbe.parseHosts(hostsText).ifEmpty { BypassProbe.DEFAULT_HOSTS }
     var probeLines by remember { mutableStateOf(listOf<String>()) }
     var probeSummary by remember { mutableStateOf<String?>(null) }
     fun runProbe() {
@@ -111,12 +117,13 @@ fun BlackWallScreen(onBack: () -> Unit) {
             Toast.makeText(context, context.getString(R.string.xbw_probe_vpn_on), Toast.LENGTH_SHORT).show()
             return
         }
+        val hosts = probeHosts()
         probing = true
         probeLines = emptyList()
         probeSummary = null
         scope.launch {
             val report = withContext(Dispatchers.IO) {
-                BypassProbe.run { site ->
+                BypassProbe.run(hosts) { site ->
                     probeLines = probeLines + "${site.host}: ${site.verdict} — ${site.detail}"
                 }
             }
@@ -131,7 +138,7 @@ fun BlackWallScreen(onBack: () -> Unit) {
         }
     }
     fun openOoni() {
-        val urls = BypassProbe.DEFAULT_HOSTS.joinToString(",") { "\"https://$it\"" }
+        val urls = probeHosts().joinToString(",") { "\"https://$it\"" }
         val ta = Uri.encode("{\"urls\":[$urls]}")
         val deepLink = Uri.parse("ooni://nettest?tn=web_connectivity&ta=$ta&mv=1.2.0")
         val store = Uri.parse("https://play.google.com/store/apps/details?id=org.openobservatory.ooniprobe")
@@ -335,6 +342,18 @@ fun BlackWallScreen(onBack: () -> Unit) {
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
+                    )
+                    OutlinedTextField(
+                        value = hostsText,
+                        onValueChange = {
+                            hostsText = it
+                            PrefsManager.setProbeHosts(context, it)
+                        },
+                        label = { Text(stringResource(R.string.xbw_probe_hosts)) },
+                        minLines = 3,
+                        maxLines = 8,
+                        enabled = !probing,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Button(
                         onClick = { runProbe() },

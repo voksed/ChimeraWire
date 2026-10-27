@@ -56,8 +56,20 @@ object BypassProbe {
 
     val DEFAULT_HOSTS = listOf(
         "www.youtube.com", "discord.com", "www.instagram.com",
-        "www.facebook.com", "x.com", "www.linkedin.com", "telegram.org"
+        "www.facebook.com", "x.com", "www.linkedin.com", "telegram.org", "www.tiktok.com"
     )
+
+    private val HOST_RE = Regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
+
+    /**
+     * Turns free-form user input (domains or full URLs separated by whitespace, commas or
+     * semicolons) into a de-duplicated list of valid hostnames; invalid tokens are dropped.
+     */
+    fun parseHosts(text: String): List<String> = text
+        .split(Regex("[\\s,;]+"))
+        .map { it.trim().lowercase().removePrefix("https://").removePrefix("http://").substringBefore('/') }
+        .filter { HOST_RE.matches(it) && it.substringAfterLast('.').any(Char::isLetter) }
+        .distinct()
 
     val PLAIN = Strategy(null, 0..0)
 

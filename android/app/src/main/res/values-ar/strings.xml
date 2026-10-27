@@ -899,4 +899,5 @@ Android: %2$s
     <string name="xbw_probe_none">لا حجب أو لم تنجح أي تجزئة</string>
     <string name="xbw_probe_ooni">التحقق عبر OONI Probe</string>
     <string name="xbw_probe_vpn_on">افصل VPN قبل الاختبار</string>
+    <string name="xbw_probe_hosts">المواقع المراد اختبارها (واحد في كل سطر أو مفصولة بفواصل)</string>
 </resources>

@@ -357,6 +357,13 @@ object PrefsManager {
     fun setBlackWallLevel(context: Context, level: String) =
         getPrefs(context).edit().putString("black_wall_level", level).apply()
 
+    // Sites BypassProbe checks, one per line; empty = built-in defaults.
+    fun getProbeHosts(context: Context): String =
+        getPrefs(context).getString("bypass_probe_hosts", "") ?: ""
+
+    fun setProbeHosts(context: Context, hosts: String) =
+        getPrefs(context).edit().putString("bypass_probe_hosts", hosts).apply()
+
     // Fragmentation learned by BypassProbe on this network; empty string = not measured yet.
     fun getProbedFragmentLength(context: Context): String =
         getPrefs(context).getString("bypass_probe_length", "") ?: ""

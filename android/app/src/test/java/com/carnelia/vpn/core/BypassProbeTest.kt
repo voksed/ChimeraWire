@@ -31,6 +31,13 @@ class BypassProbeTest {
         assertTrue(!BypassProbe.isBogon("142.250.74.14"))
     }
 
+    @Test
+    fun parseHostsAcceptsUrlsAndDropsGarbage() {
+        val parsed = BypassProbe.parseHosts("https://TikTok.com/foo, x.com;x.com
+ bad_host  localhost 1.2")
+        assertEquals(listOf("tiktok.com", "x.com"), parsed)
+    }
+
     /** Live check against the real network; run with BYPASS_LIVE=1. */
     @Test
     fun liveProbePrintsReport() {
