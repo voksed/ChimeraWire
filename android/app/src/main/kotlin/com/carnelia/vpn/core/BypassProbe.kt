@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
+import java.util.concurrent.Executors
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -84,18 +85,24 @@ object BypassProbe {
         Strategy(1..1, 1..5)
     )
 
+    private const val PARALLELISM = 4
     private const val CONNECT_TIMEOUT_MS = 4000
     private const val IO_TIMEOUT_MS = 5000
 
     /**
-     * Probes [hosts] sequentially and returns per-host verdicts plus the strategy that
+     * Probes [hosts] on a small thread pool (results keep input order) and returns per-host verdicts plus the strategy that
      * unblocked the most SNI-blocked hosts (null when nothing needed or found one).
      */
     fun run(
         hosts: List<String> = DEFAULT_HOSTS,
         onProgress: (SiteResult) -> Unit = {}
     ): Report {
-        val results = hosts.map { host -> probeHost(host).also(onProgress) }
+        val pool = Executors.newFixedThreadPool(minOf(PARALLELISM, maxOf(hosts.size, 1)))
+        val results = try {
+            hosts.map { host -> pool.submit<SiteResult> { probeHost(host).also(onProgress) } }.map { it.get() }
+        } finally {
+            pool.shutdown()
+        }
         val best = results
             .mapNotNull { it.strategy?.takeIf { s -> s.length != null } }
             .groupingBy { it }.eachCount()

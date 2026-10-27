@@ -33,8 +33,7 @@ class BypassProbeTest {
 
     @Test
     fun parseHostsAcceptsUrlsAndDropsGarbage() {
-        val parsed = BypassProbe.parseHosts("https://TikTok.com/foo, x.com;x.com
- bad_host  localhost 1.2")
+        val parsed = BypassProbe.parseHosts("https://TikTok.com/foo, x.com;x.com\n bad_host  localhost 1.2")
         assertEquals(listOf("tiktok.com", "x.com"), parsed)
     }
 

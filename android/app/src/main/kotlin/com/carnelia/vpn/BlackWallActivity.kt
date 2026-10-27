@@ -110,7 +110,8 @@ fun BlackWallScreen(onBack: () -> Unit) {
         )
     }
     fun probeHosts(): List<String> = BypassProbe.parseHosts(hostsText).ifEmpty { BypassProbe.DEFAULT_HOSTS }
-    var probeLines by remember { mutableStateOf(listOf<String>()) }
+    var probeResults by remember { mutableStateOf(listOf<BypassProbe.SiteResult>()) }
+    var probeTotal by remember { mutableStateOf(0) }
     var probeSummary by remember { mutableStateOf<String?>(null) }
     fun runProbe() {
         if (bypassRunning) {
@@ -119,12 +120,13 @@ fun BlackWallScreen(onBack: () -> Unit) {
         }
         val hosts = probeHosts()
         probing = true
-        probeLines = emptyList()
+        probeResults = emptyList()
+        probeTotal = hosts.size
         probeSummary = null
         scope.launch {
             val report = withContext(Dispatchers.IO) {
                 BypassProbe.run(hosts) { site ->
-                    probeLines = probeLines + "${site.host}: ${site.verdict} — ${site.detail}"
+                    probeResults = probeResults + site
                 }
             }
             val best = report.best
@@ -360,9 +362,13 @@ fun BlackWallScreen(onBack: () -> Unit) {
                     ) {
                         Text(stringResource(if (probing) R.string.xbw_probe_running else R.string.xbw_probe_run))
                     }
-                    probeLines.forEach {
-                        Text(it, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (probing && probeTotal > 0) {
+                        LinearProgressIndicator(
+                            progress = { probeResults.size / probeTotal.toFloat() },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
+                    probeResults.sortedBy { it.host }.forEach { ProbeResultRow(it) }
                     probeSummary?.let {
                         Text(it, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                     }
@@ -401,5 +407,35 @@ fun BlackWallScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+@Composable
+private fun ProbeResultRow(site: BypassProbe.SiteResult) {
+    val verdictRes = when (site.verdict) {
+        BypassProbe.Verdict.OK           -> R.string.xbw_verdict_ok
+        BypassProbe.Verdict.DNS_TAMPERED -> R.string.xbw_verdict_dns
+        BypassProbe.Verdict.IP_BLOCKED   -> R.string.xbw_verdict_ip
+        BypassProbe.Verdict.SNI_BLOCKED  -> R.string.xbw_verdict_sni
+        BypassProbe.Verdict.UNREACHABLE  -> R.string.xbw_verdict_unreachable
+    }
+    val color = when (site.verdict) {
+        BypassProbe.Verdict.OK -> MaterialTheme.colorScheme.primary
+        BypassProbe.Verdict.SNI_BLOCKED, BypassProbe.Verdict.DNS_TAMPERED -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.error
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Icon(
+            if (site.verdict == BypassProbe.Verdict.OK || site.verdict == BypassProbe.Verdict.SNI_BLOCKED ||
+                site.verdict == BypassProbe.Verdict.DNS_TAMPERED
+            ) Icons.Default.Check else Icons.Default.Warning,
+            contentDescription = null, tint = color, modifier = Modifier.size(18.dp)
+        )
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(site.host, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(site.detail, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(stringResource(verdictRes), fontSize = 12.sp, fontWeight = FontWeight.Medium, color = color)
     }
 }

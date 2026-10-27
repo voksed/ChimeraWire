@@ -901,4 +901,9 @@ Región: %4$s
     <string name="xbw_probe_vpn_on">Desconecta la VPN antes de probar</string>
     <string name="xbw_probe_hosts">Sitios a probar (uno por línea o separados por comas)</string>
     <string name="xbw_probe_ooni_copied">Lista copiada. En OONI Probe elige Sitios web y pega tu lista.</string>
+    <string name="xbw_verdict_ok">Abierto</string>
+    <string name="xbw_verdict_dns">DNS falsificado</string>
+    <string name="xbw_verdict_ip">IP bloqueada</string>
+    <string name="xbw_verdict_sni">SNI bloqueado</string>
+    <string name="xbw_verdict_unreachable">Inaccesible</string>
 </resources>
