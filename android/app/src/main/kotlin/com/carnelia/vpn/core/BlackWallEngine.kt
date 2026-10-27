@@ -70,6 +70,13 @@ object BlackWallEngine {
         AppLogger.log("BlackWall: Level set to ${level.label}")
     }
 
+    /** TLS-hello fragment (length, interval) for the current level; see XrayCoreManager.fragmentSettings. */
+    fun fragmentPreset(context: Context): Pair<String, String> = when (getLevel(context)) {
+        StealthLevel.PHANTOM -> "1-3" to "5-15"
+        StealthLevel.WRAITH  -> "1-2" to "2-8"
+        else                 -> "1-5" to "10-20"
+    }
+
     fun getCamouflageDomain(context: Context): String {
         // Pick a random whitelist domain each session
         return CAMOUFLAGE_DOMAINS.random()
@@ -99,27 +106,11 @@ object BlackWallEngine {
 
         AppLogger.log("BlackWall: Applying level ${level.label} to ${config.protocol}")
 
-        // Layer 1: TLS Fragmentation (all levels)
+        // Layer 1: TLS Fragmentation (all levels), parameters in fragmentPreset()
         val sockopt = streamSettings.optJSONObject("sockopt") ?: JSONObject()
 
-        val fragment = JSONObject().apply {
-            // Fragment TLS ClientHello into 1-3 byte pieces
-            put("packets", "tlshello")
-            when (level) {
-                StealthLevel.GHOST   -> put("length", "1-5")
-                StealthLevel.PHANTOM -> put("length", "1-3")
-                StealthLevel.WRAITH  -> put("length", "1-2")
-                else -> {}
-            }
-            // Random interval between fragments
-            put("interval", when (level) {
-                StealthLevel.GHOST   -> "10-20"
-                StealthLevel.PHANTOM -> "5-15"
-                StealthLevel.WRAITH  -> "2-8"
-                else -> "10-20"
-            })
-        }
-        sockopt.put("fragment", fragment)
+        // sockopt.fragment is ignored by Xray: dial through the fragmenting freedom outbound.
+        sockopt.put("dialerProxy", XrayCoreManager.TAG_FRAG_DIALER)
         sockopt.put("tcpKeepAliveInterval", 300)
 
         // Layer 2: SNI Camouflage for VLESS/Trojan/VMess

@@ -27,6 +27,8 @@ object XrayCoreManager {
     private const val TAG_PROXY = "proxy"
     private const val TAG_PROXY_OUT = "proxy_out"
     private const val TAG_DIRECT = "direct"
+    /** Freedom outbound that fragments the TLS hello; other outbounds dial through it via sockopt.dialerProxy. */
+    const val TAG_FRAG_DIALER = "frag_dialer"
     private const val TAG_BLOCKED = "blocked"
 
     /** uTLS ClientHello-профиль по умолчанию (chrome/firefox/...), настраивается в Settings. */
@@ -454,6 +456,8 @@ object XrayCoreManager {
         }
         outbounds.put(realOutbound)
 
+        addFragmentDialerIfUsed(context, outbounds)
+
         // 3. Direct
         val direct = JSONObject()
         direct.put("tag", TAG_DIRECT)
@@ -527,14 +531,10 @@ object XrayCoreManager {
              streamSettings.has("realitySettings")
 
          if (!isReality && PrefsManager.isFragmentationEnabled(context)) {
-             val fragment = JSONObject()
-             // No "enabled" field — xray enables fragment by presence of the object itself
-             fragment.put("packets", PrefsManager.getFragmentPackets(context))
-             fragment.put("length", PrefsManager.getFragmentLength(context))
-             fragment.put("interval", PrefsManager.getFragmentInterval(context))
-             
-             sockopt.put("fragment", fragment)
-             AppLogger.log("Fragmentation: Applied from prefs")
+             // Xray ignores sockopt.fragment; fragmentation is done by a freedom outbound
+             // that this outbound dials through (see addFragmentDialerIfUsed).
+             sockopt.put("dialerProxy", TAG_FRAG_DIALER)
+             AppLogger.log("Fragmentation: dialing through $TAG_FRAG_DIALER")
          }
          
          sockopt.put("tcpKeepAliveInterval", 300)
@@ -562,6 +562,40 @@ object XrayCoreManager {
     }
 
     /**
+     * Fragment settings shared by every fragmenting path. Black Wall levels set the base
+     * aggressiveness; a strategy measured by BypassProbe on this network beats the preset.
+     * Without Black Wall the user's manual fragmentation preferences apply.
+     */
+    private fun fragmentSettings(context: Context): JSONObject {
+        if (!BlackWallEngine.isEnabled(context) && PrefsManager.isFragmentationEnabled(context)) {
+            return JSONObject()
+                .put("packets", PrefsManager.getFragmentPackets(context))
+                .put("length", PrefsManager.getFragmentLength(context))
+                .put("interval", PrefsManager.getFragmentInterval(context))
+        }
+        val (presetLength, presetInterval) = BlackWallEngine.fragmentPreset(context)
+        return JSONObject()
+            .put("packets", "tlshello")
+            .put("length", PrefsManager.getProbedFragmentLength(context).ifEmpty { presetLength })
+            .put("interval", PrefsManager.getProbedFragmentInterval(context).ifEmpty { presetInterval })
+    }
+
+    /** Appends the fragmenting freedom outbound when any outbound dials through it. */
+    private fun addFragmentDialerIfUsed(context: Context, outbounds: JSONArray) {
+        val used = (0 until outbounds.length()).any {
+            outbounds.getJSONObject(it).optJSONObject("streamSettings")
+                ?.optJSONObject("sockopt")?.optString("dialerProxy") == TAG_FRAG_DIALER
+        }
+        if (!used) return
+        outbounds.put(
+            JSONObject()
+                .put("tag", TAG_FRAG_DIALER)
+                .put("protocol", "freedom")
+                .put("settings", JSONObject().put("fragment", fragmentSettings(context)))
+        )
+    }
+
+    /**
      * Serverless bypass outbound: a direct (freedom) connection whose TLS ClientHello is
      * fragmented so DPI cannot match on the SNI. Fragment aggressiveness follows the Black
      * Wall level and is always applied here, since fragmentation is the mode's only purpose.
@@ -569,20 +603,7 @@ object XrayCoreManager {
     private fun configureFreedom(context: Context, outbound: JSONObject) {
         outbound.put("protocol", "freedom")
 
-        // A strategy measured by BypassProbe on this network beats the static level presets.
-        val probedLength = PrefsManager.getProbedFragmentLength(context)
-        val length = probedLength.ifEmpty {
-            when (BlackWallEngine.getLevel(context)) {
-                BlackWallEngine.StealthLevel.PHANTOM -> "1-3"
-                BlackWallEngine.StealthLevel.WRAITH  -> "1-2"
-                else -> "1-5"
-            }
-        }
-        val interval = PrefsManager.getProbedFragmentInterval(context).ifEmpty { "10-20" }
-        val fragment = JSONObject()
-            .put("packets", "tlshello")
-            .put("length", length)
-            .put("interval", interval)
+        val fragment = fragmentSettings(context)
         // Freedom reads `fragment` from its own settings; under sockopt it is silently ignored.
         outbound.put("settings", JSONObject().put("domainStrategy", "UseIP").put("fragment", fragment))
         val sockopt = JSONObject().put("tcpKeepAliveInterval", 300)
