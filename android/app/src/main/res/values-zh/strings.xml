@@ -900,4 +900,5 @@ Android：%2$s
     <string name="xbw_probe_ooni">用 OONI Probe 验证</string>
     <string name="xbw_probe_vpn_on">测试前请先断开 VPN</string>
     <string name="xbw_probe_hosts">要测试的网站（每行一个，或用逗号分隔）</string>
+    <string name="xbw_probe_ooni_copied">网站列表已复制。在 OONI Probe 中选择网站测试并粘贴你的列表。</string>
 </resources>

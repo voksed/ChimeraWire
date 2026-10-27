@@ -568,7 +568,6 @@ object XrayCoreManager {
      */
     private fun configureFreedom(context: Context, outbound: JSONObject) {
         outbound.put("protocol", "freedom")
-        outbound.put("settings", JSONObject().put("domainStrategy", "UseIP"))
 
         // A strategy measured by BypassProbe on this network beats the static level presets.
         val probedLength = PrefsManager.getProbedFragmentLength(context)
@@ -584,9 +583,9 @@ object XrayCoreManager {
             .put("packets", "tlshello")
             .put("length", length)
             .put("interval", interval)
-        val sockopt = JSONObject()
-            .put("fragment", fragment)
-            .put("tcpKeepAliveInterval", 300)
+        // Freedom reads `fragment` from its own settings; under sockopt it is silently ignored.
+        outbound.put("settings", JSONObject().put("domainStrategy", "UseIP").put("fragment", fragment))
+        val sockopt = JSONObject().put("tcpKeepAliveInterval", 300)
         outbound.put("streamSettings", JSONObject().put("sockopt", sockopt))
     }
 

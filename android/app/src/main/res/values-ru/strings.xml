@@ -902,4 +902,5 @@ Android: %2$s
     <string name="xbw_probe_ooni">Проверить в OONI Probe</string>
     <string name="xbw_probe_vpn_on">Отключите VPN перед тестом</string>
     <string name="xbw_probe_hosts">Сайты для проверки (по одному в строке или через запятую)</string>
+    <string name="xbw_probe_ooni_copied">Список сайтов скопирован. В OONI Probe выберите «Сайты» и вставьте свой список.</string>
 </resources>

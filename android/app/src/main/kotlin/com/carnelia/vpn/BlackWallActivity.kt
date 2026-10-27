@@ -138,15 +138,13 @@ fun BlackWallScreen(onBack: () -> Unit) {
         }
     }
     fun openOoni() {
-        val urls = probeHosts().joinToString(",") { "\"https://$it\"" }
-        val ta = Uri.encode("{\"urls\":[$urls]}")
-        val deepLink = Uri.parse("ooni://nettest?tn=web_connectivity&ta=$ta&mv=1.2.0")
-        val store = Uri.parse("https://play.google.com/store/apps/details?id=org.openobservatory.ooniprobe")
-        try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, deepLink))
-        } catch (_: Exception) {
-            context.startActivity(Intent(Intent.ACTION_VIEW, store))
-        }
+        // OONI Probe has no deep link for custom URL lists; hand the sites over via the clipboard.
+        val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("sites", probeHosts().joinToString("\n")))
+        Toast.makeText(context, context.getString(R.string.xbw_probe_ooni_copied), Toast.LENGTH_LONG).show()
+        val launch = context.packageManager.getLaunchIntentForPackage("org.openobservatory.ooniprobe")
+            ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=org.openobservatory.ooniprobe"))
+        context.startActivity(launch)
     }
 
     Scaffold(

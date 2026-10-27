@@ -900,4 +900,5 @@ Last Error: %5$s
     <string name="xbw_probe_ooni">Verify with OONI Probe</string>
     <string name="xbw_probe_vpn_on">Disconnect the VPN before testing</string>
     <string name="xbw_probe_hosts">Sites to test (one per line, or comma separated)</string>
+    <string name="xbw_probe_ooni_copied">Site list copied. In OONI Probe choose Websites, then paste your own list.</string>
 </resources>

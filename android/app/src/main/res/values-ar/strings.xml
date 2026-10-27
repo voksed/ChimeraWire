@@ -900,4 +900,5 @@ Android: %2$s
     <string name="xbw_probe_ooni">التحقق عبر OONI Probe</string>
     <string name="xbw_probe_vpn_on">افصل VPN قبل الاختبار</string>
     <string name="xbw_probe_hosts">المواقع المراد اختبارها (واحد في كل سطر أو مفصولة بفواصل)</string>
+    <string name="xbw_probe_ooni_copied">تم نسخ قائمة المواقع. في OONI Probe اختر المواقع ثم الصق قائمتك.</string>
 </resources>
