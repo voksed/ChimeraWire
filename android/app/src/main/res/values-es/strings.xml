@@ -891,4 +891,12 @@ Región: %4$s
     <string name="xset_reset_title">Restablecer ajustes</string>
     <string name="xset_reset_desc">Todas las opciones vuelven a sus valores predeterminados. Se conservan los servidores y las suscripciones.</string>
     <string name="xset_reset_btn">Restablecer</string>
+    <string name="xbw_probe_title">Detectar bloqueos</string>
+    <string name="xbw_probe_desc">Mide DNS, TCP y TLS hacia sitios populares de forma local, sin servidor, y elige la fragmentación TLS que funciona en esta red. Desconecta antes la VPN.</string>
+    <string name="xbw_probe_run">Ejecutar prueba</string>
+    <string name="xbw_probe_running">Probando…</string>
+    <string name="xbw_probe_applied">Aplicado: %1$s</string>
+    <string name="xbw_probe_none">Sin bloqueos o ninguna fragmentación funcionó</string>
+    <string name="xbw_probe_ooni">Verificar con OONI Probe</string>
+    <string name="xbw_probe_vpn_on">Desconecta la VPN antes de probar</string>
 </resources>

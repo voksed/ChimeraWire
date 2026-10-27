@@ -357,6 +357,19 @@ object PrefsManager {
     fun setBlackWallLevel(context: Context, level: String) =
         getPrefs(context).edit().putString("black_wall_level", level).apply()
 
+    // Fragmentation learned by BypassProbe on this network; empty string = not measured yet.
+    fun getProbedFragmentLength(context: Context): String =
+        getPrefs(context).getString("bypass_probe_length", "") ?: ""
+
+    fun getProbedFragmentInterval(context: Context): String =
+        getPrefs(context).getString("bypass_probe_interval", "") ?: ""
+
+    fun setProbedFragment(context: Context, length: String, interval: String) =
+        getPrefs(context).edit()
+            .putString("bypass_probe_length", length)
+            .putString("bypass_probe_interval", interval)
+            .apply()
+
     // TLS ClientHello (uTLS) fingerprint — какой браузер имитировать по умолчанию,
     // если сервер сам не задал fp= в ссылке. Обходит DPI по белым спискам TLS-отпечатков.
     fun getTlsFingerprint(context: Context): String =

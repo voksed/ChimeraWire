@@ -891,4 +891,12 @@ Android：%2$s
     <string name="xset_reset_title">重置设置</string>
     <string name="xset_reset_desc">所有选项恢复为默认值。服务器和订阅将保留。</string>
     <string name="xset_reset_btn">重置</string>
+    <string name="xbw_probe_title">检测封锁</string>
+    <string name="xbw_probe_desc">在本地、无需服务器，测量到热门网站的 DNS、TCP 和 TLS，并选出在当前网络可用的 TLS 分片方案。请先断开 VPN。</string>
+    <string name="xbw_probe_run">运行测试</string>
+    <string name="xbw_probe_running">测试中…</string>
+    <string name="xbw_probe_applied">已应用：%1$s</string>
+    <string name="xbw_probe_none">未被封锁，或分片无效</string>
+    <string name="xbw_probe_ooni">用 OONI Probe 验证</string>
+    <string name="xbw_probe_vpn_on">测试前请先断开 VPN</string>
 </resources>

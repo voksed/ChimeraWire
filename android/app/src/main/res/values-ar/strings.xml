@@ -891,4 +891,12 @@ Android: %2$s
     <string name="xset_reset_title">إعادة تعيين الإعدادات</string>
     <string name="xset_reset_desc">تعود جميع الخيارات إلى قيمها الافتراضية. تبقى الخوادم والاشتراكات.</string>
     <string name="xset_reset_btn">إعادة تعيين</string>
+    <string name="xbw_probe_title">اكتشاف الحجب</string>
+    <string name="xbw_probe_desc">يقيس DNS وTCP وTLS محليًا إلى مواقع شائعة دون أي خادم، ويختار تجزئة TLS التي تعمل على هذه الشبكة. افصل VPN أولًا.</string>
+    <string name="xbw_probe_run">تشغيل الاختبار</string>
+    <string name="xbw_probe_running">جارٍ الاختبار…</string>
+    <string name="xbw_probe_applied">تم التطبيق: %1$s</string>
+    <string name="xbw_probe_none">لا حجب أو لم تنجح أي تجزئة</string>
+    <string name="xbw_probe_ooni">التحقق عبر OONI Probe</string>
+    <string name="xbw_probe_vpn_on">افصل VPN قبل الاختبار</string>
 </resources>

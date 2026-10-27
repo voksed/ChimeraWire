@@ -893,4 +893,12 @@ Android: %2$s
     <string name="xset_reset_title">Сбросить настройки</string>
     <string name="xset_reset_desc">Все параметры вернутся к значениям по умолчанию. Серверы и подписки останутся.</string>
     <string name="xset_reset_btn">Сбросить</string>
+    <string name="xbw_probe_title">Определить блокировки</string>
+    <string name="xbw_probe_desc">Локально, без сервера, замеряет DNS, TCP и TLS до популярных сайтов и подбирает фрагментацию TLS, которая работает в этой сети. Сначала отключите VPN.</string>
+    <string name="xbw_probe_run">Запустить тест</string>
+    <string name="xbw_probe_running">Идёт проверка…</string>
+    <string name="xbw_probe_applied">Применено: %1$s</string>
+    <string name="xbw_probe_none">Блокировок нет или фрагментация не помогла</string>
+    <string name="xbw_probe_ooni">Проверить в OONI Probe</string>
+    <string name="xbw_probe_vpn_on">Отключите VPN перед тестом</string>
 </resources>

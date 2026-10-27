@@ -570,15 +570,20 @@ object XrayCoreManager {
         outbound.put("protocol", "freedom")
         outbound.put("settings", JSONObject().put("domainStrategy", "UseIP"))
 
-        val length = when (BlackWallEngine.getLevel(context)) {
-            BlackWallEngine.StealthLevel.PHANTOM -> "1-3"
-            BlackWallEngine.StealthLevel.WRAITH  -> "1-2"
-            else -> "1-5"
+        // A strategy measured by BypassProbe on this network beats the static level presets.
+        val probedLength = PrefsManager.getProbedFragmentLength(context)
+        val length = probedLength.ifEmpty {
+            when (BlackWallEngine.getLevel(context)) {
+                BlackWallEngine.StealthLevel.PHANTOM -> "1-3"
+                BlackWallEngine.StealthLevel.WRAITH  -> "1-2"
+                else -> "1-5"
+            }
         }
+        val interval = PrefsManager.getProbedFragmentInterval(context).ifEmpty { "10-20" }
         val fragment = JSONObject()
             .put("packets", "tlshello")
             .put("length", length)
-            .put("interval", "10-20")
+            .put("interval", interval)
         val sockopt = JSONObject()
             .put("fragment", fragment)
             .put("tcpKeepAliveInterval", 300)

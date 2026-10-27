@@ -891,4 +891,12 @@ Last Error: %5$s
     <string name="xset_reset_title">Reset settings</string>
     <string name="xset_reset_desc">All options return to their defaults. Servers and subscriptions are kept.</string>
     <string name="xset_reset_btn">Reset</string>
+    <string name="xbw_probe_title">Detect blocking</string>
+    <string name="xbw_probe_desc">Measures DNS, TCP and TLS to popular sites locally, without any server, and picks the TLS fragmentation that works on this network. Disconnect the VPN first.</string>
+    <string name="xbw_probe_run">Run test</string>
+    <string name="xbw_probe_running">Testing…</string>
+    <string name="xbw_probe_applied">Applied: %1$s</string>
+    <string name="xbw_probe_none">Nothing blocked, or no fragmentation helped</string>
+    <string name="xbw_probe_ooni">Verify with OONI Probe</string>
+    <string name="xbw_probe_vpn_on">Disconnect the VPN before testing</string>
 </resources>

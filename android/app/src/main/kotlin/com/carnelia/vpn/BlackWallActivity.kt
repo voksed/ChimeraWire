@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.carnelia.vpn.R
 import com.carnelia.vpn.core.BlackWallEngine
 import com.carnelia.vpn.core.BlackWallEngine.StealthLevel
+import com.carnelia.vpn.core.BypassProbe
 import com.carnelia.vpn.core.ConnectionState
 import com.carnelia.vpn.core.VpnGlobalState
 import com.carnelia.vpn.core.VpnProtocol
@@ -97,6 +98,47 @@ fun BlackWallScreen(onBack: () -> Unit) {
         } else {
             val prep = VpnService.prepare(context)
             if (prep != null) vpnConsentLauncher.launch(prep) else startBypass()
+        }
+    }
+
+    // Block detection: local OONI-style DNS/TCP/TLS probe that tunes the fragmentation.
+    val scope = rememberCoroutineScope()
+    var probing by remember { mutableStateOf(false) }
+    var probeLines by remember { mutableStateOf(listOf<String>()) }
+    var probeSummary by remember { mutableStateOf<String?>(null) }
+    fun runProbe() {
+        if (bypassRunning) {
+            Toast.makeText(context, context.getString(R.string.xbw_probe_vpn_on), Toast.LENGTH_SHORT).show()
+            return
+        }
+        probing = true
+        probeLines = emptyList()
+        probeSummary = null
+        scope.launch {
+            val report = withContext(Dispatchers.IO) {
+                BypassProbe.run { site ->
+                    probeLines = probeLines + "${site.host}: ${site.verdict} — ${site.detail}"
+                }
+            }
+            val best = report.best
+            if (best != null) {
+                PrefsManager.setProbedFragment(context, best.xrayLength, best.xrayInterval)
+                probeSummary = context.getString(R.string.xbw_probe_applied, best.label)
+            } else {
+                probeSummary = context.getString(R.string.xbw_probe_none)
+            }
+            probing = false
+        }
+    }
+    fun openOoni() {
+        val urls = BypassProbe.DEFAULT_HOSTS.joinToString(",") { "\"https://$it\"" }
+        val ta = Uri.encode("{\"urls\":[$urls]}")
+        val deepLink = Uri.parse("ooni://nettest?tn=web_connectivity&ta=$ta&mv=1.2.0")
+        val store = Uri.parse("https://play.google.com/store/apps/details?id=org.openobservatory.ooniprobe")
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, deepLink))
+        } catch (_: Exception) {
+            context.startActivity(Intent(Intent.ACTION_VIEW, store))
         }
     }
 
@@ -273,6 +315,42 @@ fun BlackWallScreen(onBack: () -> Unit) {
                             lineHeight = 15.sp,
                             modifier = Modifier.padding(top = 6.dp)
                         )
+                    }
+                }
+            }
+
+            // ── Block detection card ──────────────────────────────────────────
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.xbw_probe_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        stringResource(R.string.xbw_probe_desc),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                    Button(
+                        onClick = { runProbe() },
+                        enabled = !probing,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(if (probing) R.string.xbw_probe_running else R.string.xbw_probe_run))
+                    }
+                    probeLines.forEach {
+                        Text(it, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    probeSummary?.let {
+                        Text(it, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    }
+                    OutlinedButton(onClick = { openOoni() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.xbw_probe_ooni))
                     }
                 }
             }
